@@ -1,0 +1,37 @@
+ONTOLOGY_GRAPH_LOCATION # Path to the RDF ontology graph
+"../common-data/ontologies/full.ttl"
+ONTOLOGY_NAME
+"SPHN ontology"
+DATA_GRAPHS_LOCATION    # Path to the RDF data graph(s) directory
+"../rdf-synthetic-sphn/files/output_graphs/"
+"files/data/true_spo/splitv1/node_2/"
+EXTERNAL_LOCATION       # Path to the records for external terminologies
+"../common-data/ontologies/"
+EXTERNAL_TERMS          # Optional: dictionary allowing function switching to query external terminologies web APIs. To each key should correspond a callable function.
+{"bioportal":["ICD10",  "ATC"], "SVIP" : ["SVIP"]}
+OUTPUT_TABLES           # Path to the target directory, to store the result DB tables
+"files/output_tables/"
+OBSERVATION_INFO        # List of ontology concepts (OWL classes) that belong to the observation tables rather than the metadata table
+["Unit", "SubjectPseudoIdentifier", "DataProviderInstitute", "Encounter", "L1", "L2", "L3"]
+NARROW_ONTOLOGY
+""
+ABSTRACT_CLASSES        # List of ontology concepts (OWL classes) that should NOT be entry points to the graph i.e that are never instantiated (except as attribute for an other concept instance)
+["SubjectPseudoIdentifier", "DataProviderInstitute", "Encounter","SharedConcept", "Concept", "Code", "Location", "CareHandlingType", "BodySite", "Unit", "Rate", "TherapeuticArea", "MeasurementMethod", "TimePatternType", "Frequency", "Duration", "SubstanceAmount", "RelativeDoseOfDrugApplied", "Temperature"]
+BLACKLIST               # List of attributes (as substrings present in attributes or class names) to be completely ignored. Equivalent as deleting all lines mentioning them in the RDF graphs.
+["FreeText", "IcdO", "lternate_drug", "DrugAdm", "protein", "Grade", "sis_rank", "code_name", "Biobanksample", "Biosample", "Catheter", "CircumferenceMeasure", "CodedNursingDiagnosis", "CodedProblemCondition", "DrugAllergy", "DrugPrescription", "Frequency", "HeartRate", "LabResult", "NonDrugAllergyIntolerance", "OncologyTreatmentAssessment", "OxygenSaturation", "ProblemCondition", "RadiotherapyProcedure", "RespiratoryRate", "SimpleScore", "SystemicArterialBloodPressure"]
+DEACTIVATE_VALUESET     # List of RDF resources/types that normally have a valueset property, but that should be treated a free text for this run.
+["hgvs", "gene_name"]
+UNIT_DESCRIPTOR         # Substring that will be used for inclusion matching in the RDF URIs to detect attributes denoting units. They will be ignored as ontology concepts but will figure as observation details and displayed in ontology c_metadataxml panels.
+"unit"
+DATE_DESCRIPTOR         # Substring that will be used for inclusion matching in the RDF URIs to detect attributes denoting dates. They will be ignored as ontology concepts but will figure as observation details. Test is case sensitive, so "Datetime" with capital letter attributes will not be ignored.
+"datetime"
+USE_DUMMY_DATES         # Use 1 for True, 0 for False. True if all observation dates should be generalized to the year, else the true date will be used (except for Birthdate, generalized by default)
+0 
+START_SEARCH_INDEX      # Max value of start_search_index field of records already present in the observation tables.
+95000
+DEFAULT_DATE            # Default value for dates. In i2b2, the start_date field in observation__fact table is mandatory.
+730000
+RDF_FORMAT              # Reserved keyword allowing rdflib to parse the RDF graph. See rdflib documentation if using an other format.
+"turtle"
+LANGUAGE
+"fr"
