@@ -1,4 +1,5 @@
 from utils import *
+from classes import *
 import rdflib, hashlib
 
 """
@@ -49,18 +50,16 @@ DEACTIVATE_VALUESET = format_global(to_filter=DEACTIVATE_VALUESET_TOSORT)
 
 
 def setup():
+    """
+    Load the ontology graph in memory. 
+    Extract the instantiable Concepts ; a Concept is a RDF element of type owl:Class, NOT specified as "abstract" by the ABSTRACT_CLASSES macro.
+    It reflects the elements in the hierarchy that are instantiable on their own (compared to properties, never instantiated alone)
+    """
     g = rdflib.Graph()
     g.parse(ONTOLOGY_GRAPH, format=RDF_FORMAT)
-
-    classes = list_classes_simple(g)
-    classesdict = resources_lookup(classes, g)
-    narrowkeys = classesdict.keys()
-    primaries_dict = {
-        k: classesdict[k]
-        for k in classesdict.keys()
-        if k not in ABSTRACT_CLASSES and k not in CONCEPT_BLACKLIST and k in narrowkeys
-    }
-    return primaries_dict
+    classes_uris = list_all_classes_uri(g)
+    primaries = [Concept(g.resource(k)) for k in classes_uris if k not EXCLUDED_COMPONENT]
+    return primaries
 
 
 def unify_graph(graphs=DATA_GRAPHS):
@@ -82,9 +81,10 @@ def classname_to_resource(classname, classdict):
     raise Exception("class not found : " + classname)
 
 
-def filter_obsfact(attributes, toignore=OBSERVATION_INFO):
+def filter_obsfact(properties, toignore=OBSERVATION_INFO):
     """
-    Takes as input a list of predicates. Filters the ones belonging in the ontology table from the observation_fact data such as units, datetime, Data provider and subject ID info.
+    Take as input a list of predicates. Keep only the ontology properties (that should appear in the hierarchy) and return them.
+    In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
     """
     modifiers = []
     for attr in attributes:
@@ -117,18 +117,18 @@ def disc_valuesets(graph=ONTOLOGY_GRAPH):
     return items
 
 
-def extract_raw_valueset(res):
-    """
-    Extracts an explicit valueset from a formatted string to a list of string values.
-    """
-    if type(res) == rdflib.graph.Resource:
-        raw = res.value(SPHN.valueset)
-    else:
-        raw = res
-    if "[" in raw:
-        raw = raw[1:-1]
-    items = raw.split(";")
-    return items
+def extract_valueset(concept): # todo fix
+    g = concept.graph
+    resp = g.query("""
+        select * where { 
+            ?concept rdfs:subClassOf sphn:ValueSet FILTER(CONTAINS(STR(?concept),"sphn")) .
+            ?value_set rdf:type ?concept 
+                FILTER(?concept=sphn:FOPHDiagnosis_rank) . # sphn:Death_status
+        } order by ?concept ?value_set
+    """)
+    for row in resp:
+        pass
+    return resp
 
 
 def detect_toextend(vname):
@@ -206,28 +206,20 @@ def remove_prefix(modifier_rsc):
         )
 
 
-def resources_lookup(classes, g):
-    reslist = {}
-    # Build a lookup table between class names and their Resource object
-    for item in classes:
-        elemURI = item.asdict()["s"]
-        literal = rname(elemURI, g)
-        reslist.update({literal: g.resource(elemURI)})
-    # Read the csv file and update the resources using the class names as key
-    return reslist
-
-
-def list_classes_simple(g):
+def list_all_classes_uri(g):
+    """
+    Return the list of all the owl:Class-typed elements, as URIs.
+    """
     res = g.query(
         """
-            SELECT DISTINCT ?s
+            SELECT ?s
             WHERE {
                     ?s rdf:type owl:Class
             }
             ORDER by ?s
             """
     )
-    return res
+    return [row[0] for row in res]
 
 
 def list_modifiers(mainclass):
@@ -235,23 +227,17 @@ def list_modifiers(mainclass):
     Returns a list of all the entities (as resources) that reference the class passed as parameter, as value for their rdfs:domain predicate.
     """
 
-    def shortname(uri):
-        rsc = mainclass.graph.resource(uri)
-        rnge = rsc.value(RDFS.range)
-        return rname(rnge.identifier, rsc.graph)
+    def target_shortname(resource):
+        # Extracts the suffix of the RDFS.range object for this resource
+        rnge = resource.value(RDFS.range)
+        return resource.graph.namespace_manager.normalizeUri(rnge.identifier)
 
-    res = mainclass.graph.query(
-        """
-            SELECT DISTINCT ?m
-            WHERE {?m rdfs:domain ?mainclass}
-            
-            """,
-        initBindings={"mainclass": mainclass.identifier},
-    )
-    modifiers = [
-        mainclass.graph.resource(el[0])
+    # Extract all resources referencing this class as their domain
+    res = mainclass.subjects(RDFS.domain)
+    
+    modifiers = [el[0]
         for el in res
-        if shortname(el[0]) not in CONCEPT_BLACKLIST
+        if target_shortname(el[0]) not in CONCEPT_BLACKLIST
         and rname(el[0], mainclass.graph) not in CONCEPT_BLACKLIST
     ]
     return modifiers

@@ -13,11 +13,11 @@ ENCOUNTER_URI = SPHN["L3-encounter"]
 PROJECT_ID = "SPO"
 
 
-def isfrom_valueset(pred):
+def isfrom_valueset(c_res):
     # Check if the arg predicate references a valueset or if its values will be free text values
-    name = rname(pred.identifier, pred.graph)
-    return name in HAVE_VALUESET and name not in DEACTIVATE_VALUESET
 
+    # Edit: might be useless because the object is an instance of NamedIndividual if the concept has a valueset.
+    return c_res.value(RDFS.subClassOf) == SPHN.Valueset
 
 def navigate_graph(graphs=DATA_GRAPHS):
     """

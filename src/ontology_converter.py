@@ -24,6 +24,7 @@ def gather_onto_lines(primaries_dict):
     Makes use of predicate_to_ONtline().
     """
     db = []
+    pdb.set_trace()
     entryconcepts = [k for k in primaries_dict.values()]
     # Trigger the Units extraction with the ontology graph, the data graph and the list of valid classes
     extract_units(
@@ -218,7 +219,7 @@ def dig_values(modifier, code_prehash=""):
     # CASE 1: a valueset is specified
     if modifier.graph.resource(SPHN.valueset) in modifier.predicates():
         print("found valueset:")
-        values = extract_raw_valueset(modifier)
+        values = extract_valueset(modifier)
         m_dic.update({"has_children": True})
         for leaf in values:
             if leaf[0] == " ":

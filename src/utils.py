@@ -57,6 +57,7 @@ with open("files/ontology_config") as ff:
                 DATA_GRAPHS = [DATA_GRAPHS_LOCATION]
 
         category = ff.readline()
+        EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+BLACKLIST_CONCEPT+OBSERVATION_INFO))
 
 
 def saved_lookup(item, relativepath=EXTERNAL_LOCATION):
