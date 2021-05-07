@@ -18,14 +18,12 @@ If not using i2b2, the way gathered information is distributed along database fi
 """
 
 
-def gather_onto_lines(primaries_dict):
+def gather_onto_lines(entryconcepts):
     """
     From the entry-level ontology concepts/modifier list, generates a csv file of ontology db lines (one for each concept and modifier).
     Makes use of predicate_to_ONtline().
     """
     db = []
-    pdb.set_trace()
-    entryconcepts = [k for k in primaries_dict.values()]
     # Trigger the Units extraction with the ontology graph, the data graph and the list of valid classes
     extract_units(
         entryconcepts[0].graph,
