@@ -9,6 +9,7 @@ It initializes global variables by reading the "ontology_config" file.
 # This macro allows to write a modifier name as its default value as well
 DIRECT_VALUE = ["SomaticVariantFound"]
 LOGS_FOLDER = "files/logs/"
+MAX_BASECODE_LEN = 49
 
 with open("files/ontology_config") as ff:
     category = ff.readline()
@@ -57,7 +58,6 @@ with open("files/ontology_config") as ff:
                 DATA_GRAPHS = [DATA_GRAPHS_LOCATION]
 
         category = ff.readline()
-        EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+BLACKLIST_CONCEPT+OBSERVATION_INFO))
 
 
 def saved_lookup(item, relativepath=EXTERNAL_LOCATION):

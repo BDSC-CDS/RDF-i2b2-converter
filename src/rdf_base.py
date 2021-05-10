@@ -47,8 +47,134 @@ def format_global(ontograph=ONTOLOGY_GRAPH, to_filter=[]):
 
 CONCEPT_BLACKLIST = format_global(to_filter=CONCEPT_BLACKLIST_TOSORT)
 DEACTIVATE_VALUESET = format_global(to_filter=DEACTIVATE_VALUESET_TOSORT)
+EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+CONCEPT_BLACKLIST+OBSERVATION_INFO))
 
+class Component:
+    def __init__(self, resource):
+        self.resource = resource
+        self.label = resource.label().toPython()
+        self.comment = resource.value(RDFS.comment)
+        self.parent = resource.value(RDFS.subClassOf) if self.resource.value(RDF.type) == OWL.Class else resource.value(RDFS.subPropertyOf)
+    self.path = None
+    self.parent = None
 
+class Concept(Component):
+    def list_properties(self):
+        """
+        Returns a list of all the entities (as resources) that reference the class passed as parameter, as value for their rdfs:domain predicate.
+        """
+        def target_shortname(self):
+            # Extracts the suffix of the RDFS.range object for this resource
+            rnge = self.resource.value(RDFS.range)
+            return self.resource.graph.namespace_manager.normalizeUri(rnge.identifier)
+
+        # Extract all resources referencing this class as their domain
+        res = self.resource.subjects(RDFS.domain)
+        modifiers = [el[0]
+            for el in res
+            if target_shortname(el[0]) not in CONCEPT_BLACKLIST
+            and rname(el[0], self.resource.graph) not in CONCEPT_BLACKLIST
+        ]
+        return modifiers
+
+    def extract_ontology_properties(self):
+        # filter_obsfact is implemented in the subclasses
+        return self.filter_obsfact()
+
+class Property(Component):    
+    pass
+
+class I2B2Component(Component):
+    
+    def reduce_basecode(self, value, debug=False, cap=MAX_BASECODE_LEN):
+        """
+        Returns a basecode for self. A value can be added in the hash.
+        The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
+        A basecode is invisible to the user, and its only constraints is to be unique regarding the concept it is describing,
+        and to be computable both from the ontology side and from the data loader side.
+        The resulting code is the joining key between data tables and ontology tables.
+        """
+        if len(value) > 0 and value[0] == "\\":
+            value = value[1:]
+        if self.rdf_uri[-1] != "\\":
+            tmp_uri = self.rdf_uri + "\\"
+        tohash = tmp_uri + value
+        return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
+
+    def single_line(self):
+        return  {
+            "c_hlevel": str(self.level),
+            "c_fullname": self.c_path,
+            "c_name": self.c_name,
+            "c_synonym_cd": "N",
+            "c_basecode": self.basecode,
+            "c_comment": self.comment,
+            "c_dimcode": self.c_path,
+            "c_tooltip": "",
+            "c_totalnum": "",
+            "update_date": "",
+            "download_date": "",
+            "import_date": "",
+            "sourcesystem_cd": "",
+            "valuetype_cd": "",
+            "m_exclusion_cd": "",
+            "c_path": self.parent.c_path,
+            "c_symbol": self.c_path[len(self.parent.c_path):],
+            "c_metadataxml": ""}
+    
+    def get_info(self):
+        """
+        Create a db line as dictionary for a concept, using the single_line function.
+        This function looks at potential macro-concepts and allows to use multi-leveled concepts.
+        Return a list of dictionaries, one for each concept found on the way.
+        """
+        if self.parent is None:
+            return [single_line(entry, type="root")]
+        line = []
+        line.extend(self.parent.get_info())
+        for el in line:
+            el["c_visualattributes"] = "FA"
+        previous = line[-1]
+        line.append(
+            self.single_line(
+                entry,
+                type="concept",
+                level=str(int(previous["c_hlevel"]) + 1),
+                prefix=previous["c_fullname"],
+            )
+        )
+        return line
+
+class I2B2Concept(Concept, I2B2Component):
+
+    def get_info (self):
+        info = super().get_info()
+        info.update({
+            "c_facttablecolumn": "CONCEPT_CD",
+            "c_tablename": "CONCEPT_DIMENSION",
+            "c_columnname": "CONCEPT_PATH",
+            "c_columndatatype": "T",
+            "c_operator": "LIKE",
+            "c_visualattributes": "FA",
+            "m_applied_path": "@",})
+        return info
+
+    def filter_obsfact(self, toignore=OBSERVATION_INFO):
+        """
+        Fetch the properties of self (referencing self as domain). Keep only the ontology properties (that should appear in the hierarchy) and return them.
+        In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
+        """
+        modifiers = []
+        for attr in self.list_properties():
+            if attr.identifier not in toignore:
+                modifiers.append(I2B2Modifier(attr))
+        return modifiers
+    
+
+class I2B2Modifier(Property, I2B2Component):
+    self.applied_concept = None
+    self.basecode = None
+    
 def setup():
     """
     Load the ontology graph in memory. 
@@ -58,7 +184,7 @@ def setup():
     g = rdflib.Graph()
     g.parse(ONTOLOGY_GRAPH, format=RDF_FORMAT)
     classes_uris = list_all_classes_uri(g)
-    primaries = [Concept(g.resource(k)) for k in classes_uris if k not EXCLUDED_COMPONENT]
+    primaries = [I2B2Concept(g.resource(k)) for k in classes_uris if k not in EXCLUDED_COMPONENT]
     return primaries
 
 
@@ -81,18 +207,6 @@ def classname_to_resource(classname, classdict):
     raise Exception("class not found : " + classname)
 
 
-def filter_obsfact(properties, toignore=OBSERVATION_INFO):
-    """
-    Take as input a list of predicates. Keep only the ontology properties (that should appear in the hierarchy) and return them.
-    In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
-    """
-    modifiers = []
-    for attr in attributes:
-        idd = rname(attr.identifier, attr.graph)
-        if idd == RDF.type or any([el in idd for el in toignore]):
-            continue
-        modifiers.append(attr)
-    return modifiers
 
 
 def disc_valuesets(graph=ONTOLOGY_GRAPH):
@@ -147,22 +261,6 @@ def detect_toextend(vname):
     return vname[vname.find("@") + 1 :], vname[: vname.find("@")]
 
 
-def reduce_basecode(path, cap=49, value="", debug=False):
-    """
-    Returns a basecode for the specified path. A value can be added in the hash.
-    The path is traditionally the URI of the RDF concept, which is the only info shared by both the data file and the ontology file.
-    This basecode is used to join the ontology table (storing the concept and modifier paths) and the observations.
-
-    A basecode is invisible to the user, and its only constraints is to be unique regarding the concept it is describing,
-    and to be computable both from the ontology side and from the data loader side.
-    The resulting code is the joining key between data tables and ontology tables.
-    """
-    if len(value) > 0 and value[0] == "\\":
-        value = value[1:]
-    if path[-1] != "\\":
-        path = path + "\\"
-    tohash = path + value
-    return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
 
 
 def format_vsetdescr(vname):
@@ -222,25 +320,6 @@ def list_all_classes_uri(g):
     return [row[0] for row in res]
 
 
-def list_modifiers(mainclass):
-    """
-    Returns a list of all the entities (as resources) that reference the class passed as parameter, as value for their rdfs:domain predicate.
-    """
-
-    def target_shortname(resource):
-        # Extracts the suffix of the RDFS.range object for this resource
-        rnge = resource.value(RDFS.range)
-        return resource.graph.namespace_manager.normalizeUri(rnge.identifier)
-
-    # Extract all resources referencing this class as their domain
-    res = mainclass.subjects(RDFS.domain)
-    
-    modifiers = [el[0]
-        for el in res
-        if target_shortname(el[0]) not in CONCEPT_BLACKLIST
-        and rname(el[0], mainclass.graph) not in CONCEPT_BLACKLIST
-    ]
-    return modifiers
 
 
 def sort_by_concept(datagraph, onto_g):

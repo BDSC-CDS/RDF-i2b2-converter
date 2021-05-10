@@ -32,7 +32,7 @@ def gather_onto_lines(entryconcepts):
     )
     buffer = []
     for entry in entryconcepts:
-        modifiers = filter_obsfact(list_modifiers(entry))
+        modifiers = entry.extract_ontology_properties()
         # Add the concept line to the DB and retrieve the concept path (to reuse for each modifier
         lines = line_concept(entry)
         # Only add the concept to the db. Macro concept are stored in a buffer, will be sorted so there are no duplicates.
