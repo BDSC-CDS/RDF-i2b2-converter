@@ -50,15 +50,18 @@ DEACTIVATE_VALUESET = format_global(to_filter=DEACTIVATE_VALUESET_TOSORT)
 EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+CONCEPT_BLACKLIST+OBSERVATION_INFO))
 
 class Component:
+    """
+    Component is a wrapper for the rdflib.Resource class.
+    """
     def __init__(self, resource):
         self.resource = resource
-        self.label = resource.label().toPython()
+        self.label = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE).toPython()
         self.comment = resource.value(RDFS.comment)
-        self.parent = resource.value(RDFS.subClassOf) if self.resource.value(RDF.type) == OWL.Class else resource.value(RDFS.subPropertyOf)
-    self.path = None
-    self.parent = None
+        self.parent = resource.value(self.parent_predicate)
+        self.path = rname(resource.identifier, resource.graph)
 
 class Concept(Component):
+    self.parent_predicate = RDFS.subClassOf
     def list_properties(self):
         """
         Returns a list of all the entities (as resources) that reference the class passed as parameter, as value for their rdfs:domain predicate.
@@ -82,10 +85,9 @@ class Concept(Component):
         return self.filter_obsfact()
 
 class Property(Component):    
-    pass
+    self.parent_predicate = RDFS.subPropertyOf
 
-class I2B2Component(Component):
-    
+class I2B2Component:
     def reduce_basecode(self, value, debug=False, cap=MAX_BASECODE_LEN):
         """
         Returns a basecode for self. A value can be added in the hash.
@@ -94,9 +96,10 @@ class I2B2Component(Component):
         and to be computable both from the ontology side and from the data loader side.
         The resulting code is the joining key between data tables and ontology tables.
         """
+        rdf_uri = self.resource.identifier
         if len(value) > 0 and value[0] == "\\":
             value = value[1:]
-        if self.rdf_uri[-1] != "\\":
+        if rdf_uri[-1] != "\\":
             tmp_uri = self.rdf_uri + "\\"
         tohash = tmp_uri + value
         return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
@@ -145,7 +148,9 @@ class I2B2Component(Component):
         )
         return line
 
-class I2B2Concept(Concept, I2B2Component):
+class I2B2Concept(I2B2Component):
+    def __init__(self, resource):
+        self.concept = Concept(resource)
 
     def get_info (self):
         info = super().get_info()
@@ -165,13 +170,15 @@ class I2B2Concept(Concept, I2B2Component):
         In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
         """
         modifiers = []
-        for attr in self.list_properties():
+        for attr in self.concept.list_properties():
             if attr.identifier not in toignore:
                 modifiers.append(I2B2Modifier(attr))
         return modifiers
     
 
-class I2B2Modifier(Property, I2B2Component):
+class I2B2Modifier(I2B2Component):
+    def __init__(self, resource):
+        self.property = Property(resource)
     self.applied_concept = None
     self.basecode = None
     
