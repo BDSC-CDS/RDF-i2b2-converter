@@ -15,7 +15,7 @@ with open("files/ontology_config") as ff:
     category = ff.readline()
     while category:
         if "ONTOLOGY_GRAPH_LOCATION" in category:
-            ONTOLOGY_GRAPH = json.loads(ff.readline())
+            ONTOLOGY_GRAPH_LOCATION = json.loads(ff.readline())
         elif "ONTOLOGY_NAME" in category:
             ONTOLOGY_NAME = json.loads(ff.readline())
         elif "ABSTRACT" in category:

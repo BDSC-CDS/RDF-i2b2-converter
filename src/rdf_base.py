@@ -55,60 +55,81 @@ class Component:
     """
     def __init__(self, resource):
         self.resource = resource
-        self.label = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE).toPython()
-        self.comment = resource.value(RDFS.comment)
-        self.parent = resource.value(self.parent_predicate)
-        self.path = rname(resource.identifier, resource.graph)
+        self.label = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE)[0].toPython() or resource.graph.label(resource.identifier).toPython()
+        self.parent = None
+        self.shortname = resource.rname(resource.identifier, resource.graph)
 
 class Concept(Component):
-    self.parent_predicate = RDFS.subClassOf
-    def list_properties(self):
-        """
-        Returns a list of all the entities (as resources) that reference the class passed as parameter, as value for their rdfs:domain predicate.
-        """
-        def target_shortname(self):
-            # Extracts the suffix of the RDFS.range object for this resource
-            rnge = self.resource.value(RDFS.range)
-            return self.resource.graph.namespace_manager.normalizeUri(rnge.identifier)
-
-        # Extract all resources referencing this class as their domain
-        res = self.resource.subjects(RDFS.domain)
-        modifiers = [el[0]
-            for el in res
-            if target_shortname(el[0]) not in CONCEPT_BLACKLIST
-            and rname(el[0], self.resource.graph) not in CONCEPT_BLACKLIST
-        ]
-        return modifiers
-
     def extract_ontology_properties(self):
         # filter_obsfact is implemented in the subclasses
         return self.filter_obsfact()
 
 class Property(Component):    
-    self.parent_predicate = RDFS.subPropertyOf
 
-class I2B2Component:
-    def reduce_basecode(self, value, debug=False, cap=MAX_BASECODE_LEN):
+    def list_children(self):
         """
-        Returns a basecode for self. A value can be added in the hash.
-        The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
-        A basecode is invisible to the user, and its only constraints is to be unique regarding the concept it is describing,
-        and to be computable both from the ontology side and from the data loader side.
-        The resulting code is the joining key between data tables and ontology tables.
+        Returns a list of all entities (as resources)
         """
-        rdf_uri = self.resource.identifier
-        if len(value) > 0 and value[0] == "\\":
-            value = value[1:]
-        if rdf_uri[-1] != "\\":
-            tmp_uri = self.rdf_uri + "\\"
-        tohash = tmp_uri + value
-        return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
+        
+
+class OntologyDepthExplorer:
+    """
+    Constructed by a Concept. Fetch the subgraph spanned from this concept.
+    """
+    def __init__(self, concept):
+        self.concept = concept
+    
+    def explore_subgraph(self):
+        predicates = self.list_properties()
+        subgraph = []
+        for predicate, target_class in predicates:
+            subgraph.append(predicate)
+            subgraph.extend(target_class.)
+
+    def list_properties(self):
+        """
+        Extract the (predicate, object TYPE) couples for all non-blacklisted predicates of a resource.
+        """
+        def shortname(resource):
+            # Allows to write blacklisted elements such as "owl:UselessDetail" in the config file
+            return resource.graph.namespace_manager.normalizeUri(resource.identifier)
+
+        def isvalid(res_list):
+            # Check neither the predicate or the pointed object type are to be ignored
+            return all([shortname(item) not in CONCEPT_BLACKLIST for item in res_list])
+
+        # Extract all resources referencing this class as their domain
+        predicates = self.component.resource.subjects(RDFS.domain)
+        predicates_clean = []
+        for el in predicates :
+            rnge_type = el.value(RDFS.range)
+            if isvalid([el, rnge_type]):
+                predicates_clean.append((Property(el[0]), Concept(rnge_type)))
+        return predicates_clean
+
+
+class OntologyPathResolver:
+
+    def compute_path(self):
+        parent_path = self.component.parent.path_resolver.extract_path()
+        self.path = parent_path + "\\" + self.component.shortname
+
+    def extract_path(self):
+        if self.path == "":
+            self.compute_path()
+        return self.path
+
+class I2B2OntologyElement:
+    self.basecode_handler = None
+
+    def set_level(self):
+        self.level = self.c_path.count("\\")
 
     def single_line(self):
         return  {
             "c_hlevel": str(self.level),
             "c_fullname": self.c_path,
-            "c_name": self.c_name,
+            "c_name": self.label,
             "c_synonym_cd": "N",
             "c_basecode": self.basecode,
             "c_comment": self.comment,
@@ -148,7 +169,7 @@ class I2B2Component:
         )
         return line
 
-class I2B2Concept(I2B2Component):
+class I2B2Concept(I2B2OntologyElement):
     def __init__(self, resource):
         self.concept = Concept(resource)
 
@@ -172,15 +193,49 @@ class I2B2Concept(I2B2Component):
         modifiers = []
         for attr in self.concept.list_properties():
             if attr.identifier not in toignore:
-                modifiers.append(I2B2Modifier(attr))
+                modifiers.append(I2B2Modifier(attr, self))
         return modifiers
     
+class BasecodeHandler():
+    """
+    Compute and extract the basecode for a Class or a Property existing in the ontology. 
+    If a value is specified, it will be included in the basecode computation.
+    If the initializing component has a parent component with an existing basecode, it will also be included in the basecode computation.
+    """
+    def __init__(self, component, value=None):
+        self.value = value
+        self.core = component.resource.identifier
+        self.prefix = component.parent.basecode
+        
+    def extract_basecode(self):
+        if self.basecode is not None:
+            return self.basecode
+        return self.reduce_basecode()
+
+    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LEN):
+        """
+        Returns a basecode for self.component. A prefix and a value can be added in the hash.
+        The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
+        A basecode is invisible to the user, and its only constraints is to be unique regarding the concept it is describing,
+        and to be computable both from the ontology side and from the data loader side.
+        The resulting code is the joining key between data tables and ontology tables.
+        """
+        rdf_uri = self.core
+        value = self.value
+        prefix = self.prefix
+        if len(value) > 0 and value[0] == "\\":
+            value = value[1:]
+        if rdf_uri[-1] != "\\":
+            tmp_uri = rdf_uri + "\\"
+        tohash = tmp_uri + value
+        return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
 
 class I2B2Modifier(I2B2Component):
-    def __init__(self, resource):
+    def __init__(self, resource, i2b2concept, parent):
         self.property = Property(resource)
-    self.applied_concept = None
-    self.basecode = None
+        self.applied_concept = i2b2concept
+        self.parent = parent
+        self.basecode = self.reduce_basecode(prefix=parent.basecode)
     
 def setup():
     """
@@ -188,6 +243,8 @@ def setup():
     Extract the instantiable Concepts ; a Concept is a RDF element of type owl:Class, NOT specified as "abstract" by the ABSTRACT_CLASSES macro.
     It reflects the elements in the hierarchy that are instantiable on their own (compared to properties, never instantiated alone)
     """
+    def isvalid(uri):
+        return not any([upper_uri in EXCLUDED_COMPONENT )
     g = rdflib.Graph()
     g.parse(ONTOLOGY_GRAPH, format=RDF_FORMAT)
     classes_uris = list_all_classes_uri(g)
