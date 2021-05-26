@@ -21,7 +21,6 @@ def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
 
-
 def format_global(ontograph=ONTOLOGY_GRAPH, to_filter=[]):
     """
     Utility functions allowing to use substrings in the CONCEPT_BLACKLIST definition instead of correct resource names.
@@ -80,16 +79,17 @@ class OntologyDepthExplorer:
         self.concept = concept
     
     def explore_subgraph(self):
-        predicates = self.list_properties()
+        predicates = self.filter_properties(self.list_unique_properties())
         subgraph = []
         for predicate, target_class in predicates:
             subgraph.append(predicate)
             subgraph.extend(target_class.)
 
-    def list_properties(self):
+    def filter_properties(self, predicates):
         """
-        Extract the (predicate, object TYPE) couples for all non-blacklisted predicates of a resource.
+        Discard all blacklisted predicates.
         """
+
         def shortname(resource):
             # Allows to write blacklisted elements such as "owl:UselessDetail" in the config file
             return resource.graph.namespace_manager.normalizeUri(resource.identifier)
@@ -97,15 +97,34 @@ class OntologyDepthExplorer:
         def isvalid(res_list):
             # Check neither the predicate or the pointed object type are to be ignored
             return all([shortname(item) not in CONCEPT_BLACKLIST for item in res_list])
+            predicates_clean = []
 
-        # Extract all resources referencing this class as their domain
-        predicates = self.component.resource.subjects(RDFS.domain)
-        predicates_clean = []
         for el in predicates :
             rnge_type = el.value(RDFS.range)
             if isvalid([el, rnge_type]):
                 predicates_clean.append((Property(el[0]), Concept(rnge_type)))
         return predicates_clean
+
+    def list_unique_properties(self):
+        """
+        Extract the (predicate, object TYPE) couples for predicates of a resource.
+        Extracts only finest properties, which means if two properties are related (hierarchy), only the most specific is kept.
+        """
+        self_res = self.component.resource
+        response = self_res.graph.query("""
+            SELECT ?p 
+            WHERE {
+                ?p rdfs:domain ?self .
+                FILTER NOT EXISTS {
+                    ?child rdfs:domain ?self .
+                    ?p rdfs:subPropertyOf+ ?child 
+                }
+            }
+        """, initBindings={"self":self_res.identifier})
+
+        # Extract all resources referencing this class as their domain
+        return [self_res.graph.resource(row[0]) for row in response]
+        
 
 
 class OntologyPathResolver:

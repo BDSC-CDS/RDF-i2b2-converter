@@ -1,0 +1,4 @@
+{   #TODO fix so classes/predicates consistent
+    "ENCOUNTER_NUM":":AdministrativeCase",
+    "start_date": "has_datetime"
+}
