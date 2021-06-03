@@ -56,6 +56,7 @@ class Component:
         self.resource = resource
         self.label = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE)[0].toPython() or resource.graph.label(resource.identifier).toPython()
         self.parent = None
+        self.children = []
         self.shortname = resource.rname(resource.identifier, resource.graph)
 
 class Concept(Component):
@@ -63,12 +64,41 @@ class Concept(Component):
         # filter_obsfact is implemented in the subclasses
         return self.filter_obsfact()
 
-class Property(Component):    
+        """SELECT ?classname (group_concat(distinct ?property;separator=",") as ?properties)
+        WHERE {
+            {
+            OPTIONAL{?property rdfs:domain ?someunion .
+            ?someunion owl:unionOf/rdf:rest*/rdf:first ?classname . 
+            }
+            } UNION {
+                OPTIONAL{?property rdfs:domain ?classname .}
+                }
+            FILTER(STRSTARTS(STR(?classname), "https://biomedit.ch/rdf/sphn-ontology/sphn"))
+        }
+        GROUP BY ?classname
 
+        """
+
+class Property(Component):    
     def list_children(self):
         """
         Returns a list of all entities (as resources)
         """
+        pass
+
+    def extract_range_type(self):
+        # Return the range type of the property, expanding the bnode if any
+        response = self.resource.graph.query("""
+        SELECT DISTINCT ?class 
+        where {
+            ?self rdfs:range ?class .
+            optional {
+                ?self rdfs:range [ a owl:Class ;
+                                    owl:unionOf [ rdf:rest*/rdf:first ?class ]
+                ]
+            }
+        }
+        """)
         
 
 class OntologyDepthExplorer:
@@ -78,12 +108,13 @@ class OntologyDepthExplorer:
     def __init__(self, concept):
         self.concept = concept
     
-    def explore_subgraph(self):
+    def explore_subgraph(self, entrypoint=self.concept):
         predicates = self.filter_properties(self.list_unique_properties())
         subgraph = []
         for predicate, target_class in predicates:
-            subgraph.append(predicate)
-            subgraph.extend(target_class.)
+            subgraph.append(Property(predicate))
+            subgraph.extend(self.explore_subgraph(entrypoint=Concept(target_class)))
+        return subgraph
 
     def filter_properties(self, predicates):
         """
@@ -97,12 +128,16 @@ class OntologyDepthExplorer:
         def isvalid(res_list):
             # Check neither the predicate or the pointed object type are to be ignored
             return all([shortname(item) not in CONCEPT_BLACKLIST for item in res_list])
-            predicates_clean = []
 
+        def extract_range_type(predicate):
+            # This is untrivial if the rdfs.range predicate points to a list (unionOf, oneOf)
+            rnge = [predicate.value(RDFS.range)]
+
+        predicates_clean = []
         for el in predicates :
-            rnge_type = el.value(RDFS.range)
-            if isvalid([el, rnge_type]):
-                predicates_clean.append((Property(el[0]), Concept(rnge_type)))
+            rnge_type = extract_range_type(predicate)
+            if isvalid([el] + rnge_type):
+                predicates_clean.append((el, rnge_type))
         return predicates_clean
 
     def list_unique_properties(self):
@@ -125,7 +160,11 @@ class OntologyDepthExplorer:
         # Extract all resources referencing this class as their domain
         return [self_res.graph.resource(row[0]) for row in response]
         
-
+    def solve_leaves(self, property):
+        """
+        Explore the valueset. It can be in a Bnode to unpack (owl:unionOf if the item is a class, )
+        """
+        pass
 
 class OntologyPathResolver:
 
@@ -262,8 +301,6 @@ def setup():
     Extract the instantiable Concepts ; a Concept is a RDF element of type owl:Class, NOT specified as "abstract" by the ABSTRACT_CLASSES macro.
     It reflects the elements in the hierarchy that are instantiable on their own (compared to properties, never instantiated alone)
     """
-    def isvalid(uri):
-        return not any([upper_uri in EXCLUDED_COMPONENT )
     g = rdflib.Graph()
     g.parse(ONTOLOGY_GRAPH, format=RDF_FORMAT)
     classes_uris = list_all_classes_uri(g)
@@ -389,16 +426,17 @@ def remove_prefix(modifier_rsc):
 
 def list_all_classes_uri(g):
     """
-    Return the list of all the owl:Class-typed elements, as URIs.
+    Return the list of all the owl:Class-typed elements descending from the root concept, as URIs.
     """
     res = g.query(
         """
             SELECT ?s
             WHERE {
-                    ?s rdf:type owl:Class
+                    ?s rdf:type owl:Class .
+                    ?s rdfs:subClassOf+ ?root
             }
             ORDER by ?s
-            """
+            """, initBindings=ROOT_URI
     )
     return [row[0] for row in res]
 
