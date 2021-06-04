@@ -64,20 +64,6 @@ class Concept(Component):
         # filter_obsfact is implemented in the subclasses
         return self.filter_obsfact()
 
-        """SELECT ?classname (group_concat(distinct ?property;separator=",") as ?properties)
-        WHERE {
-            {
-            OPTIONAL{?property rdfs:domain ?someunion .
-            ?someunion owl:unionOf/rdf:rest*/rdf:first ?classname . 
-            }
-            } UNION {
-                OPTIONAL{?property rdfs:domain ?classname .}
-                }
-            FILTER(STRSTARTS(STR(?classname), "https://biomedit.ch/rdf/sphn-ontology/sphn"))
-        }
-        GROUP BY ?classname
-
-        """
 
 class Property(Component):    
     def list_children(self):
@@ -87,7 +73,7 @@ class Property(Component):
         pass
 
     def extract_range_type(self):
-        # Return the range type of the property, expanding the bnode if any
+        # Return the range type of the property, expanding the bnode if any. 
         response = self.resource.graph.query("""
         SELECT DISTINCT ?class 
         where {
@@ -98,8 +84,8 @@ class Property(Component):
                 ]
             }
         }
-        """)
-        
+        """, initBindings={"self":self.resource.identifier})
+        return [row[0] for row in response]
 
 class OntologyDepthExplorer:
     """
@@ -107,37 +93,48 @@ class OntologyDepthExplorer:
     """
     def __init__(self, concept):
         self.concept = concept
+        self.next_level = []
     
-    def explore_subgraph(self, entrypoint=self.concept):
+    def explore_subclasses(self):
+        """
+        Fetch the direct subclasses of the concept.
+        """
+        subs = self.concept.resource.subject(RDFS.subClassOf)
+        return [Concept(sub) for sub in subs]
+
+    def explore_properties(self, entrypoint=self.concept):
+        """
+        Fetch the properties 
+        """
         predicates = self.filter_properties(self.list_unique_properties())
-        subgraph = []
-        for predicate, target_class in predicates:
-            subgraph.append(Property(predicate))
-            subgraph.extend(self.explore_subgraph(entrypoint=Concept(target_class)))
+        subgraph = {}
+        # Each predicate goes in pair with a list of its range classes
+        for predicate, ranges_list in predicates:
+            rnge_subs = self.explore_subgraph(entrypoint=Concept(target_class))
+            subgraph.update({Property(predicate):rnge_subs}) # TODO change here
         return subgraph
 
     def filter_properties(self, predicates):
         """
         Discard all blacklisted predicates.
         """
-
         def shortname(resource):
             # Allows to write blacklisted elements such as "owl:UselessDetail" in the config file
             return resource.graph.namespace_manager.normalizeUri(resource.identifier)
 
-        def isvalid(res_list):
-            # Check neither the predicate or the pointed object type are to be ignored
-            return all([shortname(item) not in CONCEPT_BLACKLIST for item in res_list])
-
-        def extract_range_type(predicate):
-            # This is untrivial if the rdfs.range predicate points to a list (unionOf, oneOf)
-            rnge = [predicate.value(RDFS.range)]
+        def filter_valid(res_list):
+            # Discards elements referenced in the blacklist, proceed with the other
+            filtered = [item for item in res_list if shortname(item) not in CONCEPT_BLACKLIST]
+            return filtered
 
         predicates_clean = []
         for el in predicates :
-            rnge_type = extract_range_type(predicate)
-            if isvalid([el] + rnge_type):
-                predicates_clean.append((el, rnge_type))
+            rnge_type = predicate.extract_range_type()
+            # If the predicate is not blacklisted and has at least one non-blacklisted range, add it 
+            if filter_valid([el])==[el]: 
+                rnges = filter_valid(rnge_type)
+                if len(rnges)>0:
+                    predicates_clean.append((el, rnges)
         return predicates_clean
 
     def list_unique_properties(self):
