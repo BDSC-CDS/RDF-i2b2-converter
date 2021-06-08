@@ -55,17 +55,29 @@ class Component:
     def __init__(self, resource):
         self.resource = resource
         self.label = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE)[0].toPython() or resource.graph.label(resource.identifier).toPython()
-        self.parent = None
-        self.children = []
         self.shortname = resource.rname(resource.identifier, resource.graph)
 
 class Concept(Component):
+    def __init__(self, resource):
+        super().__init__(resource)
+        self.subconcepts = []
+        self.properties = []
     def extract_ontology_properties(self):
         # filter_obsfact is implemented in the subclasses
         return self.filter_obsfact()
 
+    def explore_children(self):
+        resolver = OntologyDepthExplorer(self)
+        self.subconcepts.extend(resolver.explore_subclasses())
+        self.properties.extend(resolver.explore_properties())
+
+
 
 class Property(Component):    
+    def __init__(self, resource):
+        super().__init__(resource)
+        self.concept = None # TODO is this useful?
+
     def list_children(self):
         """
         Returns a list of all entities (as resources)
@@ -87,34 +99,14 @@ class Property(Component):
         """, initBindings={"self":self.resource.identifier})
         return [row[0] for row in response]
 
-class OntologyDepthExplorer:
+class PropertyFilter:
     """
-    Constructed by a Concept. Fetch the subgraph spanned from this concept.
+    Handle the property extraction for a concept.
     """
     def __init__(self, concept):
         self.concept = concept
-        self.next_level = []
-    
-    def explore_subclasses(self):
-        """
-        Fetch the direct subclasses of the concept.
-        """
-        subs = self.concept.resource.subject(RDFS.subClassOf)
-        return [Concept(sub) for sub in subs]
 
-    def explore_properties(self, entrypoint=self.concept):
-        """
-        Fetch the properties 
-        """
-        predicates = self.filter_properties(self.list_unique_properties())
-        subgraph = {}
-        # Each predicate goes in pair with a list of its range classes
-        for predicate, ranges_list in predicates:
-            rnge_subs = self.explore_subgraph(entrypoint=Concept(target_class))
-            subgraph.update({Property(predicate):rnge_subs}) # TODO change here
-        return subgraph
-
-    def filter_properties(self, predicates):
+    def filter_properties(self):
         """
         Discard all blacklisted predicates.
         """
@@ -127,6 +119,7 @@ class OntologyDepthExplorer:
             filtered = [item for item in res_list if shortname(item) not in CONCEPT_BLACKLIST]
             return filtered
 
+        predicates = self.list_unique_properties()
         predicates_clean = []
         for el in predicates :
             rnge_type = predicate.extract_range_type()
@@ -134,7 +127,7 @@ class OntologyDepthExplorer:
             if filter_valid([el])==[el]: 
                 rnges = filter_valid(rnge_type)
                 if len(rnges)>0:
-                    predicates_clean.append((el, rnges)
+                    predicates_clean.append((el, rnges))
         return predicates_clean
 
     def list_unique_properties(self):
@@ -156,14 +149,38 @@ class OntologyDepthExplorer:
 
         # Extract all resources referencing this class as their domain
         return [self_res.graph.resource(row[0]) for row in response]
-        
-    def solve_leaves(self, property):
-        """
-        Explore the valueset. It can be in a Bnode to unpack (owl:unionOf if the item is a class, )
-        """
-        pass
 
-class OntologyPathResolver:
+class OntologyDepthExplorer:
+    """
+    Constructed by a Concept. Fetch the subgraph spanned from this concept.
+    All searches are done recursively, fetching only the first level of children and creating an other OntologyDepthExplorer object for 
+    """
+    def __init__(self, concept):
+        self.concept = concept
+        self.filter = PropertyFilter(concept)
+    
+    def explore_subclasses(self):
+        """
+        Fetch the direct subclasses of the concept.
+        """
+        subs = self.concept.resource.subject(RDFS.subClassOf)
+        return [Concept(sub) for sub in subs if sub not in CONCEPT_BLACKLIST]
+
+    def explore_properties(self, entrypoint=self.concept):
+        """
+        Fetch the properties 
+        """
+        predicates = self.filter.filter_properties()
+        subgraph = {}
+        # Each predicate goes in pair with a list of its range classes
+        for predicate, ranges_list in predicates:
+            rnge_subs = self.explore_subgraph(entrypoint=Concept(target_class))
+            subgraph.update({Property(predicate):rnge_subs}) # TODO change here
+        return subgraph
+
+class I2b2PathResolver:
+    def __init__(self, component):
+        self.component = component
 
     def compute_path(self):
         parent_path = self.component.parent.path_resolver.extract_path()
@@ -175,8 +192,6 @@ class OntologyPathResolver:
         return self.path
 
 class I2B2OntologyElement:
-    self.basecode_handler = None
-
     def set_level(self):
         self.level = self.c_path.count("\\")
 
@@ -225,8 +240,11 @@ class I2B2OntologyElement:
         return line
 
 class I2B2Concept(I2B2OntologyElement):
-    def __init__(self, resource):
+    def __init__(self, resource, parent = None):
         self.concept = Concept(resource)
+        self.basecodehdler = BasecodeHandler(self.concept)
+        self.path_handler = I2b2PathResolver(self.concept)
+        self.parent = parent
 
     def get_info (self):
         info = super().get_info()
@@ -286,8 +304,10 @@ class BasecodeHandler():
         return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
 
 class I2B2Modifier(I2B2Component):
-    def __init__(self, resource, i2b2concept, parent):
+    def __init__(self, resource, i2b2concept, parent=None):
         self.property = Property(resource)
+        self.basecodehdler = BasecodeHandler(self.concept)
+        self.path_handler = I2b2PathResolver(self.concept)
         self.applied_concept = i2b2concept
         self.parent = parent
         self.basecode = self.reduce_basecode(prefix=parent.basecode)
