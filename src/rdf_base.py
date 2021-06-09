@@ -1,6 +1,7 @@
-from utils import *
-from classes import *
-import rdflib, hashlib
+import rdflib
+import hashlib
+import json
+import pdb
 
 """
 This file features RDF functions used by both the ontology builder and the data loader, but also other utility functions that do not fit 
@@ -16,12 +17,25 @@ OWL = rdflib.Namespace("http://www.w3.org/2002/07/owl#")
 XSD = rdflib.Namespace("http://www.w3.org/2001/XMLSchema#")
 RESOURCE = rdflib.Namespace("http://sphn.ch/rdf/resource/")
 
+with open("files/ontology_config.json") as ff:
+    config = json.load(ff) 
+for key, val in config["parameters"].items():
+    globals()[key] = val
+for key, val in config["uris"].items():
+    globals()[key] = val
+
+with open("files/i2b2_rdf_mapping.json") as ff:
+    config = json.load(ff) 
+for key, val in config.items():
+    globals()[key] = val
+
+
 
 def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
 
-def format_global(ontograph=ONTOLOGY_GRAPH, to_filter=[]):
+def format_global(ontograph=ONTOLOGY_GRAPH_LOCATION, to_filter=[]):
     """
     Utility functions allowing to use substrings in the CONCEPT_BLACKLIST definition instead of correct resource names.
     Overwrite the CONCEPT_BLACKLIST by finding the matching (shortened) URIs.
@@ -43,10 +57,10 @@ def format_global(ontograph=ONTOLOGY_GRAPH, to_filter=[]):
                 forbidden.append(rname(subject[0], graph))
     return forbidden
 
-
+""" 
 CONCEPT_BLACKLIST = format_global(to_filter=CONCEPT_BLACKLIST_TOSORT)
 DEACTIVATE_VALUESET = format_global(to_filter=DEACTIVATE_VALUESET_TOSORT)
-EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+CONCEPT_BLACKLIST+OBSERVATION_INFO))
+EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+CONCEPT_BLACKLIST+OBSERVATION_INFO)) """
 
 class Component:
     """
@@ -54,22 +68,32 @@ class Component:
     """
     def __init__(self, resource):
         self.resource = resource
-        self.label = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE)[0].toPython() or resource.graph.label(resource.identifier).toPython()
-        self.shortname = resource.rname(resource.identifier, resource.graph)
+        self.shortname = rname(resource.identifier, resource.graph)
+        labels = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE)
+        if len(labels)==0: 
+            self.label = resource.graph.label(resource.identifier).toPython()
+        else:
+            self.label = labels[0].toPython() 
 
 class Concept(Component):
     def __init__(self, resource):
         super().__init__(resource)
         self.subconcepts = []
         self.properties = []
+
     def extract_ontology_properties(self):
-        # filter_obsfact is implemented in the subclasses
         return self.filter_obsfact()
 
     def explore_children(self):
         resolver = OntologyDepthExplorer(self)
         self.subconcepts.extend(resolver.explore_subclasses())
         self.properties.extend(resolver.explore_properties())
+
+        # Trigger recursive call on first-level children
+        for subc in self.subconcepts:
+            subc.explore_children()
+        for predicate, rnge in self.properties:
+            rnge.explore_children()
 
 
 
@@ -120,22 +144,23 @@ class PropertyFilter:
             return filtered
 
         predicates = self.list_unique_properties()
-        predicates_clean = []
+        properties_clean = []
+        # Loop over Properties
         for el in predicates :
-            rnge_type = predicate.extract_range_type()
+            rnge_type = el.extract_range_type()
             # If the predicate is not blacklisted and has at least one non-blacklisted range, add it 
-            if filter_valid([el])==[el]: 
+            if filter_valid([el.resource])==[el.resource]: 
                 rnges = filter_valid(rnge_type)
                 if len(rnges)>0:
-                    predicates_clean.append((el, rnges))
-        return predicates_clean
+                    properties_clean.append((el, rnges))
+        return properties_clean
 
     def list_unique_properties(self):
         """
         Extract the (predicate, object TYPE) couples for predicates of a resource.
         Extracts only finest properties, which means if two properties are related (hierarchy), only the most specific is kept.
         """
-        self_res = self.component.resource
+        self_res = self.concept.resource
         response = self_res.graph.query("""
             SELECT ?p 
             WHERE {
@@ -148,7 +173,7 @@ class PropertyFilter:
         """, initBindings={"self":self_res.identifier})
 
         # Extract all resources referencing this class as their domain
-        return [self_res.graph.resource(row[0]) for row in response]
+        return [Property(self_res.graph.resource(row[0])) for row in response]
 
 class OntologyDepthExplorer:
     """
@@ -163,22 +188,24 @@ class OntologyDepthExplorer:
         """
         Fetch the direct subclasses of the concept.
         """
-        subs = self.concept.resource.subject(RDFS.subClassOf)
+        subs = self.concept.resource.subjects(RDFS.subClassOf)
         return [Concept(sub) for sub in subs if sub not in CONCEPT_BLACKLIST]
 
-    def explore_properties(self, entrypoint=self.concept):
+    def explore_properties(self, entrypoint=None):
         """
         Fetch the properties 
         """
-        predicates = self.filter.filter_properties()
+        if entrypoint is None:
+            entrypoint = self.concept
+        properties = self.filter.filter_properties()
         subgraph = {}
         # Each predicate goes in pair with a list of its range classes
-        for predicate, ranges_list in predicates:
+        for prop, ranges_list in properties: #TODO change this block
             rnge_subs = self.explore_subgraph(entrypoint=Concept(target_class))
-            subgraph.update({Property(predicate):rnge_subs}) # TODO change here
+            subgraph.update({Property(predicate):rnge_subs})
         return subgraph
 
-class I2b2PathResolver:
+class I2B2PathResolver:
     def __init__(self, component):
         self.component = component
 
@@ -243,8 +270,14 @@ class I2B2Concept(I2B2OntologyElement):
     def __init__(self, resource, parent = None):
         self.concept = Concept(resource)
         self.basecodehdler = BasecodeHandler(self.concept)
-        self.path_handler = I2b2PathResolver(self.concept)
+        self.path_handler = I2B2PathResolver(self.concept)
         self.parent = parent
+
+    def get_concept_details(self):
+        pass
+
+    def get_lines(self):
+        pass
 
     def get_info (self):
         info = super().get_info()
@@ -266,7 +299,7 @@ class I2B2Concept(I2B2OntologyElement):
         modifiers = []
         for attr in self.concept.list_properties():
             if attr.identifier not in toignore:
-                modifiers.append(I2B2Modifier(attr, self))
+                modifiers.append(I2B2Modifier(attr, self)) #todo change this, weird af
         return modifiers
     
 class BasecodeHandler():
@@ -285,7 +318,7 @@ class BasecodeHandler():
             return self.basecode
         return self.reduce_basecode()
 
-    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LEN):
+    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LENGTH):
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
         The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
@@ -303,11 +336,11 @@ class BasecodeHandler():
         tohash = tmp_uri + value
         return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
 
-class I2B2Modifier(I2B2Component):
+class I2B2Modifier(I2B2OntologyElement):
     def __init__(self, resource, i2b2concept, parent=None):
         self.property = Property(resource)
         self.basecodehdler = BasecodeHandler(self.concept)
-        self.path_handler = I2b2PathResolver(self.concept)
+        self.path_handler = I2B2PathResolver(self.concept)
         self.applied_concept = i2b2concept
         self.parent = parent
         self.basecode = self.reduce_basecode(prefix=parent.basecode)
@@ -319,13 +352,16 @@ def setup():
     It reflects the elements in the hierarchy that are instantiable on their own (compared to properties, never instantiated alone)
     """
     g = rdflib.Graph()
-    g.parse(ONTOLOGY_GRAPH, format=RDF_FORMAT)
+    g.parse(ONTOLOGY_GRAPH_LOCATION, format=RDF_FORMAT)
     classes_uris = list_all_classes_uri(g)
     primaries = [I2B2Concept(g.resource(k)) for k in classes_uris if k not in EXCLUDED_COMPONENT]
-    return primaries
+    db_lines = []
+    for element in primaries:
+        db_lines.append(element.get_lines())
+    return db_lines
 
 
-def unify_graph(graphs=DATA_GRAPHS):
+def unify_graph(graphs=DATA_GRAPHS_LOCATION):
     g = rdflib.Graph()
     for target in graphs:
         try:
@@ -346,7 +382,7 @@ def classname_to_resource(classname, classdict):
 
 
 
-def disc_valuesets(graph=ONTOLOGY_GRAPH):
+def disc_valuesets(graph=ONTOLOGY_GRAPH_LOCATION):
     """
     Extract a list of elements in the ontology graph that reference a specific valueset.
     This is needed because at the data loading, free text values are not stored and queried in the same fashion than elements of a known finite set.
@@ -453,7 +489,7 @@ def list_all_classes_uri(g):
                     ?s rdfs:subClassOf+ ?root
             }
             ORDER by ?s
-            """, initBindings=ROOT_URI
+            """, initBindings={"root":ROOT_URI}
     )
     return [row[0] for row in res]
 

@@ -1,4 +1,7 @@
-{   #TODO fix so classes/predicates consistent
-    "ENCOUNTER_NUM":":AdministrativeCase",
-    "start_date": "has_datetime"
+{
+    "ENCOUNTER_NUM":"https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
+    "start_date": "has_datetime",
+    "MAX_BASECODE_LENGTH": 50,
+    "START_SEARCH_INDEX": 95000,
+    "DEFAULT_DATE": 730000
 }
