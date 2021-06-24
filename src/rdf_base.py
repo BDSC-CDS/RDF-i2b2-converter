@@ -37,8 +37,8 @@ def rname(uri, graph):
 
 def format_global(ontograph=ONTOLOGY_GRAPH_LOCATION, to_filter=[]):
     """
-    Utility functions allowing to use substrings in the CONCEPT_BLACKLIST definition instead of correct resource names.
-    Overwrite the CONCEPT_BLACKLIST by finding the matching (shortened) URIs.
+    Utility functions allowing to use substrings in the BLACKLIST definition instead of correct resource names.
+    Overwrite the BLACKLIST by finding the matching (shortened) URIs.
     """
     graph = rdflib.Graph()
     graph.parse(ontograph, format="turtle")
@@ -58,9 +58,9 @@ def format_global(ontograph=ONTOLOGY_GRAPH_LOCATION, to_filter=[]):
     return forbidden
 
 """ 
-CONCEPT_BLACKLIST = format_global(to_filter=CONCEPT_BLACKLIST_TOSORT)
+BLACKLIST = format_global(to_filter=BLACKLIST_TOSORT)
 DEACTIVATE_VALUESET = format_global(to_filter=DEACTIVATE_VALUESET_TOSORT)
-EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+CONCEPT_BLACKLIST+OBSERVATION_INFO)) """
+EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+BLACKLIST+OBSERVATION_INFO)) """
 
 class Component:
     """
@@ -73,7 +73,7 @@ class Component:
         if len(labels)==0: 
             self.label = resource.graph.label(resource.identifier).toPython()
         else:
-            self.label = labels[0].toPython() 
+            self.label = labels[0].toPython() # TODO AttributeError: 'str' object has no attribute 'toPython'
 
 class Concept(Component):
     def __init__(self, resource):
@@ -92,37 +92,45 @@ class Concept(Component):
         # Trigger recursive call on first-level children
         for subc in self.subconcepts:
             subc.explore_children()
-        for predicate, rnge in self.properties:
-            rnge.explore_children()
+        for predicate in self.properties:
+            predicate.explore_ranges()
 
 
 
 class Property(Component):    
     def __init__(self, resource):
         super().__init__(resource)
-        self.concept = None # TODO is this useful?
+        self.concept = None 
+        self.ranges = []
 
-    def list_children(self):
-        """
-        Returns a list of all entities (as resources)
-        """
-        pass
+    def explore_ranges():
+        for obj in self.ranges:
+            obj.explore_children()
 
     def extract_range_type(self):
-        # Return the range type of the property, expanding the bnode if any. 
+        """
+        Return the range type of the property, expanding the bnode if any. 
+        The return value is a list.
+        """
         response = self.resource.graph.query("""
         SELECT DISTINCT ?class 
         where {
-            ?self rdfs:range ?class .
-            optional {
+            {
+            ?self rdfs:range ?class }
+            union
+            {
                 ?self rdfs:range [ a owl:Class ;
                                     owl:unionOf [ rdf:rest*/rdf:first ?class ]
                 ]
-            }
+                    }
         }
         """, initBindings={"self":self.resource.identifier})
-        return [row[0] for row in response]
-
+        listed_res = [self.resource.graph.resource(row[0]) for row in response]
+        # If there are several ranges, remove the first element which is in fact the name of the blank node
+        if len(listed_res)>1:
+            listed_res=listed_res[1:]
+        return listed_res
+        
 class PropertyFilter:
     """
     Handle the property extraction for a concept.
@@ -130,29 +138,26 @@ class PropertyFilter:
     def __init__(self, concept):
         self.concept = concept
 
-    def filter_properties(self):
+    def filter_properties(self, predicates):
         """
         Discard all blacklisted predicates.
+        Update the range attribute of each Property object so it embeds all the range objects.
         """
-        def shortname(resource):
-            # Allows to write blacklisted elements such as "owl:UselessDetail" in the config file
-            return resource.graph.namespace_manager.normalizeUri(resource.identifier)
-
         def filter_valid(res_list):
             # Discards elements referenced in the blacklist, proceed with the other
-            filtered = [item for item in res_list if shortname(item) not in CONCEPT_BLACKLIST]
+            filtered = [item for item in res_list if item.identifier.toPython() not in BLACKLIST]
             return filtered
 
-        predicates = self.list_unique_properties()
         properties_clean = []
-        # Loop over Properties
-        for el in predicates :
+        # Loop over Properties, check they are not blacklisted and not all their ranges are blacklisted
+        for el in predicates : 
             rnge_type = el.extract_range_type()
             # If the predicate is not blacklisted and has at least one non-blacklisted range, add it 
             if filter_valid([el.resource])==[el.resource]: 
                 rnges = filter_valid(rnge_type)
                 if len(rnges)>0:
-                    properties_clean.append((el, rnges))
+                    el.ranges.extend([Concept(obj) for obj in rnges])
+                    properties_clean.append(el)
         return properties_clean
 
     def list_unique_properties(self):
@@ -189,7 +194,7 @@ class OntologyDepthExplorer:
         Fetch the direct subclasses of the concept.
         """
         subs = self.concept.resource.subjects(RDFS.subClassOf)
-        return [Concept(sub) for sub in subs if sub not in CONCEPT_BLACKLIST]
+        return [Concept(sub) for sub in subs if sub.identifier not in BLACKLIST]
 
     def explore_properties(self, entrypoint=None):
         """
@@ -197,13 +202,9 @@ class OntologyDepthExplorer:
         """
         if entrypoint is None:
             entrypoint = self.concept
-        properties = self.filter.filter_properties()
-        subgraph = {}
-        # Each predicate goes in pair with a list of its range classes
-        for prop, ranges_list in properties: #TODO change this block
-            rnge_subs = self.explore_subgraph(entrypoint=Concept(target_class))
-            subgraph.update({Property(predicate):rnge_subs})
-        return subgraph
+        all_properties = self.filter.list_unique_properties()
+        return self.filter.filter_properties(all_properties)
+
 
 class I2B2PathResolver:
     def __init__(self, component):

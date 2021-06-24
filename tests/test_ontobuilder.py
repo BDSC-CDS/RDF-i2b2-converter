@@ -44,4 +44,18 @@ def test_explore_children():
     pdb.set_trace()
 
 
+def test_extract_range_type_bnode():
+    res = ONTOLOGY_GRAPH.resource(rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasCareHandlingTypeCode"))
+    pro = Property(res)
+    rnges = pro.extract_range_type()
+    assert len(rnges)>1
+
+
+def test_extract_range_type_plain():
+    res = ONTOLOGY_GRAPH.resource(rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosample"))
+    pro = Property(res)
+    rnges = pro.extract_range_type()
+    assert len(rnges)==1
+
+
 
