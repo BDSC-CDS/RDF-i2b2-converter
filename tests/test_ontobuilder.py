@@ -9,13 +9,14 @@ from rdf_base import *
 
 ONTOLOGY_GRAPH = rdflib.Graph()
 ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
+pdb.set_trace()
+for file in os.listdir(TERMINOLOGIES_LOCATION):
+    ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION+file, format="turtle")
 
-def give_concepts():
-    root_resource = ONTOLOGY_GRAPH.resource(ROOT_URI)
-    root_component = Concept(root_resource)
-    return [e for e in root_resource.subjects(RDFS.subClassOf)]
+def give_entry_concepts():
+    return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]
 
-CONCEPT_LIST= give_concepts()
+CONCEPT_LIST= give_entry_concepts()
 
 def test_list_properties():
 
@@ -42,6 +43,7 @@ def test_explore_children():
     concept = Concept(CONCEPT_LIST[0])
     concept.explore_children()
     pdb.set_trace()
+    return concept
 
 
 def test_extract_range_type_bnode():
@@ -56,6 +58,5 @@ def test_extract_range_type_plain():
     pro = Property(res)
     rnges = pro.extract_range_type()
     assert len(rnges)==1
-
 
 

@@ -69,11 +69,24 @@ class Component:
     def __init__(self, resource):
         self.resource = resource
         self.shortname = rname(resource.identifier, resource.graph)
-        labels = resource.graph.preferredLabel(resource.identifier, lang=PREF_LANGUAGE)
-        if len(labels)==0: 
-            self.label = resource.graph.label(resource.identifier).toPython()
-        else:
-            self.label = labels[0].toPython() # TODO AttributeError: 'str' object has no attribute 'toPython'
+        self.set_label()
+
+
+    def set_label(self):
+        """
+        Set the language-dependent label (to be used as display name)
+        """
+        labels = self.resource.graph.preferredLabel(self.resource.identifier, lang=PREF_LANGUAGE)
+        if len(labels)>0: 
+            self.label = labels[0].toPython()
+            return
+    
+        # If the resource had no language-tagged label, get the normal label. If it does not exist, say the label will be the URI suffix
+        fmtd_label = self.resource.graph.label(self.resource.identifier)
+        self.label = self.shortname if fmtd_label == '' else fmtd_label.toPython()
+
+    def __repr__(self):
+        return self.__class__.__name__+"(" + self.resource.graph.namespace_manager.normalizeUri(self.resource.identifier)+ ")"
 
 class Concept(Component):
     def __init__(self, resource):
@@ -103,9 +116,37 @@ class Property(Component):
         self.concept = None 
         self.ranges = []
 
-    def explore_ranges():
+    def explore_ranges(self):
+        to_expand = self.mute_ranges()
         for obj in self.ranges:
+            # The explore method will trigger subclasses and properties discovery
             obj.explore_children()
+
+    def mute_ranges(self):
+        """
+        Determine which ranges to explore descendants of, and which should be kept silent.
+        This is typically dependent on the RDF implementation rules. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
+        """
+        if ALWAYS_DEEP:
+            return self.ranges
+        # In the SPHN implementation, we consider several cases:
+        #   - If a possible range is a subclass of :Terminology (e.g SNOMED:xxx)
+        #       - If it is alone, it should be expanded into its subclasses as it stands for "all descendants of ..."
+        #       - If another class of the SAME terminology (e.g SNOMED:yyy) is also a possible range, then do NOT expand any of them
+        #           as they now stand for explicit list of possible endpoints
+        #   - Do not expand into subclasses any other case, but do expand the potential properties
+        
+        # Check if we are in the very specific case TODO finish this so it really check brothers and not cousins
+        termins = []#[(elem, RDFS.subClassOf*OneOrMore, TERMINOLOGY_MARKER_URI) in self.resource.graph for elem in self.ranges]
+        idx = [i for i,x in enumerate(termins) if x]
+        # Prune all subclasses of the range objects except for the only class of a terminology
+        for i in range(len(self.ranges)):
+            if i in idx and len(idx)==1:
+                continue
+            self.ranges[i].subconcepts=[]
+
+
+
 
     def extract_range_type(self):
         """

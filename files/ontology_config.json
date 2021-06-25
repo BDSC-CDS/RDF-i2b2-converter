@@ -2,11 +2,12 @@
     "parameters":
     {
         "ONTOLOGY_GRAPH_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/sphn_ontology.ttl" ,
+        "TERMINOLOGIES_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/external_terminologies/",
         "ONTOLOGY_NAME": "SPHN ontology",
         "DATA_GRAPHS_LOCATION" : "../rdf-synthetic-sphn/files/output_graphs/",
-        "EXTERNAL_LOCATION" : "../common-data/ontologies/",
         "OUTPUT_TABLES":  "files/output_tables/",
         "USE_DUMMY_DATES":  0,
+        "ALWAYS_DEEP": 0,
         "RDF_FORMAT": "turtle",
         "PREF_LANGUAGE": "fr"
     },
@@ -44,6 +45,8 @@
                                 "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth"],
         "BLACKLIST":            "",
         "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit",
-        "DATE_DESCRIPTOR":  "http://www.w3.org/2001/XMLSchema#dateTime"
+        "DATE_DESCRIPTOR":  "http://www.w3.org/2001/XMLSchema#dateTime",
+        "TERMINOLOGY_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",
+        "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet"
     }
 }
