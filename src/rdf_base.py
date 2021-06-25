@@ -124,21 +124,22 @@ class Property(Component):
 
     def mute_ranges(self):
         """
-        Determine which ranges to explore descendants of, and which should be kept silent.
+        Determine which ranges to explore subclasses of, and which should be kept silent (only print properties).
         This is typically dependent on the RDF implementation rules. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
         """
         if ALWAYS_DEEP:
             return self.ranges
-        # In the SPHN implementation, we consider several cases:
-        #   - If a possible range is a subclass of :Terminology (e.g SNOMED:xxx)
-        #       - If it is alone, it should be expanded into its subclasses as it stands for "all descendants of ..."
-        #       - If another class of the SAME terminology (e.g SNOMED:yyy) is also a possible range, then do NOT expand any of them
-        #           as they now stand for explicit list of possible endpoints
-        #   - Do not expand into subclasses any other case, but do expand the potential properties
+        # In the SPHN implementation, we want to expand an property range node into its subclasses if and only if 
+        # it is a descendant of a sphn:Terminology and is the only of its kind (same prefix) in the ranges list
         
-        # Check if we are in the very specific case TODO finish this so it really check brothers and not cousins
-        termins = []#[(elem, RDFS.subClassOf*OneOrMore, TERMINOLOGY_MARKER_URI) in self.resource.graph for elem in self.ranges]
+        
+        # Check if we are in the very specific case 
+        # TODO finish this so it really check brothers and not cousins. maybe 
+        pdb.set_trace()
+        termins = [(elem, RDFS.subClassOf*OneOrMore, TERMINOLOGY_MARKER_URI) in self.resource.graph for elem in self.ranges]
         idx = [i for i,x in enumerate(termins) if x]
+        nspc = self.resource.graph.namespace_manager
+
         # Prune all subclasses of the range objects except for the only class of a terminology
         for i in range(len(self.ranges)):
             if i in idx and len(idx)==1:

@@ -9,10 +9,10 @@ from rdf_base import *
 
 ONTOLOGY_GRAPH = rdflib.Graph()
 ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
-pdb.set_trace()
 for file in os.listdir(TERMINOLOGIES_LOCATION):
     ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION+file, format="turtle")
 
+pdb.set_trace()
 def give_entry_concepts():
     return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]
 
