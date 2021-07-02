@@ -124,30 +124,43 @@ class Property(Component):
 
     def mute_ranges(self):
         """
-        Determine which ranges to explore subclasses of, and which should be kept silent (only print properties).
-        This is typically dependent on the RDF implementation rules. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
+        Overwrite the "subconcepts" attribute of some Concepts stored in self.range. 
+        Comsequence will be that concept.explore_children() will only return properties of such muted concepts.
+        The overwriting rule is typically dependent on the RDF implementation. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
+
+        In the SPHN implementation, we want to expand an property range node into its subclasses if and only if 
+        it is a descendant of a sphn:Terminology and is the only of its kind (same prefix) in the ranges list.
+        To achieve this, we find the ranges having "terminology brothers" and mute their subconcepts. 
+
         """
         if ALWAYS_DEEP:
-            return self.ranges
-        # In the SPHN implementation, we want to expand an property range node into its subclasses if and only if 
-        # it is a descendant of a sphn:Terminology and is the only of its kind (same prefix) in the ranges list
+            return 0
+        muted_total = 0
         
-        
-        # Check if we are in the very specific case 
-        # TODO finish this so it really check brothers and not cousins. maybe 
-        pdb.set_trace()
+        # Extract the indices of self.ranges which belong to an external terminology
         termins = [(elem, RDFS.subClassOf*OneOrMore, TERMINOLOGY_MARKER_URI) in self.resource.graph for elem in self.ranges]
-        idx = [i for i,x in enumerate(termins) if x]
-        nspc = self.resource.graph.namespace_manager
+        idx_termsinrange = [indx for indx,truth_val in enumerate(termins) if x]
 
-        # Prune all subclasses of the range objects except for the only class of a terminology
-        for i in range(len(self.ranges)):
-            if i in idx and len(idx)==1:
-                continue
-            self.ranges[i].subconcepts=[]
+        # Now count occurrence of each specific terminology
+        counts={}
+        for cur_idx in idx_termsinrange:
+            cur_terminology = self.resource.graph.qname(self.ranges[cur_idx])
+            if cur_terminology in counts.keys():
+                counts[cur_terminology]=counts[cur_terminology]+1
+            else:
+                counts[cur_terminology]=1
 
+        # Now search in self.ranges which range belong to an ontology and have brother in it.
+        # When found, prune its subconcepts so it cannot be expanded
+        for rn_idx in range(len(self.ranges)):
+            if rn_idx in idx_termsinrange :
+                if counts[self.resource.graph(qname(self.ranges[rn_idx]))]>1:
+                    self.ranges[rn_idx].subconcepts=[]
+                    muted_total=muted_total+1
+        return muted_total
 
-
+    def addrange(self, range_list):
+        self.ranges.extend(range_list)
 
     def extract_range_type(self):
         """
@@ -173,6 +186,7 @@ class Property(Component):
             listed_res=listed_res[1:]
         return listed_res
         
+
 class PropertyFilter:
     """
     Handle the property extraction for a concept.
@@ -180,9 +194,9 @@ class PropertyFilter:
     def __init__(self, concept):
         self.concept = concept
 
-    def filter_properties(self, predicates):
+    def filter_properties(self, properties):
         """
-        Discard all blacklisted predicates.
+        Discard all blacklisted properties.
         Update the range attribute of each Property object so it embeds all the range objects.
         """
         def filter_valid(res_list):
@@ -192,13 +206,16 @@ class PropertyFilter:
 
         properties_clean = []
         # Loop over Properties, check they are not blacklisted and not all their ranges are blacklisted
-        for el in predicates : 
+        for el in properties : 
+            # If the predicate is blacklisted, skip 
+            if filter_valid([el.resource])!=[el.resource]: 
+                continue
             rnge_type = el.extract_range_type()
             # If the predicate is not blacklisted and has at least one non-blacklisted range, add it 
             if filter_valid([el.resource])==[el.resource]: 
                 rnges = filter_valid(rnge_type)
                 if len(rnges)>0:
-                    el.ranges.extend([Concept(obj) for obj in rnges])
+                    el.addrange([Concept(obj) for obj in rnges])
                     properties_clean.append(el)
         return properties_clean
 
