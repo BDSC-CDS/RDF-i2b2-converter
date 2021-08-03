@@ -19,6 +19,7 @@ def isfrom_valueset(c_res):
     # Edit: might be useless because the object is an instance of NamedIndividual if the concept has a valueset.
     return c_res.value(RDFS.subClassOf) == SPHN.Valueset
 
+
 def navigate_graph(graphs=DATA_GRAPHS):
     """
     Returns a list of all the instances matching any of the ontology concepts returned by the setup() function.

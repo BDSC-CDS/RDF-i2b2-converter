@@ -115,6 +115,7 @@ def extend_valuepath(dicname):
     else:
         return False
 
+
 def sanitize(db, col_name):
     for el in db:
         for col in col_name:

@@ -5,78 +5,126 @@ import random
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../src/")
-from rdf_base import *
+from rdfwrappers import *
 
 ONTOLOGY_GRAPH = rdflib.Graph()
 ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
 for file in os.listdir(TERMINOLOGIES_LOCATION):
-    if "snomed" in file:
-        continue
-    print("Adding "+file+" to the graph")
-    ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION+file, format="turtle")
+    print("Adding " + file + " to the graph")
+    ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")
 pdb.set_trace()
+
 
 def give_entry_concepts():
     return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]
 
-CONCEPT_LIST= give_entry_concepts()
+
+CONCEPT_LIST = give_entry_concepts()
+
 
 def test_list_properties():
 
     example_concept = Concept(random.choice(CONCEPT_LIST))
-    properties = example_concept.list_unique_properties()
-    graph = example_concept.component.resource.graph
+    properties = PropertyFilter(example_concept).fetch_unique_properties()
+    graph = example_concept.resource.graph
 
     # Other way around:
-    other_props = example_concept.component.resource.subjects(RDFS.domain)
+    other_props = example_concept.resource.subjects(RDFS.domain)
     clean_props = []
     for candidate in other_props:
         add = True
         for child in other_props:
-            if (child, RDFS.subPropertyOf*OneOrMore, candidate) in graph:
+            if (child, RDFS.subPropertyOf * rdflib.paths.OneOrMore, candidate) in graph:
                 add = False
                 break
         if add:
             # No children found for this candidate so it's the most specific
             clean_props.append(candidate)
     assert len(clean_props) == len(properties)
-            
+
+
 def test_unique_properties_specific():
-    pass
+    """
+    Check if a concept has a "Code" property and a "XX Code" property (descendant of Code), only the latter is written in the concept class attribute.
+    """
+    res1 = ONTOLOGY_GRAPH.resource(
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis"
+    )
+    test_concept = Concept(res1)
+    test_concept.explore_children()
+    assert len(test_concept.properties) == 6
+
 
 def test_explore_children():
     concept = Concept(CONCEPT_LIST[0])
     concept.explore_children()
-    pdb.set_trace()
-    return concept
+    assert concept.subconcepts != [] or concept.properties != []
 
 
 def test_extract_range_type_bnode():
-    res = ONTOLOGY_GRAPH.resource(rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasCareHandlingTypeCode"))
-    pro = Property(res)
-    rnges = pro.extract_range_type()
-    assert len(rnges)>1
+    res = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef(
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCareHandlingTypeCode"
+        )
+    )
+    handler = RangeFilter(res)
+    reachable = handler.extract_range_type()
+    assert len(rnges) > 1
 
 
 def test_extract_range_type_plain():
-    res = ONTOLOGY_GRAPH.resource(rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosample"))
-    pro = Property(res)
+    res = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosample")
+    )
+    pro = RangeFilter(res)
     rnges = pro.extract_range_type()
-    assert len(rnges)==1
+    assert len(rnges) == 1
+
+
+def nonblrng_props(reslist):
+    """
+    Return a list of instantiated Resources with their ranges filtered as non-blacklisted, from a list of resource uris
+    """
+    prop = PropertyFilter(None)
+    prop.resources = reslist
+    ranges = self.filter_ranges()
+    if len(ranges) != len(self.resources):
+        raise Exception("Bad property-range matching")
+    return [Resource(self.resources[i], ranges[i]) for i in range(self.resources)]
 
 
 def test_mute_sameterminology():
-    res1 = ONTOLOGY_GRAPH.resource(rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasAdministrativeGenderCode")
-    res2 = ONTOLOGY_GRAPH.resource(rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasDiagnosticRadiologicExaminationCode")
-    prop1 = Property(res1)
-    prop2 = Property(res2)
-    filter_d = PropertyFilter(None)
-    filter_d.filter_properties([prop1, prop2])
-    assert all(rnn.subconcepts == [] for rnn in prop1.ranges+prop2.ranges)
+    res1 = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef(
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasAdministrativeGenderCode"
+        )
+    )
+    res2 = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef(
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasDiagnosticRadiologicExaminationCode"
+        )
+    )
+    props = nonblrng_props([res1, res2])
+    rnns = []
+    for prop in props:
+        prop.explore_ranges()
+        rnns.extends(prop.ranges)
+    assert all([rnn.subconcepts == [] for rnn in rnns])
+
 
 def test_nomute_diffterminologies():
-    "https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubstanceCode"
+    res1 = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubstanceCode")
+    )
+    prop1 = nonblrng_props(res1)
+    prop1.explore_ranges()
+    assert all([len(rnn.subconcepts) > 0 for rnn in prop1.ranges])
+
 
 def test_mute_sameterm_differentfiles():
+    res1 = ONTOLOGY_GRAPH.resource(rdflib.URIRef("http://snomed.info/id/105590001"))
+    res2 = ONTOLOGY_GRAPH.resource(rdflib.URIRef("http://snomed.info/id/118169006"))
+    prop = Property(ONTOLOGY_GRAPH.resource(RDF.toto), [res1, res2])
+    prop.explore_ranges()
+    assert all([len(rnn.subconcepts) == [] for rnn in prop.ranges])
     # use <http://snomed.info/id/105590001> (extracted from the sphn ttl) vs any other snomed node from the snomed file
-    pass
