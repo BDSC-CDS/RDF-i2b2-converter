@@ -140,7 +140,7 @@ class Property(Component):
         # Now search in self.ranges which range belong to an ontology and have brother in it.
         # When found, prune its subconcepts so it cannot be expanded
         for rn_idx in range(len(self.ranges)):
-            if rn_idx in idx_termsinrange:  # TODO instead of mute, typecast here
+            if rn_idx in idx_termsinrange:  
                 if counts[self.resource.graph(qname(self.ranges[rn_idx]))] > 1:
                     final_ranges.append(GenericConcept(self.ranges[rn_idx]))
                     continue
