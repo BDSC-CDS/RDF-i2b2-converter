@@ -154,7 +154,7 @@ class RangeFilter:
     Fetch and filter the Range elements of a Property discarding the blacklisted ones.
     """
 
-    def __init__(res):
+    def __init__(self, res):
         self.resource = res
 
     def extract_concepts(self):
@@ -210,7 +210,7 @@ class PropertyFilter:
         ranges = self.filter_ranges()
         if len(ranges) != len(self.resources):
             raise Exception("Bad property-range matching")
-        return [Resource(self.resources[i], ranges[i]) for i in range(self.resources)]
+        return [Resource(self.resources[i], ranges[i]) for i in range(len(self.resources))]
 
     def filter_ranges(self):
         """
@@ -279,4 +279,4 @@ class OntologyDepthExplorer:
         """
         Fetch the properties
         """
-        return self.filter.get_properties(all_properties)
+        return self.filter.get_properties()

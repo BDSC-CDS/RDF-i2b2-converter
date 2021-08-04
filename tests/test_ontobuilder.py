@@ -12,7 +12,6 @@ ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
 for file in os.listdir(TERMINOLOGIES_LOCATION):
     print("Adding " + file + " to the graph")
     ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")
-pdb.set_trace()
 
 
 def give_entry_concepts():
@@ -25,11 +24,13 @@ CONCEPT_LIST = give_entry_concepts()
 def test_list_properties():
 
     example_concept = Concept(random.choice(CONCEPT_LIST))
-    properties = PropertyFilter(example_concept).fetch_unique_properties()
+    fil = PropertyFilter(example_concept)
+    fil.fetch_unique_properties()
+    properties = fil.resources
     graph = example_concept.resource.graph
 
     # Other way around:
-    other_props = example_concept.resource.subjects(RDFS.domain)
+    other_props = [e for e in example_concept.resource.subjects(RDFS.domain)]
     clean_props = []
     for candidate in other_props:
         add = True
@@ -69,7 +70,7 @@ def test_extract_range_type_bnode():
     )
     handler = RangeFilter(res)
     reachable = handler.extract_range_type()
-    assert len(rnges) > 1
+    assert len(reachable) > 1
 
 
 def test_extract_range_type_plain():
@@ -87,7 +88,7 @@ def nonblrng_props(reslist):
     """
     prop = PropertyFilter(None)
     prop.resources = reslist
-    ranges = self.filter_ranges()
+    ranges = prop.filter_ranges()
     if len(ranges) != len(self.resources):
         raise Exception("Bad property-range matching")
     return [Resource(self.resources[i], ranges[i]) for i in range(self.resources)]
