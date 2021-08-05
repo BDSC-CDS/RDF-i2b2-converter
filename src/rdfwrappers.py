@@ -93,7 +93,7 @@ class GenericConcept(Concept):
 class Property(Component):
     def __init__(self, resource, valid_ranges):
         super().__init__(resource)
-        self.ranges = valid_ranges
+        self.ranges_res = valid_ranges
 
     def explore_ranges(self):
         self.ranges = self.mute_ranges()
@@ -103,7 +103,7 @@ class Property(Component):
 
     def mute_ranges(self):
         """
-        Overwrite the "subconcepts" attribute of some Concepts stored in self.range.
+        Create Concept or GenericConcept based on the resources stored in self.range_res and populate self.range with them.
         Comsequence will be that concept.explore_children() will only return properties of such muted concepts.
         The overwriting rule is typically dependent on the RDF implementation. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
 
@@ -116,7 +116,7 @@ class Property(Component):
             return 0
         final_ranges = []
 
-        # Extract the indices of self.ranges which belong to an external terminology
+        # Extract the indices of self.ranges_res which belong to an external terminology
         termins = [
             (
                 elem.identifier,
@@ -124,27 +124,27 @@ class Property(Component):
                 TERMINOLOGY_MARKER_URI,
             )
             in self.resource.graph
-            for elem in self.ranges
+            for elem in self.ranges_res
         ]
         idx_termsinrange = [indx for indx, truth_val in enumerate(termins) if truth_val]
 
         # Now count occurrence of each specific terminology
         counts = {}
         for cur_idx in idx_termsinrange:
-            cur_terminology = self.resource.graph.qname(self.ranges[cur_idx])
+            cur_terminology = self.resource.graph.qname(self.ranges_res[cur_idx])
             if cur_terminology in counts.keys():
                 counts[cur_terminology] = counts[cur_terminology] + 1
             else:
                 counts[cur_terminology] = 1
 
-        # Now search in self.ranges which range belong to an ontology and have brother in it.
+        # Now search in self.ranges_res which range belong to an ontology and have brother in it.
         # When found, prune its subconcepts so it cannot be expanded
-        for rn_idx in range(len(self.ranges)):
+        for rn_idx in range(len(self.ranges_res)):
             if rn_idx in idx_termsinrange:  
-                if counts[self.resource.graph(qname(self.ranges[rn_idx]))] > 1:
-                    final_ranges.append(GenericConcept(self.ranges[rn_idx]))
+                if counts[self.resource.graph(qname(self.ranges_res[rn_idx]))] > 1:
+                    final_ranges.append(GenericConcept(self.ranges_res[rn_idx]))
                     continue
-            final_ranges.append(Concept(self.ranges[rn_idx]))
+            final_ranges.append(Concept(self.ranges_res[rn_idx]))
 
         return final_ranges
 
@@ -157,7 +157,7 @@ class RangeFilter:
     def __init__(self, res):
         self.resource = res
 
-    def extract_concepts(self):
+    def extract_range_res(self):
         rnge_types = self.extract_range_type()
         return filter_valid(rnge_types)
 
@@ -210,7 +210,7 @@ class PropertyFilter:
         ranges = self.filter_ranges()
         if len(ranges) != len(self.resources):
             raise Exception("Bad property-range matching")
-        return [Resource(self.resources[i], ranges[i]) for i in range(len(self.resources))]
+        return [Property(self.resources[i], ranges[i]) for i in range(len(self.resources))]
 
     def filter_ranges(self):
         """
@@ -220,7 +220,7 @@ class PropertyFilter:
         ranges = []
         for res in self.resources:
             handler = RangeFilter(res)
-            reachable = handler.extract_concepts()
+            reachable = handler.extract_range_res()
             if reachable != []:
                 cleanres.append(res)
                 ranges.append(reachable)
@@ -239,12 +239,21 @@ class PropertyFilter:
         Extract the (predicate, object TYPE) couples for predicates of a resource.
         Extracts only finest properties uris, which means if two properties are related (hierarchy), only the most specific is kept.
         """
-        self_res = self.concept.resource
-        response = self_res.graph.query(
+        print("Fetching properties for concept "+ self.concept.__repr__())
+        self_res = self.concept.resource # TODO check why this does not fetch the AdministrativeCase. bnode is not unpacked correctly
+        response = self_res.graph.query( 
             """
             SELECT ?p 
             WHERE {
-                ?p rdfs:domain ?self .
+                {
+                ?p rdfs:domain ?self }
+                UNION
+                {
+                ?p rdfs:domain ?bnode .
+                ?bnode rdfs:domain [ a owl:Class ;
+                                    owl:unionOf [ rdf:rest*/rdf:first ?self ]
+                                ]
+                }
                 FILTER NOT EXISTS {
                     ?child rdfs:domain ?self .
                     ?p rdfs:subPropertyOf+ ?child 
