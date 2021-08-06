@@ -3,5 +3,6 @@
     "start_date": "has_datetime",
     "MAX_BASECODE_LENGTH": 50,
     "START_SEARCH_INDEX": 95000,
-    "DEFAULT_DATE": 730000
+    "DEFAULT_DATE": 730000,
+    "ROOT_PATH":"\\SPHNv2020.1\\"
 }

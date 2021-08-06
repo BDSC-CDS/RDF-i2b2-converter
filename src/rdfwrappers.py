@@ -120,7 +120,7 @@ class Property(Component):
         termins = [
             (
                 elem.identifier,
-                RDFS.subClassOf * rdflib.paths.OneOrMore,
+                SUBCLASS_PRED * rdflib.paths.OneOrMore,
                 TERMINOLOGY_MARKER_URI,
             )
             in self.resource.graph
@@ -240,23 +240,32 @@ class PropertyFilter:
         Extracts only finest properties uris, which means if two properties are related (hierarchy), only the most specific is kept.
         """
         print("Fetching properties for concept "+ self.concept.__repr__())
-        self_res = self.concept.resource # TODO check why this does not fetch the AdministrativeCase. bnode is not unpacked correctly
+        self_res = self.concept.resource 
+        # TODO enhance this so the subproperties are actually left out. the filter part does not work. Maybe construct a graph and perform a second query on it?
         response = self_res.graph.query( 
             """
             SELECT ?p 
             WHERE {
                 {
-                ?p rdfs:domain ?self }
+                ?p rdfs:domain ?self 
+                }
                 UNION
                 {
-                ?p rdfs:domain ?bnode .
-                ?bnode rdfs:domain [ a owl:Class ;
+                ?p rdfs:domain [ a owl:Class ;
                                     owl:unionOf [ rdf:rest*/rdf:first ?self ]
                                 ]
                 }
-                FILTER NOT EXISTS {
-                    ?child rdfs:domain ?self .
-                    ?p rdfs:subPropertyOf+ ?child 
+                FILTER NOT EXISTS { 
+                    {
+                    ?child rdfs:domain ?self 
+                    }
+                    UNION
+                    {
+                    ?child rdfs:domain [ a owl:Class ;
+                                        owl:unionOf [ rdf:rest*/rdf:first ?self ]
+                                    ]
+                    }
+                    ?child rdfs:subPropertyOf+ ?p
                 }
             }
         """,
@@ -281,7 +290,7 @@ class OntologyDepthExplorer:
         """
         Fetch the direct subclasses of the concept.
         """
-        subs = self.concept.resource.subjects(RDFS.subClassOf)
+        subs = self.concept.resource.subjects(SUBCLASS_PRED)
         return [Concept(sub) for sub in subs if sub.identifier not in BLACKLIST]
 
     def explore_properties(self, entrypoint=None):

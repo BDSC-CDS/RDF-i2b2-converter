@@ -14,14 +14,33 @@ for file in os.listdir(TERMINOLOGIES_LOCATION):
     if "snomed" in file:
         continue
     ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")
-
+ns = [e for e in ONTOLOGY_GRAPH.namespace_manager.namespaces()]
+for tupp in ns:
+    key, val = tupp
+    globals()[key.upper()] = rdflib.Namespace(val)
 
 def give_entry_concepts():
     return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]
 
-
+TEST_URI = SPHN.FOPHDiagnosis
 CONCEPT_LIST = give_entry_concepts()
 
+def list_sparql_bnode_domains(uri=TEST_URI):
+    """
+    This should return all predicates for which the requested uri is a domain listed among other domains (in a blank node bag using owl:unionOf) 
+    """
+    resp=ONTOLOGY_GRAPH.query(
+        """
+        SELECT ?p WHERE
+                {
+                ?p rdfs:domain [ a owl:Class ;
+                                    owl:unionOf [ rdf:rest*/rdf:first ?self ]
+                                    ]
+                }
+        """, initBindings={"self":uri}
+    )
+    rows = [ONTOLOGY_GRAPH.resource(e[0]) for e in resp]
+    return rows
 
 def test_list_properties():
 
@@ -32,12 +51,12 @@ def test_list_properties():
     graph = example_concept.resource.graph
 
     # Other way around:
-    other_props = [e for e in example_concept.resource.subjects(RDFS.domain)]
+    other_props = [e for e in example_concept.resource.subjects(RDFS.domain)]+list_sparql_bnode_domains(example_concept.resource.identifier)
     clean_props = []
     for candidate in other_props:
         add = True
         for child in other_props:
-            if (child, RDFS.subPropertyOf * rdflib.paths.OneOrMore, candidate) in graph:
+            if (child.identifier, RDFS.subPropertyOf * rdflib.paths.OneOrMore, candidate.identifier) in graph:
                 add = False
                 break
         if add:

@@ -8,15 +8,6 @@ This file features RDF functions used by both the ontology builder and the data 
 in the low-level "utils" file, typically functions triggering the external terminologies search.
 """
 
-ROOT = "\\SPHNv2020.1\\"
-SPHN = rdflib.Namespace("http://sphn.ch/rdf/ontology/")
-RDF = rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-RDFS = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
-SPO = rdflib.Namespace("http://sphn.ch/rdf/spo/ontology/")
-OWL = rdflib.Namespace("http://www.w3.org/2002/07/owl#")
-XSD = rdflib.Namespace("http://www.w3.org/2001/XMLSchema#")
-RESOURCE = rdflib.Namespace("http://sphn.ch/rdf/resource/")
-
 with open("files/ontology_config.json") as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():
@@ -29,6 +20,7 @@ with open("files/i2b2_rdf_mapping.json") as ff:
 for key, val in config.items():
     globals()[key] = val
 
+SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
 
 def rname(uri, graph):
     full = graph.qname(uri)
