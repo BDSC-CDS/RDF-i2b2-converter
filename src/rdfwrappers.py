@@ -241,7 +241,7 @@ class PropertyFilter:
         """
         print("Fetching properties for concept "+ self.concept.__repr__())
         self_res = self.concept.resource 
-        # TODO enhance this so the subproperties are actually left out. the filter part does not work. Maybe construct a graph and perform a second query on it?
+        # TODO enhance this 
         response = self_res.graph.query( 
             """
             SELECT ?p 

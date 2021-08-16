@@ -11,8 +11,6 @@ ONTOLOGY_GRAPH = rdflib.Graph()
 ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
 for file in os.listdir(TERMINOLOGIES_LOCATION):
     print("Adding " + file + " to the graph")
-    if "snomed" in file:
-        continue
     ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")
 ns = [e for e in ONTOLOGY_GRAPH.namespace_manager.namespaces()]
 for tupp in ns:
@@ -110,9 +108,9 @@ def nonblrng_props(reslist):
     prop = PropertyFilter(None)
     prop.resources = reslist
     ranges = prop.filter_ranges()
-    if len(ranges) != len(self.resources):
+    if len(ranges) != len(prop.resources):
         raise Exception("Bad property-range matching")
-    return [Resource(self.resources[i], ranges[i]) for i in range(self.resources)]
+    return [Property(prop.resources[i], ranges[i]) for i in range(len(prop.resources))]
 
 
 def test_mute_sameterminology():
@@ -130,7 +128,7 @@ def test_mute_sameterminology():
     rnns = []
     for prop in props:
         prop.explore_ranges()
-        rnns.extends(prop.ranges)
+        rnns.extend(prop.ranges)
     assert all([rnn.subconcepts == [] for rnn in rnns])
 
 
@@ -138,9 +136,9 @@ def test_nomute_diffterminologies():
     res1 = ONTOLOGY_GRAPH.resource(
         rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubstanceCode")
     )
-    prop1 = nonblrng_props(res1)
+    prop1 = nonblrng_props([res1])[0]
     prop1.explore_ranges()
-    assert all([len(rnn.subconcepts) > 0 for rnn in prop1.ranges])
+    assert [len(rnn.subconcepts) > 0 for rnn in prop1.ranges] == [True, False, True]
 
 
 def test_mute_sameterm_differentfiles():

@@ -1,6 +1,7 @@
 import rdflib
 import hashlib
 import json
+import sys
 import pdb
 
 """
@@ -19,8 +20,20 @@ with open("files/i2b2_rdf_mapping.json") as ff:
     config = json.load(ff)
 for key, val in config.items():
     globals()[key] = val
+#TODO uncomment this block when testing phase is finished (done in the test file to have it easily accessible)
+""" myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + "/../src/")
 
-SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
+ONTOLOGY_GRAPH = rdflib.Graph()
+ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
+for file in os.listdir(TERMINOLOGIES_LOCATION):
+    print("Adding " + file + " to the graph")
+    ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")
+
+def give_entry_concepts():
+    return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]"""
+    
+SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI) 
 
 def rname(uri, graph):
     full = graph.qname(uri)
