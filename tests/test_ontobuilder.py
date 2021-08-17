@@ -146,5 +146,5 @@ def test_mute_sameterm_differentfiles():
     res2 = ONTOLOGY_GRAPH.resource(rdflib.URIRef("http://snomed.info/id/118169006"))
     prop = Property(ONTOLOGY_GRAPH.resource(RDF.toto), [res1, res2])
     prop.explore_ranges()
-    assert all([len(rnn.subconcepts) == [] for rnn in prop.ranges])
+    assert all([rnn.subconcepts == [] for rnn in prop.ranges])
     # use <http://snomed.info/id/105590001> (extracted from the sphn ttl) vs any other snomed node from the snomed file
