@@ -8,6 +8,13 @@ def filter_valid(res_list):
     ]
     return filtered
 
+def toskip_properties(concept):
+    """
+    Determine if it is worth looking for properties of this concept or not.
+    In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
+    """
+    return PROJECT_RDF_NAMESPACE not in concept.resource.identifier
+
 
 """ 
 BLACKLIST = format_global(to_filter=BLACKLIST_TOSORT)
@@ -52,15 +59,16 @@ class Component:
 
 
 class Concept(Component):
-    def __init__(self, resource):
+    def __init__(self, resource, parent=None):
         super().__init__(resource)
         self.subconcepts = []
         self.properties = []
+        self.parent = parent
 
     def explore_children(self):
         resolver = OntologyDepthExplorer(self)
         self.subconcepts.extend(self.find_subconcepts(resolver))
-        if self.subconcepts != []:
+        if self.subconcepts != [] or toskip_properties(self):
             return
 
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
@@ -288,10 +296,10 @@ class OntologyDepthExplorer:
 
     def explore_subclasses(self):
         """
-        Fetch the direct subclasses of the concept.
+        Fetch the direct subclasses of the concept. Reference the parent concept.
         """
         subs = self.concept.resource.subjects(SUBCLASS_PRED)
-        return [Concept(sub) for sub in subs if sub.identifier not in BLACKLIST]
+        return [Concept(sub, parent=self.concept) for sub in subs if sub.identifier not in BLACKLIST]
 
     def explore_properties(self, entrypoint=None):
         """

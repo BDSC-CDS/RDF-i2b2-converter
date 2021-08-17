@@ -1,5 +1,21 @@
 from rdfwrappers import *
 
+class I2B2Converter:
+    """
+    The converter object initialized with a python rdfwrappers.Concept instance. 
+    All concepts related to this instance (i.e it and its subconcepts) are converted to an i2b2 concept object (taking the hierarchy into account)
+    From this object can be triggered the modifiers generation.
+    """
+    def __init__(self, concept:Concept):
+        self.i2b2concepts = [I2B2Concept(concept)]
+        self.i2b2concepts.extend([I2B2Concept(sub, parent=concept) for sub in concept.subconcepts])
+
+    def generate_modifiers(self):
+        """
+        TODO: do we generate modifiers all at once or recursively
+        """
+        for conc in self.i2b2concepts:
+            pass
 
 class I2B2PathResolver:
     def __init__(self, component):
@@ -66,11 +82,11 @@ class I2B2OntologyElement:
 
 
 class I2B2Concept(I2B2OntologyElement):
-    def __init__(self, resource, parent=None):
-        self.concept = Concept(resource)
+    def __init__(self, concept:Concept, parent=None):
+        self.concept = concept
+        self.parent = parent
         self.basecodehdler = BasecodeHandler(self.concept)
         self.path_handler = I2B2PathResolver(self.concept)
-        self.parent = parent
 
     def get_concept_details(self):
         pass

@@ -32,7 +32,6 @@ for file in os.listdir(TERMINOLOGIES_LOCATION):
 
 def give_entry_concepts():
     return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]"""
-    
 SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI) 
 
 def rname(uri, graph):

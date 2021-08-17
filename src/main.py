@@ -8,22 +8,25 @@ def generate_ontology_table():
         key, val = tupp
         globals()[key.upper()] = rdflib.Namespace(val)
 
-    entry_objs = give_entry_concepts()
+    # Step 1: generate python objects from the entry concept list specified in the config file
+    entry_concept_resources = give_entry_concepts()
+    batch_concepts = []
 
-    for concept in entry_objs:
+    # Step 2: For each concept, create an I2B2 converter and extract info from it.
+    # This might be suboptimal in terms of memory usage when an entry concept is in fact a directory having a lot of subconcepts
+    for concept_res in entry_objs:
+        concept = Concept(concept_res)
         concept.explore_children()
-        # or do this :
-        db_lines = concept.toi2b2repr()
 
-    """
-    At this point all the concepts can be simply mapped to i2b2 concepts and modifiers
-    """
+        # Initialize the converter using the list of objects
+        converter = I2B2Converter(concept)
+        # Get the i2b2 db lines related to this concept
+        buffer = converter.get_lines()
+    
+    # Step 3: Write the root information in the DB file then merge all concept files into it
 
-    #calling the i2b2 mapping routines
+    # Step 4 (maybe outside this script?): use SQL to derive I2B2 concept_dimension and modifier_dimension from the ontology table using C_TABLENAME or equivalent
+    
 
-    """
-    Now simply filling the database with every element in memory
-    """
-
-def generate_CRC_tables():
+def generate_event_tables():
     pass
