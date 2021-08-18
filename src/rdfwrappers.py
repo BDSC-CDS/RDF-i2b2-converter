@@ -8,7 +8,7 @@ def filter_valid(res_list):
     ]
     return filtered
 
-def toskip_properties(concept):
+def terminology_indicator(concept):
     """
     Determine if it is worth looking for properties of this concept or not.
     In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
@@ -57,6 +57,8 @@ class Component:
             + ")"
         )
 
+    def __eq__(self, other):
+        return self.resource.identifier == other.resource.identifier
 
 class Concept(Component):
     def __init__(self, resource, parent=None):
@@ -68,14 +70,19 @@ class Concept(Component):
     def explore_children(self):
         resolver = OntologyDepthExplorer(self)
         self.subconcepts.extend(self.find_subconcepts(resolver))
-        if self.subconcepts != [] or toskip_properties(self):
+        if self.subconcepts != [] or terminology_indicator(self):
             return
 
+        self.subconcepts.extend(resolver.explore_valueset())
+
+        if self.subconcepts != []:
+            return
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
         # Note generic concepts are dealt with in the Property.mute_range method which casts them as leaf concepts
         self.properties.extend(resolver.explore_properties())
         for predicate in self.properties:
             predicate.explore_ranges()
+
 
     def find_subconcepts(self, resolver):
         subcs = resolver.explore_subclasses()
@@ -97,11 +104,21 @@ class GenericConcept(Concept):
     def find_subconcepts(self, resolver):
         return []
 
+class ValuesetIndividual(Concept):
+    """
+    Individuals are leaves of the concept tree, by definition. They cannot have children nor properties and will match observation instances.
+    """
+    def explore_children(self):
+        return
+
+
+
 
 class Property(Component):
     def __init__(self, resource, valid_ranges):
         super().__init__(resource)
         self.ranges_res = valid_ranges
+        self.ranges =[]
 
     def explore_ranges(self):
         self.ranges = self.mute_ranges()
@@ -154,7 +171,7 @@ class Property(Component):
                     continue
             final_ranges.append(Concept(self.ranges_res[rn_idx]))
 
-        return final_ranges
+        return final_ranges # TODO if the final range is of type Valueset (CAREFUL because type NameIndividual is weird in the ttl), generate the valueset values!
 
 
 class RangeFilter:
@@ -166,8 +183,11 @@ class RangeFilter:
         self.resource = res
 
     def extract_range_res(self):
+        """
+        Return all the ranges a property points to, except the ones referring to metadata (see the config file)
+        """
         rnge_types = self.extract_range_type()
-        return filter_valid(rnge_types)
+        return filter_valid([curng for curng in rnge_types if curng.identifier.toPython() not in OBSERVATION_INFO+[DATE_DESCRIPTOR]])
 
     def extract_range_type(self):
         """
@@ -306,3 +326,22 @@ class OntologyDepthExplorer:
         Fetch the properties
         """
         return self.filter.get_properties()
+
+    def explore_valueset(self):
+        """
+        If the concept is a child of "Valueset", then all possible instances should be specified as children of this concept.
+        At data loading, these instances should be treated differently as other instances (for which only the class is important)
+        """
+        if self.concept.resource.value(rdflib.URIRef(SUBCLASS_PRED_URI)).identifier!=rdflib.URIRef(VALUESET_MARKER_URI):
+            return []
+        graph =self.concept.resource.graph
+        res2 = graph.query("""
+        select ?s 
+        where {
+            ?s rdf:type ?o
+        }
+        """, initBindings={"o":self.concept.resource.identifier}
+        )
+        return [ValuesetIndividual(graph.resource(row[0])) for row in res2]
+
+        

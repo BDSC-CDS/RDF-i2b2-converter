@@ -11,6 +11,8 @@ ONTOLOGY_GRAPH = rdflib.Graph()
 ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
 for file in os.listdir(TERMINOLOGIES_LOCATION):
     print("Adding " + file + " to the graph")
+    if "snomed" in file or "loinc" in file:
+        continue
     ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")
 ns = [e for e in ONTOLOGY_GRAPH.namespace_manager.namespaces()]
 for tupp in ns:
@@ -62,6 +64,16 @@ def test_list_properties():
             clean_props.append(candidate)
     assert len(clean_props) == len(properties)
 
+def test_genericcode():
+    res = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef(
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#NursingDiagnosis"
+        )
+    )
+    
+    test_concept = Concept(res)
+    test_concept.explore_children()
+    assert len(test_concept.properties) == 1
 
 def test_unique_properties_specific():
     """
@@ -72,7 +84,7 @@ def test_unique_properties_specific():
     )
     test_concept = Concept(res1)
     test_concept.explore_children()
-    assert len(test_concept.properties) == 6
+    assert len(test_concept.properties) == 2
 
 
 def test_explore_children():
@@ -138,7 +150,7 @@ def test_nomute_diffterminologies():
     )
     prop1 = nonblrng_props([res1])[0]
     prop1.explore_ranges()
-    assert [len(rnn.subconcepts) > 0 for rnn in prop1.ranges] == [True, False, True]
+    assert [len(rnn.subconcepts) > 0 for rnn in prop1.ranges] == [False, False, True] #TODO change to True False True when including snomed
 
 
 def test_mute_sameterm_differentfiles():
@@ -148,3 +160,61 @@ def test_mute_sameterm_differentfiles():
     prop.explore_ranges()
     assert all([rnn.subconcepts == [] for rnn in prop.ranges])
     # use <http://snomed.info/id/105590001> (extracted from the sphn ttl) vs any other snomed node from the snomed file
+
+def test_valueset_structure():
+    resp=ONTOLOGY_GRAPH.query(
+        """
+        SELECT ?s 
+        where {
+            ?s owl:equivalentClass [ a owl:Class ;
+                                    owl:oneOf ?k
+                ]
+            filter not exists {
+                ?s rdfs:subClassOf ?v
+            }
+        }
+        """, initBindings={"v":rdflib.URIRef(VALUESET_MARKER_URI)}
+    )
+    assert len(resp)==0
+
+def test_namedindividual_structure():
+    ind = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#CongenitalAbnormality"))
+    res = ONTOLOGY_GRAPH.query("""
+        select ?o
+        where {
+            ?s rdf:type ?o
+        }
+    """, initBindings={"s":ind.identifier})
+    assert len(res)==2
+
+def test_implicitlist():
+    uri = ONTOLOGY_GRAPH.resource(
+        rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasDrugPrescriptionIndicationToStart"))
+    res = ONTOLOGY_GRAPH.query("""
+        select ?o
+        where {
+            ?s rdfs:range ?o
+        }
+    """, initBindings={"s":uri.identifier})
+
+    assert len(res)==2
+
+def test_explorevalueset():
+    vst = ONTOLOGY_GRAPH.resource(rdflib.URIRef(VALUESET_MARKER_URI))
+    candids = [e for e in vst.subjects(RDFS.subClassOf)]
+    cur = random.choice(candids)
+    conc = Concept(cur)
+    conc.explore_children()
+
+    res = ONTOLOGY_GRAPH.query("""
+        select ?o
+        where {
+            ?s owl:equivalentClass [ a owl:Class ;
+                                        owl:oneOf [ rdf:rest*/rdf:first ?o ]
+                                    ]
+        }
+    """, initBindings={"s":cur.identifier})
+    elems = [ValuesetIndividual(ONTOLOGY_GRAPH.resource(e[0])) for e in res]
+    assert set([e.resource.identifier.toPython() for e in elems]) == set([k.resource.identifier.toPython() for k in conc.subconcepts])
+    pdb.set_trace()
