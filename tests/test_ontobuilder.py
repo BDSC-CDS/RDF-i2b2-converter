@@ -24,6 +24,7 @@ def give_entry_concepts():
 
 TEST_URI = SPHN.FOPHDiagnosis
 CONCEPT_LIST = give_entry_concepts()
+pdb.set_trace()
 
 def list_sparql_bnode_domains(uri=TEST_URI):
     """
@@ -84,7 +85,7 @@ def test_unique_properties_specific():
     )
     test_concept = Concept(res1)
     test_concept.explore_children()
-    assert len(test_concept.properties) == 2
+    assert len(test_concept.properties) == 6
 
 
 def test_explore_children():
@@ -217,4 +218,3 @@ def test_explorevalueset():
     """, initBindings={"s":cur.identifier})
     elems = [ValuesetIndividual(ONTOLOGY_GRAPH.resource(e[0])) for e in res]
     assert set([e.resource.identifier.toPython() for e in elems]) == set([k.resource.identifier.toPython() for k in conc.subconcepts])
-    pdb.set_trace()

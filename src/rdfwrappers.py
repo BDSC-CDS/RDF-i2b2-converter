@@ -32,6 +32,12 @@ class Component:
         self.shortname = rname(resource.identifier, resource.graph)
         self.set_label()
 
+    def get_children(self):
+        """
+        Interface with the i2b2 wrapper, it allows to go down the tree without knowing if the object is a rdf Concept or Property.
+        """
+        pass
+
     def set_label(self):
         """
         Set the language-dependent label (to be used as display name)
@@ -66,6 +72,9 @@ class Concept(Component):
         self.subconcepts = []
         self.properties = []
         self.parent = parent
+
+    def get_children(self):
+        return self.properties+self.subconcepts
 
     def explore_children(self):
         resolver = OntologyDepthExplorer(self)
@@ -112,13 +121,14 @@ class ValuesetIndividual(Concept):
         return
 
 
-
-
 class Property(Component):
     def __init__(self, resource, valid_ranges):
         super().__init__(resource)
         self.ranges_res = valid_ranges
         self.ranges =[]
+
+    def get_children(self):
+        return self.ranges
 
     def explore_ranges(self):
         self.ranges = self.mute_ranges()
@@ -187,7 +197,7 @@ class RangeFilter:
         Return all the ranges a property points to, except the ones referring to metadata (see the config file)
         """
         rnge_types = self.extract_range_type()
-        return filter_valid([curng for curng in rnge_types if curng.identifier.toPython() not in OBSERVATION_INFO+[DATE_DESCRIPTOR]])
+        return filter_valid(rnge_types)
 
     def extract_range_type(self):
         """

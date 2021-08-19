@@ -9,31 +9,44 @@ class I2B2Converter:
     def __init__(self, concept:Concept):
         self.i2b2concepts = [I2B2Concept(concept)]
         self.i2b2concepts.extend([I2B2Concept(sub, parent=concept) for sub in concept.subconcepts])
+        self.left_tosearch = self.i2b2concepts
 
-    def generate_modifiers(self):
-        """
-        TODO: do we generate modifiers all at once or recursively
-        """
-        for conc in self.i2b2concepts:
+    def get_batch(self):
+        try:
+            cur = self.left_tosearch.pop()
+        except:
+            return False
+        cur.set_path()
+        cur.set_code()
+        cur.extract_modelems()
+        self.towrite = [k.get_lines() for k in [cur]+cur.modifiers]
+        return True
+
+    def write(self, filepath):
+        #use old db_csv code here
+        with open(filepath, "a"):
             pass
 
-class I2B2PathResolver:
-    def __init__(self, component):
-        self.component = component
-
-    def compute_path(self):
-        parent_path = self.component.parent.path_resolver.extract_path()
-        self.path = parent_path + "\\" + self.component.shortname
-
-    def extract_path(self):
-        if self.path == "":
-            self.compute_path()
-        return self.path
-
-
 class I2B2OntologyElement:
+    def __init__(self, component, parent=None):
+        self.parent = parent
+        self.component = component
+        self.basecodehdler=I2B2BasecodeHandler(self)
+        self.path_handler=I2B2PathResolver(self)
+
+    def set_path(self):
+        self.path= self.path_handler.get_path()
+
+    def set_code(self):
+        self.code= self.basecodehdler.get_code()
+
     def set_level(self):
         self.level = self.c_path.count("\\")
+
+    def walk_mtree(self, parent):#TODO finish this
+        self.path = self.path_handler(parent)
+        self.basecode = self.basecodehdler(parent)
+        return [I2B2Modifier(k, parent=self) for k in self.component.get_children()]
 
     def single_line(self):
         return {
@@ -56,6 +69,17 @@ class I2B2OntologyElement:
             "c_symbol": self.c_path[len(self.parent.c_path) :],
             "c_metadataxml": "",
         }
+
+    def filter_obsfact(self, toignore=OBSERVATION_INFO+[DATE_DESCRIPTOR]):
+        """
+        Fetch the properties of self (referencing self as domain). Keep only the ontology properties (that should appear in the hierarchy) and return them.
+        In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
+        """
+        modifiers = []
+        for attr in self.component.list_properties():
+            if attr.identifier.toPython() not in toignore:
+                modifiers.append(attr)  
+        return modifiers
 
     def get_info(self):
         """
@@ -80,19 +104,9 @@ class I2B2OntologyElement:
         )
         return line
 
-
 class I2B2Concept(I2B2OntologyElement):
-    def __init__(self, concept:Concept, parent=None):
-        self.concept = concept
-        self.parent = parent
-        self.basecodehdler = BasecodeHandler(self.concept)
-        self.path_handler = I2B2PathResolver(self.concept)
-
-    def get_concept_details(self):
-        pass
-
-    def get_lines(self):
-        pass
+    def extract_modelems(self):#TODO finish this
+        self.modifiers.extend(self.walk_mtree())
 
     def get_info(self):
         info = super().get_info()
@@ -109,19 +123,19 @@ class I2B2Concept(I2B2OntologyElement):
         )
         return info
 
-    def filter_obsfact(self, toignore=OBSERVATION_INFO):
-        """
-        Fetch the properties of self (referencing self as domain). Keep only the ontology properties (that should appear in the hierarchy) and return them.
-        In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
-        """
-        modifiers = []
-        for attr in self.concept.list_properties():
-            if attr.identifier not in toignore:
-                modifiers.append(I2B2Modifier(attr, self))  # todo change this, weird af
-        return modifiers
+    
+class I2B2PathResolver:
+    def __init__(self, component):
+        self.component = component
+        self.path = ""
 
+    def get_path(self):
+        if self.path == "":
+            parent_path = self.component.parent.path_resolver.get_path()
+            self.path = parent_path + "\\" + self.component.shortname
+        return self.path
 
-class BasecodeHandler:
+class I2B2BasecodeHandler:
     """
     Compute and extract the basecode for a Class or a Property existing in the ontology.
     If a value is specified, it will be included in the basecode computation.
@@ -158,10 +172,5 @@ class BasecodeHandler:
 
 
 class I2B2Modifier(I2B2OntologyElement):
-    def __init__(self, resource, i2b2concept, parent=None):
-        self.property = Property(resource)
-        self.basecodehdler = BasecodeHandler(self.concept)
-        self.path_handler = I2B2PathResolver(self.concept)
-        self.applied_concept = i2b2concept
-        self.parent = parent
-        self.basecode = self.reduce_basecode(prefix=parent.basecode)
+    def set_applied_concept(self, concept):
+        self.applied_path = concept.path
