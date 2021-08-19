@@ -8,7 +8,7 @@ class I2B2Converter:
     """
     def __init__(self, concept:Concept):
         self.i2b2concepts = [I2B2Concept(concept)]
-        self.i2b2concepts.extend([I2B2Concept(sub, parent=concept) for sub in concept.subconcepts])
+        self.i2b2concepts.extend([I2B2Concept(sub, parent=concept) for sub in concept.subconcepts])#TODO use recursion here to handle multi level concept inclusion
         self.left_tosearch = self.i2b2concepts
 
     def get_batch(self):
@@ -43,10 +43,8 @@ class I2B2OntologyElement:
     def set_level(self):
         self.level = self.c_path.count("\\")
 
-    def walk_mtree(self, parent):#TODO finish this
-        self.path = self.path_handler(parent)
-        self.basecode = self.basecodehdler(parent)
-        return [I2B2Modifier(k, parent=self) for k in self.component.get_children()]
+    def walk_mtree(self):#TODO finish this. use recursion
+        return [I2B2Modifier(k, parent=self) for k in self.get_filtered_children()]
 
     def single_line(self):
         return {
@@ -70,16 +68,16 @@ class I2B2OntologyElement:
             "c_metadataxml": "",
         }
 
-    def filter_obsfact(self, toignore=OBSERVATION_INFO+[DATE_DESCRIPTOR]):
+    def get_filtered_children(self, toignore=OBSERVATION_PRED+[DATE_DESCRIPTOR]):
         """
         Fetch the properties of self (referencing self as domain). Keep only the ontology properties (that should appear in the hierarchy) and return them.
         In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
         """
         modifiers = []
-        for attr in self.component.list_properties():
+        for attr in self.component.get_children():
             if attr.identifier.toPython() not in toignore:
-                modifiers.append(attr)  
-        return modifiers
+                modifiers_tobe.append(attr)  
+        return modifiers_tobe
 
     def get_info(self):
         """
@@ -122,6 +120,12 @@ class I2B2Concept(I2B2OntologyElement):
             }
         )
         return info
+    
+
+    def walk_mtree(self, parent):#TODO finish this
+        modifiers = super().walk_mtree()
+        for mod in modifiers:
+            mod.set_applied_concept(self)
 
     
 class I2B2PathResolver:

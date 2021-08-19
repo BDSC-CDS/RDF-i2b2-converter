@@ -16,7 +16,7 @@
     {   "ROOT_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept",
         "PROJECT_RDF_NAMESPACE" : "https://biomedit.ch/rdf/sphn-ontology/sphn#",
         "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
-        "OBSERVATION_INFO": [   "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier", 
+        "OBSERVATION_PRED": [   "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier", 
                                 "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute", 
                                 "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase"],
         "ENTRY_CONCEPTS": [
