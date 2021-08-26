@@ -21,6 +21,18 @@ BLACKLIST = format_global(to_filter=BLACKLIST_TOSORT)
 DEACTIVATE_VALUESET = format_global(to_filter=DEACTIVATE_VALUESET_TOSORT)
 EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+BLACKLIST+OBSERVATION_INFO)) """
 
+class ExposedInterface:
+    """
+    Expose methods and attributes of a rdfwrappers object.
+    """
+    def __init__(self, component):
+        self.component = component
+
+    def get_children(self):
+        return self.component.get_children()
+
+    def get_uri(self):
+        return self.component.resource.identifier
 
 class Component:
     """
@@ -34,7 +46,7 @@ class Component:
 
     def get_children(self):
         """
-        Interface with the i2b2 wrapper, it allows to go down the tree without knowing if the object is a rdf Concept or Property.
+        Only interface with the i2b2 wrapper, it allows to go down the ontology tree independently if the object is a Concept or Property.
         """
         pass
 
@@ -294,6 +306,7 @@ class PropertyFilter:
                                 ]
                 }
                 FILTER NOT EXISTS { 
+                    ?child rdfs:subPropertyOf+ ?p .
                     {
                     ?child rdfs:domain ?self 
                     }
@@ -303,7 +316,6 @@ class PropertyFilter:
                                         owl:unionOf [ rdf:rest*/rdf:first ?self ]
                                     ]
                     }
-                    ?child rdfs:subPropertyOf+ ?p
                 }
             }
         """,
