@@ -3,7 +3,7 @@
     "OBSERVATION_PRED": [
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubjectPseudoIdentifier",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasDataProviderInstitute",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasAdministrativeCase",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasAdministrativeCase"
     ],
     "DATE_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#hasDateTime",
     "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit",
@@ -11,5 +11,5 @@
     "START_SEARCH_INDEX": 95000,
     "DEFAULT_DATE": 730000,
     "ROOT_PATH": "\\SPHNv2020.1\\",
-    "UNITS": {"Height": "cm", "Weight": "kg"},
+    "UNITS": {"Height": "cm", "Weight": "kg"}
 }

@@ -84,17 +84,19 @@ class Concept(Component):
         Gather all the concepts objects descending from self, using only the subclass attribute.
         Concepts descending from self through an  other predicate are ignored.
         """
-        self.subconcepts = self.find_subconcepts(filter_mode="whitelist")
+        self.find_subconcepts(filter_mode="whitelist")
 
     def get_children(self):
         """
         Trigger the recursion and return the first level children.
         """
-        if self.properties + self.subconcepts == []:
+        if self.properties == [] or self.subconcepts ==[]:
             self.explore_children()
         return self.properties + self.subconcepts
 
     def explore_children(self):
+        if self.subconcepts == []:
+            self.find_subconcepts()
         for k in self.subconcepts:
             k.explore_children()
         if terminology_indicator(self):
@@ -109,11 +111,11 @@ class Concept(Component):
             predicate.explore_ranges()
 
     def find_subconcepts(self, filter_mode="blacklist"):
-        subcs = self.resolver.explore_subclasses(filter_mode)
+        self.subconcepts = self.resolver.explore_subclasses(filter_mode)
         # Trigger recursive call on first-level children
-        for sub in subcs:
-            sub.find_subconcepts()
-        return subcs
+        for sub in self.subconcepts:
+            sub.find_subconcepts(filter_mode)
+        
 
 
 class GenericConcept(Concept):
