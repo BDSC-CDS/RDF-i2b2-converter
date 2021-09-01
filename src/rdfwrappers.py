@@ -8,6 +8,7 @@ def filter_valid(res_list):
     ]
     return filtered
 
+
 def terminology_indicator(concept):
     """
     Determine if it is worth looking for properties of this concept or not.
@@ -15,24 +16,6 @@ def terminology_indicator(concept):
     """
     return PROJECT_RDF_NAMESPACE not in concept.resource.identifier
 
-
-""" 
-BLACKLIST = format_global(to_filter=BLACKLIST_TOSORT)
-DEACTIVATE_VALUESET = format_global(to_filter=DEACTIVATE_VALUESET_TOSORT)
-EXCLUDED_COMPONENT = list(set(ABSTRACT_CLASSES+BLACKLIST+OBSERVATION_INFO)) """
-
-class ExposedInterface:
-    """
-    Expose methods and attributes of a rdfwrappers object.
-    """
-    def __init__(self, component):
-        self.component = component
-
-    def get_children(self):
-        return self.component.get_children()
-
-    def get_uri(self):
-        return self.component.resource.identifier
 
 class Component:
     """
@@ -44,11 +27,20 @@ class Component:
         self.shortname = rname(resource.identifier, resource.graph)
         self.set_label()
 
-    def get_children(self):
+    def get_children(self, *kwargs):
         """
-        Only interface with the i2b2 wrapper, it allows to go down the ontology tree independently if the object is a Concept or Property.
+        Allows to go down the ontology tree independently if the object is a Concept or Property.
         """
         pass
+
+    def get_entry_desc(self):
+        """
+        Dig the ontology from the current point only considering subclass relations.
+        """
+        pass
+
+    def get_uri(self):
+        return self.resource.identifier.toPython()
 
     def set_label(self):
         """
@@ -78,38 +70,49 @@ class Component:
     def __eq__(self, other):
         return self.resource.identifier == other.resource.identifier
 
+
 class Concept(Component):
     def __init__(self, resource, parent=None):
         super().__init__(resource)
         self.subconcepts = []
         self.properties = []
         self.parent = parent
+        self.resolver = OntologyDepthExplorer(self)
+
+    def get_entry_desc(self):
+        """
+        Gather all the concepts objects descending from self, using only the subclass attribute.
+        Concepts descending from self through an  other predicate are ignored.
+        """
+        self.subconcepts = self.find_subconcepts(filter_mode="whitelist")
 
     def get_children(self):
-        return self.properties+self.subconcepts
+        """
+        Trigger the recursion and return the first level children.
+        """
+        if self.properties + self.subconcepts == []:
+            self.explore_children()
+        return self.properties + self.subconcepts
 
     def explore_children(self):
-        resolver = OntologyDepthExplorer(self)
-        self.subconcepts.extend(self.find_subconcepts(resolver))
-        if self.subconcepts != [] or terminology_indicator(self):
+        for k in self.subconcepts:
+            k.explore_children()
+        if terminology_indicator(self):
             return
 
         self.subconcepts.extend(resolver.explore_valueset())
 
-        if self.subconcepts != []:
-            return
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
         # Note generic concepts are dealt with in the Property.mute_range method which casts them as leaf concepts
         self.properties.extend(resolver.explore_properties())
         for predicate in self.properties:
             predicate.explore_ranges()
 
-
-    def find_subconcepts(self, resolver):
-        subcs = resolver.explore_subclasses()
+    def find_subconcepts(self, filter_mode="blacklist"):
+        subcs = self.resolver.explore_subclasses(filter_mode)
         # Trigger recursive call on first-level children
-        for subc in subcs:
-            subc.explore_children()
+        for sub in subcs:
+            sub.find_subconcepts()
         return subcs
 
 
@@ -125,10 +128,12 @@ class GenericConcept(Concept):
     def find_subconcepts(self, resolver):
         return []
 
+
 class ValuesetIndividual(Concept):
     """
     Individuals are leaves of the concept tree, by definition. They cannot have children nor properties and will match observation instances.
     """
+
     def explore_children(self):
         return
 
@@ -137,7 +142,7 @@ class Property(Component):
     def __init__(self, resource, valid_ranges):
         super().__init__(resource)
         self.ranges_res = valid_ranges
-        self.ranges =[]
+        self.ranges = []
 
     def get_children(self):
         return self.ranges
@@ -187,13 +192,13 @@ class Property(Component):
         # Now search in self.ranges_res which range belong to an ontology and have brother in it.
         # When found, prune its subconcepts so it cannot be expanded
         for rn_idx in range(len(self.ranges_res)):
-            if rn_idx in idx_termsinrange:  
+            if rn_idx in idx_termsinrange:
                 if counts[self.resource.graph(qname(self.ranges_res[rn_idx]))] > 1:
                     final_ranges.append(GenericConcept(self.ranges_res[rn_idx]))
                     continue
             final_ranges.append(Concept(self.ranges_res[rn_idx]))
 
-        return final_ranges # TODO if the final range is of type Valueset (CAREFUL because type NameIndividual is weird in the ttl), generate the valueset values!
+        return final_ranges  # TODO if the final range is of type Valueset (CAREFUL because type NameIndividual is weird in the ttl), generate the valueset values!
 
 
 class RangeFilter:
@@ -260,7 +265,9 @@ class PropertyFilter:
         ranges = self.filter_ranges()
         if len(ranges) != len(self.resources):
             raise Exception("Bad property-range matching")
-        return [Property(self.resources[i], ranges[i]) for i in range(len(self.resources))]
+        return [
+            Property(self.resources[i], ranges[i]) for i in range(len(self.resources))
+        ]
 
     def filter_ranges(self):
         """
@@ -289,10 +296,10 @@ class PropertyFilter:
         Extract the (predicate, object TYPE) couples for predicates of a resource.
         Extracts only finest properties uris, which means if two properties are related (hierarchy), only the most specific is kept.
         """
-        print("Fetching properties for concept "+ self.concept.__repr__())
-        self_res = self.concept.resource 
-        # TODO enhance this 
-        response = self_res.graph.query( 
+        print("Fetching properties for concept " + self.concept.__repr__())
+        self_res = self.concept.resource
+        # TODO enhance this
+        response = self_res.graph.query(
             """
             SELECT ?p 
             WHERE {
@@ -336,12 +343,23 @@ class OntologyDepthExplorer:
         self.concept = concept
         self.filter = PropertyFilter(concept)
 
-    def explore_subclasses(self):
+    def explore_subclasses(self, filter_mode):
         """
         Fetch the direct subclasses of the concept. Reference the parent concept.
         """
         subs = self.concept.resource.subjects(SUBCLASS_PRED)
-        return [Concept(sub, parent=self.concept) for sub in subs if sub.identifier not in BLACKLIST]
+        if filter_mode == "blacklist":
+            return [
+                Concept(sub, parent=self.concept)
+                for sub in subs
+                if sub.identifier.toPython() not in BLACKLIST
+            ]
+        if filter_mode == "whitelist":
+            return [
+                Concept(sub, parent=self.concept)
+                for sub in subs
+                if sub.identifier.toPython() in ENTRY_CONCEPTS
+            ]
 
     def explore_properties(self, entrypoint=None):
         """
@@ -354,16 +372,18 @@ class OntologyDepthExplorer:
         If the concept is a child of "Valueset", then all possible instances should be specified as children of this concept.
         At data loading, these instances should be treated differently as other instances (for which only the class is important)
         """
-        if self.concept.resource.value(rdflib.URIRef(SUBCLASS_PRED_URI)).identifier!=rdflib.URIRef(VALUESET_MARKER_URI):
+        if self.concept.resource.value(
+            rdflib.URIRef(SUBCLASS_PRED_URI)
+        ).identifier != rdflib.URIRef(VALUESET_MARKER_URI):
             return []
-        graph =self.concept.resource.graph
-        res2 = graph.query("""
+        graph = self.concept.resource.graph
+        res2 = graph.query(
+            """
         select ?s 
         where {
             ?s rdf:type ?o
         }
-        """, initBindings={"o":self.concept.resource.identifier}
+        """,
+            initBindings={"o": self.concept.resource.identifier},
         )
         return [ValuesetIndividual(graph.resource(row[0])) for row in res2]
-
-        

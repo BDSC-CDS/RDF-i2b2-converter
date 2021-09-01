@@ -3,24 +3,14 @@ import hashlib
 import json
 import sys
 import pdb
+from configs import *
 
 """
 This file features RDF functions used by both the ontology builder and the data loader, but also other utility functions that do not fit 
 in the low-level "utils" file, typically functions triggering the external terminologies search.
 """
 
-with open("files/ontology_config.json") as ff:
-    config = json.load(ff)
-for key, val in config["parameters"].items():
-    globals()[key] = val
-for key, val in config["uris"].items():
-    globals()[key] = val
-
-with open("files/i2b2_rdf_mapping.json") as ff:
-    config = json.load(ff)
-for key, val in config.items():
-    globals()[key] = val
-#TODO uncomment this block when testing phase is finished (done in the test file to have it easily accessible)
+# TODO uncomment this block when testing phase is finished (done in the test file to have it easily accessible)
 """ myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../src/")
 
@@ -32,7 +22,8 @@ for file in os.listdir(TERMINOLOGIES_LOCATION):
 
 def give_entry_concepts():
     return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]"""
-SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI) 
+SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
+
 
 def rname(uri, graph):
     full = graph.qname(uri)

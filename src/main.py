@@ -1,4 +1,15 @@
+from rdfwrappers import *
 from i2b2wrappers import *
+
+pdb.set_trace()
+
+
+def check_macros():
+    """
+    Check the config files are properly formatted and the concepts to use as entrypoints are consistent, without duplicates.
+    """
+    pass
+
 
 def generate_ontology_table():
     # Now adding the namespaces so we can refer to them as macros e.g RDF stands for rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
@@ -23,11 +34,11 @@ def generate_ontology_table():
         buffer = converter.get_batch()
         while buffer:
             converter.write(METADATA_PATH)
-    
+
     # Step 3: Write the root information in the DB file then merge all concept files into it
 
     # Step 4 (maybe outside this script?): use SQL to derive I2B2 concept_dimension and modifier_dimension from the ontology table using C_TABLENAME or equivalent
-    
+
 
 def generate_event_tables():
     pass

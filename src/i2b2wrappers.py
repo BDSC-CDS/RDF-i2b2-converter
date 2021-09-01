@@ -1,15 +1,39 @@
-from rdfwrappers import ExposedInterface
+from rdfwrappers import *
+
+NON_I2B2_ONTOLOGY = OBSERVATION_PRED
+
 
 class I2B2Converter:
     """
-    The converter object initialized with a python rdfwrappers.Concept instance. 
+    The converter object initialized with a python rdfwrappers.Concept instance.
     All concepts related to this instance (i.e it and its subconcepts) are converted to an i2b2 concept object (taking the hierarchy into account)
     From this object can be triggered the modifiers generation.
     """
-    def __init__(self, concept:Concept):
-        self.i2b2concepts = [I2B2Concept(concept)]
-        self.i2b2concepts.extend([I2B2Concept(sub, parent=concept) for sub in concept.subconcepts])#TODO use recursion here to handle multi level concept inclusion
+
+    def __init__(self, concept, i2b2parent=None):
+        """
+        Extract and instantiate all the i2b2concepts for this run.
+        They are foud by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
+        """
+        cur = I2B2Concept(concept, i2b2parent)
+        concept.get_entry_desc()
+        pdb.set_trace()
+        self.i2b2concepts = [cur]
+        for sub in concept.subconcepts:
+            self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
         self.left_tosearch = self.i2b2concepts
+
+        """
+        self.i2b2concepts = [I2B2Concept(concept, i2b2parent)]
+        self.concept_object = concept
+    
+    def populate(self)
+        if len(self.i2b2concepts)>1:
+            return
+        for sub in self.concept_object.subconcepts:
+            self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
+        self.left_tosearch = self.i2b2concepts
+        """
 
     def get_batch(self):
         try:
@@ -19,38 +43,38 @@ class I2B2Converter:
         cur.set_path()
         cur.set_code()
         cur.extract_modelems()
-        self.towrite = [k.get_lines() for k in [cur]+cur.modifiers]
+        self.towrite = [k.get_lines() for k in [cur] + cur.modifiers]
         return True
 
     def write(self, filepath):
-        #use old db_csv code here
+        # use old db_csv code here
         with open(filepath, "a"):
             pass
 
+
 class I2B2OntologyElement:
-    def __init__(self, component, parent=None):
+    def __init__(self, graph_component, parent=None):
         self.parent = parent
-        self.rdf_interface = ExposedInterface(component)
-        self.basecodehdler=I2B2BasecodeHandler(self)
-        self.path_handler=I2B2PathResolver(self)
+        self.component = graph_component
+        self.basecodehdler = I2B2BasecodeHandler(self)
+        self.path_handler = I2B2PathResolver(self)
 
     def set_path(self):
-        self.path= self.path_handler.get_path()
+        self.path = self.path_handler.get_path()
 
     def set_code(self):
-        self.code= self.basecodehdler.get_code()
+        self.code = self.basecodehdler.get_code()
 
     def set_level(self):
         self.level = self.c_path.count("\\")
 
-    def walk_mtree(self, app_concept=""):#TODO check this works well with the new interface: k should be a rdfwrappers object
+    def walk_mtree(self, app_concept=""):
         res = []
         for k in self.get_filtered_children():
             cur = I2B2Modifier(k, parent=self, applied_concept=app_concept)
             cur.walk_mtree(app_concept)
-            res.append(cur)
+            res.extend(cur)
         return res
-
 
     def single_line(self):
         return {
@@ -74,15 +98,18 @@ class I2B2OntologyElement:
             "c_metadataxml": "",
         }
 
-    def get_filtered_children(self, toignore=OBSERVATION_PRED+[DATE_DESCRIPTOR]):
+    def get_filtered_children(self, toignore=OBSERVATION_PRED + [DATE_DESCRIPTOR]):
         """
         Fetch the properties of self (referencing self as domain or subProperty). Keep only the ontology properties (that should appear in the hierarchy) and return them.
         In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
         """
-        modifiers = []
-        for attr in self.rdf_interface.get_children():
-            if attr.identifier.toPython() not in toignore:#TODO change this, attr should only be forwarded as it should be a rdfwrappers object
-                modifiers_tobe.append(attr)  
+        modifiers_tobe = []
+        for attr in self.component.get_children():
+            if (
+                not attr.get_uri() not in NON_I2B2_ONTOLOGY
+            ):  # TODO define the NON_ONTOLOGY object like as a dictionary using .keys() ?
+                # OR : attr.mapsto_any(NON_I2B2_ONTOLOGY) with component.mapsto_any(list) checking the "mappings" config dic
+                modifiers_tobe.append(attr)
         return modifiers_tobe
 
     def get_info(self):
@@ -107,11 +134,14 @@ class I2B2OntologyElement:
             )
         )
         return line
-    
+
+    def __repr__(self):
+        return self.__class__.__name__ + " at " + self.component.__repr__()
+
 
 class I2B2Concept(I2B2OntologyElement):
-    def extract_modelems(self):#TODO finish this
-        self.modifiers.extend(self.walk_mtree(applied_concept=self))
+    def extract_modelems(self):
+        self.modifiers = self.walk_mtree(applied_concept=self)
 
     def get_info(self):
         info = super().get_info()
@@ -128,7 +158,7 @@ class I2B2Concept(I2B2OntologyElement):
         )
         return info
 
-    
+
 class I2B2PathResolver:
     def __init__(self, i2b2ontelem):
         self.element = i2b2ontelem
@@ -140,6 +170,7 @@ class I2B2PathResolver:
             self.path = parent_path + "\\" + self.element.shortname
         return self.path
 
+
 class I2B2BasecodeHandler:
     """
     Compute and extract the basecode for a Class or a Property existing in the ontology.
@@ -150,8 +181,10 @@ class I2B2BasecodeHandler:
 
     def __init__(self, i2b2element, value=None):
         self.value = value
-        self.core = i2b2element.rdf_interface.get_identifier()
-        self.prefix = i2b2element.parent.basecode
+        self.core = i2b2element.component.get_uri()
+        self.prefix = (
+            i2b2element.parent.basecode if i2b2element.parent is not None else ""
+        )
 
     def extract_basecode(self):
         if self.basecode is not None:
@@ -178,7 +211,6 @@ class I2B2BasecodeHandler:
 
 
 class I2B2Modifier(I2B2OntologyElement):
-    def __init__(self, component, parent=None, applied_concept=None):
-        super().__init__(component, parent)
-        self.applied_path = concept.path is applied_concept is not None else raise Exception("Modifier "+self.__repr__()+" initialized without applied concept")
-
+    def __init__(self, component2, parent=None, applied_concept=None):
+        super().__init__(component2, parent)
+        self.applied_path = concept.path if applied_concept is not None else False
