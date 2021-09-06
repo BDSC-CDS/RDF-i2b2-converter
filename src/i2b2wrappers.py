@@ -16,10 +16,9 @@ class I2B2Converter:
         They are foud by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
         cur = I2B2Concept(concept, i2b2parent)
-        concept.get_entry_desc()
-        pdb.set_trace()
         self.i2b2concepts = [cur]
-        for sub in concept.subconcepts:
+        concept.get_entry_desc()
+        for sub in concept.subconcepts:#TODO is that a correct recursion?
             self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
         self.left_tosearch = self.i2b2concepts
 
@@ -70,13 +69,13 @@ class I2B2OntologyElement:
 
     def walk_mtree(self, app_concept=""):
         res = []
-        for k in self.get_filtered_children():
+        submods = self.get_filtered_children()
+        for k in submods:
             cur = I2B2Modifier(k, parent=self, applied_concept=app_concept)
-            cur.walk_mtree(app_concept)
-            res.extend(cur)
+            res.extend(cur.walk_mtree(app_concept))
         return res
 
-    def single_line(self):
+    def single_line(self, nodetype=""):
         return {
             "c_hlevel": str(self.level),
             "c_fullname": self.c_path,
@@ -119,7 +118,7 @@ class I2B2OntologyElement:
         Return a list of dictionaries, one for each concept found on the way.
         """
         if self.parent is None:
-            return [single_line(entry, type="root")]
+            return [self.single_line(nodetype="root")]
         line = []
         line.extend(self.parent.get_info())
         for el in line:
@@ -127,7 +126,6 @@ class I2B2OntologyElement:
         previous = line[-1]
         line.append(
             self.single_line(
-                entry,
                 type="concept",
                 level=str(int(previous["c_hlevel"]) + 1),
                 prefix=previous["c_fullname"],
@@ -213,4 +211,4 @@ class I2B2BasecodeHandler:
 class I2B2Modifier(I2B2OntologyElement):
     def __init__(self, component2, parent=None, applied_concept=None):
         super().__init__(component2, parent)
-        self.applied_path = concept.path if applied_concept is not None else False
+        self.applied_path = applied_concept.path if applied_concept is not None else False

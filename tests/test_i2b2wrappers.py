@@ -10,12 +10,6 @@ from initsts import *
 from i2b2wrappers import *
 
 
-def test_i2b2ontelem():
-    inter_conc = Concept(CONCEPT_LIST[0])
-    test_c = I2B2Concept(inter_conc, parent=None)
-    modifiers = test_c.extract_modelems()
-    pdb.set_trace()
-
 
 def test_converterclass():
     root_concept = Concept(
@@ -25,6 +19,14 @@ def test_converterclass():
     )
     converter = I2B2Converter(root_concept)
     all_concepts = converter.i2b2concepts
+    assert [k.modifiers == [] for k in all_concepts]
+    pdb.set_trace()
+
+def test_i2b2ontelem():
+    inter_conc = Concept(CONCEPT_LIST[0])
+    test_c = I2B2Concept(inter_conc, parent=None)
+    modifiers = test_c.extract_modelems()
+    mod_mod = [el for el in modifiers.walk_mtree()]
     pdb.set_trace()
 
 
@@ -35,7 +37,7 @@ def test_interface():
 
     # Step 2: For each concept, create an I2B2 converter and extract info from it.
     # This might be suboptimal in terms of memory usage when an entry concept is in fact a directory having a lot of subconcepts
-    for concept_res in entry_objs:
+    for concept_res in entry_concept_resources:
         concept = Concept(concept_res)
         concept.explore_subclasses()
 

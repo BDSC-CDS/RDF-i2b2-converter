@@ -102,11 +102,11 @@ class Concept(Component):
         if terminology_indicator(self):
             return
 
-        self.subconcepts.extend(resolver.explore_valueset())
+        self.subconcepts.extend(self.resolver.explore_valueset())
 
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
         # Note generic concepts are dealt with in the Property.mute_range method which casts them as leaf concepts
-        self.properties.extend(resolver.explore_properties())
+        self.properties.extend(self.resolver.explore_properties())
         for predicate in self.properties:
             predicate.explore_ranges()
 
@@ -195,7 +195,7 @@ class Property(Component):
         # When found, prune its subconcepts so it cannot be expanded
         for rn_idx in range(len(self.ranges_res)):
             if rn_idx in idx_termsinrange:
-                if counts[self.resource.graph(qname(self.ranges_res[rn_idx]))] > 1:
+                if counts[self.resource.graph.qname(self.ranges_res[rn_idx])] > 1:
                     final_ranges.append(GenericConcept(self.ranges_res[rn_idx]))
                     continue
             final_ranges.append(Concept(self.ranges_res[rn_idx]))

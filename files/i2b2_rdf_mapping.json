@@ -11,5 +11,6 @@
     "START_SEARCH_INDEX": 95000,
     "DEFAULT_DATE": 730000,
     "ROOT_PATH": "\\SPHNv2020.1\\",
-    "UNITS": {"Height": "cm", "Weight": "kg"}
+    "UNITS": {"Height": "cm", "Weight": "kg"},
+    "METADATA_PATH": "../output_tables/METADATA.csv"
 }
