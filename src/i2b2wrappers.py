@@ -2,7 +2,7 @@ from rdfwrappers import *
 
 NON_I2B2_ONTOLOGY = OBSERVATION_PRED
 
-
+#TODO handle leaves modifiers (do not cast the xsd:string as a modifier but use it to define the valuetype)
 class I2B2Converter:
     """
     The converter object initialized with a python rdfwrappers.Concept instance.
