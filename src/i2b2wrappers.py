@@ -55,35 +55,42 @@ class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
         self.parent = parent
         self.component = graph_component
-        self.basecodehdler = I2B2BasecodeHandler(self)
+        self.basecode_handler = I2B2BasecodeHandler(self)
         self.path_handler = I2B2PathResolver(self)
+        self.set_path()
+        self.set_code()
+        self.set_level()
 
     def set_path(self):
         self.path = self.path_handler.get_path()
 
     def set_code(self):
-        self.code = self.basecodehdler.get_code()
+        self.code = self.basecode_handler.extract_basecode()
 
     def set_level(self):
-        self.level = self.c_path.count("\\")
+        self.level = self.path.count("\\")
 
-    def walk_mtree(self, app_concept=""):
+    def get_concept(self):
+        pass
+
+    def walk_mtree(self):
         res = []
         submods = self.get_filtered_children()
         for k in submods:
-            cur = I2B2Modifier(k, parent=self, applied_concept=app_concept)
-            res.extend(cur.walk_mtree(app_concept))
+            cur = I2B2Modifier(k, parent=self, applied_path=self.applied_path)
+            res.append(cur)
+            res.extend(cur.walk_mtree())
         return res
 
     def single_line(self, nodetype=""):
         return {
             "c_hlevel": str(self.level),
-            "c_fullname": self.c_path,
+            "c_fullname": self.path,
             "c_name": self.label,
             "c_synonym_cd": "N",
             "c_basecode": self.basecode,
             "c_comment": self.comment,
-            "c_dimcode": self.c_path,
+            "c_dimcode": self.path,
             "c_tooltip": "",
             "c_totalnum": "",
             "update_date": "",
@@ -92,8 +99,8 @@ class I2B2OntologyElement:
             "sourcesystem_cd": "",
             "valuetype_cd": "",
             "m_exclusion_cd": "",
-            "c_path": self.parent.c_path,
-            "c_symbol": self.c_path[len(self.parent.c_path) :],
+            "c_path": self.parent.path,
+            "c_symbol": self.path[len(self.parent.path) :],
             "c_metadataxml": "",
         }
 
@@ -105,7 +112,7 @@ class I2B2OntologyElement:
         modifiers_tobe = []
         for attr in self.component.get_children():
             if (
-                not attr.get_uri() not in NON_I2B2_ONTOLOGY
+                not attr.get_uri() in NON_I2B2_ONTOLOGY
             ):  # TODO define the NON_ONTOLOGY object like as a dictionary using .keys() ?
                 # OR : attr.mapsto_any(NON_I2B2_ONTOLOGY) with component.mapsto_any(list) checking the "mappings" config dic
                 modifiers_tobe.append(attr)
@@ -139,7 +146,11 @@ class I2B2OntologyElement:
 
 class I2B2Concept(I2B2OntologyElement):
     def extract_modelems(self):
-        self.modifiers = self.walk_mtree(applied_concept=self)
+        self.applied_path = self.path
+        self.modifiers = self.walk_mtree()
+    
+    def get_concept(self):
+        return self
 
     def get_info(self):
         info = super().get_info()
@@ -164,8 +175,11 @@ class I2B2PathResolver:
 
     def get_path(self):
         if self.path == "":
-            parent_path = self.element.parent.path_resolver.get_path()
-            self.path = parent_path + "\\" + self.element.shortname
+            if self.element.parent is None:
+                parent_path=""
+            else:
+                parent_path = self.element.parent.path_handler.get_path()
+            self.path = parent_path + "\\" + self.element.component.get_shortname()
         return self.path
 
 
@@ -179,9 +193,10 @@ class I2B2BasecodeHandler:
 
     def __init__(self, i2b2element, value=None):
         self.value = value
+        self.basecode = None
         self.core = i2b2element.component.get_uri()
         self.prefix = (
-            i2b2element.parent.basecode if i2b2element.parent is not None else ""
+            i2b2element.parent.basecode_handler.extract_basecode() if i2b2element.parent is not None else ""
         )
 
     def extract_basecode(self):
@@ -197,6 +212,7 @@ class I2B2BasecodeHandler:
         and to be computable both from the ontology side and from the data loader side.
         The resulting code is the joining key between data tables and ontology tables.
         """
+        return ""
         rdf_uri = self.core
         value = self.value
         prefix = self.prefix
@@ -209,6 +225,10 @@ class I2B2BasecodeHandler:
 
 
 class I2B2Modifier(I2B2OntologyElement):
-    def __init__(self, component2, parent=None, applied_concept=None):
+    def __init__(self, component2, parent=None, applied_path=None):
+        # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
+        if parent is not None and parent.path==applied_path:
+            parent=None
         super().__init__(component2, parent)
-        self.applied_path = applied_concept.path if applied_concept is not None else False
+        self.applied_path = applied_path
+

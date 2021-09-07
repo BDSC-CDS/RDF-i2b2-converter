@@ -131,7 +131,7 @@ def test_mute_sameterminology():
     props = nonblrng_props([res1, res2])
     rnns = []
     for prop in props:
-        prop.explore_ranges()
+        prop.digin_ranges()
         rnns.extend(prop.ranges)
     assert all([rnn.subconcepts == [] for rnn in rnns])
 
@@ -141,7 +141,7 @@ def test_nomute_diffterminologies():
         rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubstanceCode")
     )
     prop1 = nonblrng_props([res1])[0]
-    prop1.explore_ranges()
+    prop1.digin_ranges()
     assert [len(rnn.subconcepts) > 0 for rnn in prop1.ranges] == [
         False,
         False,
@@ -153,7 +153,7 @@ def test_mute_sameterm_differentfiles():
     res1 = ONTOLOGY_GRAPH.resource(rdflib.URIRef("http://snomed.info/id/105590001"))
     res2 = ONTOLOGY_GRAPH.resource(rdflib.URIRef("http://snomed.info/id/118169006"))
     prop = Property(ONTOLOGY_GRAPH.resource(RDF.toto), [res1, res2])
-    prop.explore_ranges()
+    prop.digin_ranges()
     assert all([rnn.subconcepts == [] for rnn in prop.ranges])
     # use <http://snomed.info/id/105590001> (extracted from the sphn ttl) vs any other snomed node from the snomed file
 

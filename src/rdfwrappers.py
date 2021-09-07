@@ -1,12 +1,27 @@
 from rdf_base import *
 
+# add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
+BLACKLIST = BLACKLIST+OBSERVATION_PRED
+PARENT_BLACKLIST = [DATE_DESCRIPTOR, UNIT_DESCRIPTOR]
 
-def filter_valid(res_list):
+def filter_valid(res_list, forbidden_parents=PARENT_BLACKLIST):
+    #TODO arrange this so it does not duplicate the other blacklisting in PropertyFilter
+    #TODO make it clearer what is blacklisted because of semantics and what is ignored because of i2b2
+    #TODO add SUBPROPERTY_PRED
+    #TODO add automatic cast to URIRef of all elements in the "uri" dic of the JSON
     # Discards elements referenced in the blacklist, proceed with the other
     filtered = [
         item for item in res_list if item.identifier.toPython() not in BLACKLIST
     ]
-    return filtered
+    if forbidden_parents == []:
+        return filtered
+    # Discards elements not in the blacklist but which parents are in the dedicated blacklist
+    res = []
+    for item in filtered:
+        if not any((item.identifier, SUBCLASS_PRED, rdflib.URIRef(non_onto_parent)) in item.graph for non_onto_parent in forbidden_parents):
+            res.append(item)
+    return res
+
 
 
 def terminology_indicator(concept):
@@ -24,7 +39,7 @@ class Component:
 
     def __init__(self, resource):
         self.resource = resource
-        self.shortname = rname(resource.identifier, resource.graph)
+        self.shortname = resource.graph.namespace_manager.normalizeUri(resource.identifier)
         self.set_label()
 
     def get_children(self, *kwargs):
@@ -41,6 +56,9 @@ class Component:
 
     def get_uri(self):
         return self.resource.identifier.toPython()
+
+    def get_shortname(self):
+        return self.shortname
 
     def set_label(self):
         """
@@ -108,7 +126,7 @@ class Concept(Component):
         # Note generic concepts are dealt with in the Property.mute_range method which casts them as leaf concepts
         self.properties.extend(self.resolver.explore_properties())
         for predicate in self.properties:
-            predicate.explore_ranges()
+            predicate.digin_ranges()
 
     def find_subconcepts(self, filter_mode="blacklist"):
         self.subconcepts = self.resolver.explore_subclasses(filter_mode)
@@ -149,7 +167,7 @@ class Property(Component):
     def get_children(self):
         return self.ranges
 
-    def explore_ranges(self):
+    def digin_ranges(self):
         self.ranges = self.mute_ranges()
         for obj in self.ranges:
             # The explore method will trigger subclasses and properties discovery
@@ -298,6 +316,8 @@ class PropertyFilter:
         Extract the (predicate, object TYPE) couples for predicates of a resource.
         Extracts only finest properties uris, which means if two properties are related (hierarchy), only the most specific is kept.
         """
+        if self.resources != []:
+            return
         print("Fetching properties for concept " + self.concept.__repr__())
         self_res = self.concept.resource
         # TODO enhance this

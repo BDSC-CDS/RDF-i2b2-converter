@@ -12,7 +12,9 @@ for file in os.listdir(TERMINOLOGIES_LOCATION):
     if "snomed" in file or "loinc" in file:
         continue
     ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")
-
+RDFS=""
+RDF=""
+SPHN=""
 ns = [e for e in ONTOLOGY_GRAPH.namespace_manager.namespaces()]
 for tupp in ns:
     key, val = tupp
