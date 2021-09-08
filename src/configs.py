@@ -6,6 +6,8 @@ ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION, ONTOLOGY_NAME, DATA_GRAPHS_LOCA
 ENCOUNTER_NUM, OBSERVATION_PRED, DATE_DESCRIPTOR, UNIT_DESCRIPTOR, MAX_BASECODE_LENGTH, START_SEARCH_INDEX, DEFAULT_DATE, ROOT_PATH, UNITS, METADATA_PATH = (
     [ None, None, None, None, None, None, None, None, None, None]
 )
+ONTOLOGY_DROP_DIC={}
+MERGE_DIC={}
 with open("files/ontology_config.json") as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():

@@ -1,8 +1,19 @@
 from rdfwrappers import *
 
-NON_I2B2_ONTOLOGY = OBSERVATION_PRED
 
-#TODO handle leaves modifiers (do not cast the xsd:string as a modifier but use it to define the valuetype)
+def drop(attribute):
+    """
+    If the attribute should be dropped as mentioned in the config file, skip it
+    """
+    for rn in attribute.get_children():
+        cur_uri = rn.get_identifier()
+        if cur_uri in ONTOLOGY_DROP_DIC.values():
+            return True
+    return False
+
+#TODO maybe all this merge thing is too complex. just see if the property is a datatype and make an equivalence to the valuetype_cd code.
+# Include default metadataxml depending on the datatype. when finding a unit, overwrite the unit field of the metadataxml
+# But first check for distinct units usage. Or exceptionnally go fetch the equivalent loinc equivalence... Maybe in a separate module 
 class I2B2Converter:
     """
     The converter object initialized with a python rdfwrappers.Concept instance.
@@ -78,9 +89,11 @@ class I2B2OntologyElement:
         submods = self.get_filtered_children()
         for k in submods:
             cur = I2B2Modifier(k, parent=self, applied_path=self.applied_path)
+            next = cur.walk_mtree()
             res.append(cur)
-            res.extend(cur.walk_mtree())
+            res.extend(next)
         return res
+        
 
     def single_line(self, nodetype=""):
         return {
@@ -104,19 +117,17 @@ class I2B2OntologyElement:
             "c_metadataxml": "",
         }
 
-    def get_filtered_children(self, toignore=OBSERVATION_PRED + [DATE_DESCRIPTOR]):
+    def get_filtered_children(self):
         """
         Fetch the properties of self (referencing self as domain or subProperty). Keep only the ontology properties (that should appear in the hierarchy) and return them.
         In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
         """
         modifiers_tobe = []
         for attr in self.component.get_children():
-            if (
-                not attr.get_uri() in NON_I2B2_ONTOLOGY
-            ):  # TODO define the NON_ONTOLOGY object like as a dictionary using .keys() ?
-                # OR : attr.mapsto_any(NON_I2B2_ONTOLOGY) with component.mapsto_any(list) checking the "mappings" config dic
+            if not drop(attr):
                 modifiers_tobe.append(attr)
         return modifiers_tobe
+
 
     def get_info(self):
         """
@@ -166,7 +177,6 @@ class I2B2Concept(I2B2OntologyElement):
             }
         )
         return info
-
 
 class I2B2PathResolver:
     def __init__(self, i2b2ontelem):

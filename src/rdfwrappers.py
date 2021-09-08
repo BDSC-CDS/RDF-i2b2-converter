@@ -2,25 +2,13 @@ from rdf_base import *
 
 # add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
 BLACKLIST = BLACKLIST+OBSERVATION_PRED
-PARENT_BLACKLIST = [DATE_DESCRIPTOR, UNIT_DESCRIPTOR]
 
-def filter_valid(res_list, forbidden_parents=PARENT_BLACKLIST):
-    #TODO arrange this so it does not duplicate the other blacklisting in PropertyFilter
-    #TODO make it clearer what is blacklisted because of semantics and what is ignored because of i2b2
-    #TODO add SUBPROPERTY_PRED
-    #TODO add automatic cast to URIRef of all elements in the "uri" dic of the JSON
+def filter_valid(res_list):
     # Discards elements referenced in the blacklist, proceed with the other
     filtered = [
         item for item in res_list if item.identifier.toPython() not in BLACKLIST
     ]
-    if forbidden_parents == []:
-        return filtered
-    # Discards elements not in the blacklist but which parents are in the dedicated blacklist
-    res = []
-    for item in filtered:
-        if not any((item.identifier, SUBCLASS_PRED, rdflib.URIRef(non_onto_parent)) in item.graph for non_onto_parent in forbidden_parents):
-            res.append(item)
-    return res
+    return filtered
 
 
 

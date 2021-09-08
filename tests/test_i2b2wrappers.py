@@ -9,7 +9,13 @@ sys.path.insert(0, myPath)
 from initsts import *
 from i2b2wrappers import *
 
-
+def construct_property(uri):
+    pf = PropertyFilter(None)
+    pf.resources = [ONTOLOGY_GRAPH.resource(rdflib.URIRef(uri))]
+    properties = pf.get_properties()
+    for k in properties:
+        k.digin_ranges()
+    return properties
 
 def test_converterclass():
     root_concept = Concept(
@@ -20,13 +26,18 @@ def test_converterclass():
     converter = I2B2Converter(root_concept)
     all_concepts = converter.i2b2concepts
     assert [k.modifiers == [] for k in all_concepts]
-    pdb.set_trace()
+
+def test_modifiers():
+    prop = construct_property("https://biomedit.ch/rdf/sphn-ontology/sphn#hasInhaledOxygenConcentrationDrugAdministrationEvent")
+    i2b2mod = I2B2Modifier(prop[0], parent=None, applied_path=None)
+    modlist = i2b2mod.walk_mtree()
+    assert len(modlist)>1
 
 def test_i2b2ontelem():
-    inter_conc = Concept(CONCEPT_LIST[0])
+    inter_conc = CONCEPT_LIST[0]
     test_c = I2B2Concept(inter_conc, parent=None)
-    modifiers = test_c.extract_modelems()
-    mod_mod = [el for el in modifiers.walk_mtree()]
+    test_c.extract_modelems()
+    mod_mod = test_c.modifiers
     pdb.set_trace()
 
 

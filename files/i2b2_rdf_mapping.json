@@ -1,16 +1,23 @@
 {
-    "ENCOUNTER_NUM": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
-    "OBSERVATION_PRED": [
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubjectPseudoIdentifier",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasDataProviderInstitute",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasAdministrativeCase"
-    ],
-    "DATE_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#hasDateTime",
-    "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit",
     "MAX_BASECODE_LENGTH": 50,
     "START_SEARCH_INDEX": 95000,
     "DEFAULT_DATE": 730000,
     "ROOT_PATH": "\\SPHNv2020.1\\",
     "UNITS": {"Height": "cm", "Weight": "kg"},
-    "METADATA_PATH": "../output_tables/METADATA.csv"
+    "METADATA_PATH": "../output_tables/METADATA.csv",
+    "ONTOLOGY_DROP_DIC" : {
+        "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
+        "PATIENT_INFO" :" https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",
+        "PROVIDER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute",
+        "DATE_DESCRIPTOR": "http://www.w3.org/2001/XMLSchema#dateTime",
+        "UNIT_DESCRIPTOR" : "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"
+        },
+    "MERGE_DIC": {
+        "STRING_DESCRIPTOR": "http://www.w3.org/2001/XMLSchema#string",
+        "DOUBLE_DESCRIPTOR": "http://www.w3.org/2001/XMLSchema#double"
+    },
+    "EQUIVALENCES":{
+        "STRING_DESCRIPTOR":["VALUETYPE_CD", "T"],
+        "DOUBLE_DESCRIPTOR":["VALUETYPE_CD", "N"]
+    }
 }
