@@ -1,4 +1,5 @@
 from rdfwrappers import *
+from utils import db_to_csv
 
 
 def drop(attribute):
@@ -32,6 +33,7 @@ class I2B2Converter:
         for sub in concept.subconcepts:#TODO is that a correct recursion?
             self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
         self.left_tosearch = self.i2b2concepts
+        self.towrite=[]
 
         """
         self.i2b2concepts = [I2B2Concept(concept, i2b2parent)]
@@ -57,9 +59,11 @@ class I2B2Converter:
         return True
 
     def write(self, filepath):
-        # use old db_csv code here
-        with open(filepath, "a"):
-            pass
+        """
+        Write all the db at once through a pandas dataframe.
+        If updating this function to enable append mode, do not forget to make sure header is written exactly oncein the file.
+        """
+        db_to_csv(self.towrite, METADATA_PATH)
 
 
 class I2B2OntologyElement:

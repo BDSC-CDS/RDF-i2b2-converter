@@ -10,8 +10,6 @@ def filter_valid(res_list):
     ]
     return filtered
 
-
-
 def terminology_indicator(concept):
     """
     Determine if it is worth looking for properties of this concept or not.

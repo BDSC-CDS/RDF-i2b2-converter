@@ -3,11 +3,15 @@ import sys
 import pytest
 import random
 
+from utils import from_csv
+
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
 
 from initsts import *
 from i2b2wrappers import *
+
+global_db = []
 
 def construct_property(uri):
     pf = PropertyFilter(None)
@@ -58,3 +62,18 @@ def test_interface():
         buffer = converter.get_batch()
         while buffer:
             converter.write(METADATA_PATH)
+
+def test_duplicate_paths():
+    """
+    Check all paths and basecodes are unique.
+    """
+    col_names=["c_fullname", "c_basecode"]
+    db = from_csv(METADATA_PATH, usecols=col_names)
+    if len(db)>0:
+        assert not any([len(set(db[key]))<len(db[key]) for key in col_names])
+
+
+
+
+
+

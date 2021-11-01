@@ -1,4 +1,5 @@
-import csv, pdb
+import pandas as pd
+import pdb
 import json, os, datetime
 
 """"
@@ -157,17 +158,13 @@ def add_spaces(oname):
     return fname + oname[-1]
 
 
-def db_csv(db, filename):
+def db_to_csv(db, filename):
     """
     Simple tool writing a list of dictionaries with matching keys to a csv database-ready file.
     Argument is only the target filename, will be written in the output_tables directory.
     """
-    toCSV = db
-    keys = toCSV[0].keys()
-    with open(OUTPUT_TABLES + filename + ".csv", "w") as output_file:
-        dict_writer = csv.DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(toCSV)
+    df = pd.DataFrame(db)
+    df.to_csv(path_or_buf=filename)
 
 
 def from_csv(filename):
@@ -175,12 +172,8 @@ def from_csv(filename):
     Read the csv database and outputs a list of dicts.
     Argument is the full relative path.
     """
-    db = []
-    with open(filename) as ff:
-        reader = csv.DictReader(ff)
-        for row in reader:
-            db.append(row)
-    return db
+    db = pd.read_csv(filename)
+    return db.to_dict('records')
 
 
 def reduce_term(verbose):
