@@ -3,8 +3,6 @@ import sys
 import pytest
 import random
 
-from utils import from_csv
-
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
 
@@ -13,6 +11,7 @@ from i2b2wrappers import *
 
 global_db = []
 
+
 def construct_property(uri):
     pf = PropertyFilter(None)
     pf.resources = [ONTOLOGY_GRAPH.resource(rdflib.URIRef(uri))]
@@ -20,6 +19,7 @@ def construct_property(uri):
     for k in properties:
         k.digin_ranges()
     return properties
+
 
 def test_converterclass():
     root_concept = Concept(
@@ -31,11 +31,15 @@ def test_converterclass():
     all_concepts = converter.i2b2concepts
     assert [k.modifiers == [] for k in all_concepts]
 
+
 def test_modifiers():
-    prop = construct_property("https://biomedit.ch/rdf/sphn-ontology/sphn#hasInhaledOxygenConcentrationDrugAdministrationEvent")
+    prop = construct_property(
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasInhaledOxygenConcentrationDrugAdministrationEvent"
+    )
     i2b2mod = I2B2Modifier(prop[0], parent=None, applied_path=None)
     modlist = i2b2mod.walk_mtree()
-    assert len(modlist)>1
+    assert len(modlist) > 1
+
 
 def test_i2b2ontelem():
     inter_conc = CONCEPT_LIST[0]
@@ -63,17 +67,12 @@ def test_interface():
         while buffer:
             converter.write(METADATA_PATH)
 
+
 def test_duplicate_paths():
     """
     Check all paths and basecodes are unique.
     """
-    col_names=["c_fullname", "c_basecode"]
+    col_names = ["c_fullname", "c_basecode"]
     db = from_csv(METADATA_PATH, usecols=col_names)
-    if len(db)>0:
-        assert not any([len(set(db[key]))<len(db[key]) for key in col_names])
-
-
-
-
-
-
+    if len(db) > 0:
+        assert not any([len(set(db[key])) < len(db[key]) for key in col_names])

@@ -1,7 +1,8 @@
 from rdf_base import *
 
 # add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
-BLACKLIST = BLACKLIST+OBSERVATION_PRED
+BLACKLIST = BLACKLIST + [k for k in ONTOLOGY_DROP_DIC.values()]
+
 
 def filter_valid(res_list):
     # Discards elements referenced in the blacklist, proceed with the other
@@ -9,6 +10,7 @@ def filter_valid(res_list):
         item for item in res_list if item.identifier.toPython() not in BLACKLIST
     ]
     return filtered
+
 
 def terminology_indicator(concept):
     """
@@ -25,7 +27,10 @@ class Component:
 
     def __init__(self, resource):
         self.resource = resource
-        self.shortname = resource.graph.namespace_manager.normalizeUri(resource.identifier)
+        self.shortname = resource.graph.namespace_manager.normalizeUri(
+            resource.identifier
+        )
+        self.comment = resource.value(COMMENT_URI)
         self.set_label()
 
     def get_children(self, *kwargs):
@@ -45,6 +50,9 @@ class Component:
 
     def get_shortname(self):
         return self.shortname
+
+    def get_comment(self):
+        return self.comment
 
     def set_label(self):
         """
@@ -94,7 +102,7 @@ class Concept(Component):
         """
         Trigger the recursion and return the first level children.
         """
-        if self.properties == [] or self.subconcepts ==[]:
+        if self.properties == [] or self.subconcepts == []:
             self.explore_children()
         return self.properties + self.subconcepts
 
@@ -119,7 +127,6 @@ class Concept(Component):
         # Trigger recursive call on first-level children
         for sub in self.subconcepts:
             sub.find_subconcepts(filter_mode)
-        
 
 
 class GenericConcept(Concept):

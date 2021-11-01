@@ -158,13 +158,13 @@ def add_spaces(oname):
     return fname + oname[-1]
 
 
-def db_to_csv(db, filename):
+def db_to_csv(db, filename, mode="w"):
     """
     Simple tool writing a list of dictionaries with matching keys to a csv database-ready file.
     Argument is only the target filename, will be written in the output_tables directory.
     """
     df = pd.DataFrame(db)
-    df.to_csv(path_or_buf=filename)
+    df.to_csv(path_or_buf=filename, mode=mode, header=(mode != "a"))
 
 
 def from_csv(filename):
@@ -173,7 +173,7 @@ def from_csv(filename):
     Argument is the full relative path.
     """
     db = pd.read_csv(filename)
-    return db.to_dict('records')
+    return db.to_dict("records")
 
 
 def reduce_term(verbose):

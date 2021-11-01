@@ -12,9 +12,10 @@ def drop(attribute):
             return True
     return False
 
-#TODO maybe all this merge thing is too complex. just see if the property is a datatype and make an equivalence to the valuetype_cd code.
+
+# TODO maybe all this merge thing is too complex. just see if the property is a datatype and make an equivalence to the valuetype_cd code.
 # Include default metadataxml depending on the datatype. when finding a unit, overwrite the unit field of the metadataxml
-# But first check for distinct units usage. Or exceptionnally go fetch the equivalent loinc equivalence... Maybe in a separate module 
+# But first check for distinct units usage. Or exceptionnally go fetch the equivalent loinc equivalence... Maybe in a separate module
 class I2B2Converter:
     """
     The converter object initialized with a python rdfwrappers.Concept instance.
@@ -30,10 +31,10 @@ class I2B2Converter:
         cur = I2B2Concept(concept, i2b2parent)
         self.i2b2concepts = [cur]
         concept.get_entry_desc()
-        for sub in concept.subconcepts:#TODO is that a correct recursion?
+        for sub in concept.subconcepts:  # TODO is that a correct recursion?
             self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
         self.left_tosearch = self.i2b2concepts
-        self.towrite=[]
+        self.towrite = []
 
         """
         self.i2b2concepts = [I2B2Concept(concept, i2b2parent)]
@@ -97,7 +98,6 @@ class I2B2OntologyElement:
             res.append(cur)
             res.extend(next)
         return res
-        
 
     def single_line(self, nodetype=""):
         return {
@@ -132,7 +132,6 @@ class I2B2OntologyElement:
                 modifiers_tobe.append(attr)
         return modifiers_tobe
 
-
     def get_info(self):
         """
         Create a db line as dictionary for a concept, using the single_line function.
@@ -163,7 +162,7 @@ class I2B2Concept(I2B2OntologyElement):
     def extract_modelems(self):
         self.applied_path = self.path
         self.modifiers = self.walk_mtree()
-    
+
     def get_concept(self):
         return self
 
@@ -182,6 +181,7 @@ class I2B2Concept(I2B2OntologyElement):
         )
         return info
 
+
 class I2B2PathResolver:
     def __init__(self, i2b2ontelem):
         self.element = i2b2ontelem
@@ -190,7 +190,7 @@ class I2B2PathResolver:
     def get_path(self):
         if self.path == "":
             if self.element.parent is None:
-                parent_path=""
+                parent_path = ""
             else:
                 parent_path = self.element.parent.path_handler.get_path()
             self.path = parent_path + "\\" + self.element.component.get_shortname()
@@ -210,7 +210,9 @@ class I2B2BasecodeHandler:
         self.basecode = None
         self.core = i2b2element.component.get_uri()
         self.prefix = (
-            i2b2element.parent.basecode_handler.extract_basecode() if i2b2element.parent is not None else ""
+            i2b2element.parent.basecode_handler.extract_basecode()
+            if i2b2element.parent is not None
+            else ""
         )
 
     def extract_basecode(self):
@@ -241,8 +243,7 @@ class I2B2BasecodeHandler:
 class I2B2Modifier(I2B2OntologyElement):
     def __init__(self, component2, parent=None, applied_path=None):
         # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
-        if parent is not None and parent.path==applied_path:
-            parent=None
+        if parent is not None and parent.path == applied_path:
+            parent = None
         super().__init__(component2, parent)
         self.applied_path = applied_path
-
