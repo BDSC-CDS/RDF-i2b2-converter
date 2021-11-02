@@ -107,9 +107,7 @@ class Concept(Component):
         return self.properties + self.subconcepts
 
     def explore_children(self):
-        if self.subconcepts == []:
-            self.find_subconcepts()
-        for k in self.subconcepts:
+        for k in self.find_subconcepts():
             k.explore_children()
         if terminology_indicator(self):
             return
@@ -123,6 +121,8 @@ class Concept(Component):
             predicate.digin_ranges()
 
     def find_subconcepts(self, filter_mode="blacklist"):
+        if len(self.subconcepts)>0:
+            return self.subconcepts
         self.subconcepts = self.resolver.explore_subclasses(filter_mode)
         # Trigger recursive call on first-level children
         for sub in self.subconcepts:
@@ -161,10 +161,20 @@ class Property(Component):
         return self.ranges
 
     def digin_ranges(self):
-        self.ranges = self.mute_ranges()
-        for obj in self.ranges:
-            # The explore method will trigger subclasses and properties discovery
-            obj.explore_children()
+        if self.resource.value(TYPE_PREDICATE_URI)==DATATYPE_PROP_URI:
+            pass
+            """
+            if self.resource is a datatype property, no need to do anything on the ranges but return them and somehow flag self/them as datatype/as a leaf
+            """
+
+            #TODO :  if is a datatype, do not call mute range but write and call another function that just turns the range_res into range concept objects
+            #  (or leaf objects that will work with i2b2 metadata), and return
+
+        elif self.resource.value(TYPE_PREDICATE_URI)==OBJECT_PROP_URI:
+            self.ranges = self.mute_ranges()
+            for obj in self.ranges:
+                # The explore method will trigger subclasses and properties discovery
+                obj.explore_children()
 
     def mute_ranges(self):
         """
@@ -211,7 +221,7 @@ class Property(Component):
                     continue
             final_ranges.append(Concept(self.ranges_res[rn_idx]))
 
-        return final_ranges  # TODO if the final range is of type Valueset (CAREFUL because type NameIndividual is weird in the ttl), generate the valueset values!
+        return final_ranges 
 
 
 class RangeFilter:
