@@ -1,6 +1,7 @@
 import pandas as pd
 import pdb
 import json, os, datetime
+from configs import *
 
 """"
 This file figures file and format utility functions.
@@ -66,22 +67,38 @@ def from_csv(filename):
     return db.to_dict("records")
 
 
-def reduce_term(verbose):
+def generate_xml(metadata_dict):
     """
-    Extract the identifying code of the term if any.
+    Generate the metadata_xml panel for a specific entry. Uses the XML_PATTERN and UNITS_DIC global variables.
+    enum types are not used since we have explicit valuesets as modifier leaves.
+    Default type is string but PosFloat, Integer, PosInteger, Float are accepted
     """
-    suffix = verbose.split("\\")[-1] if "\\" in verbose else verbose
-    nb_par = suffix.count("(")
-    if nb_par == 1 or suffix[0] == "(":
-        cutp = suffix.split("(")[1]
-        return cutp[: cutp.find(")")]
-    elif suffix[-1] == ")":
-        cutp = suffix.split("(")[-1]
-        cutp = cutp[:-1]
-        return cutp
-    else:
-        return suffix
-
+    keyz = metadata_dict.keys()
+    shortname =metadata_dict["TestName"]if "TestName" in keyz else ""
+    shortname =metadata_dict["TestName"]if "TestName" in keyz else ""
+    simple_type=metadata_dict["DataType"] if "DataType" in keyz else ""
+    valueset=metadata_dict["EnumValues"] if "EnumValues" in keyz else ""
+    test_id=metadata_dict["TestID"] if "TestID" in keyz else ""
+    units=metadata_dict["ValueMetadata"] if "ValueMetadata" in keyz else ""
+    if simple_type is None:
+        return
+    res = XML_PATTERN
+    res = res.replace("<TestName></TestName>", "<TestName>" + shortname + "</TestName>")
+    res = res.replace(
+        "<DataType></DataType>", "<DataType>" + simple_type + "</DataType>"
+    )
+    res = res.replace("<TestID></TestID>", "<TestID>" + test_id + "</TestID>")
+    if simple_type == "Enum" and len(valueset) > 0:
+        enumstr = "".join(
+            ['<Val description="">' + elem + "</Val>" for elem in valueset]
+        )
+        res = res.replace(
+            "<EnumValues></EnumValues>", "<EnumValues>" + enumstr + "</EnumValues>"
+        )
+    res = res.replace(
+        "</ValueMetadata>", units + "</ValueMetadata>"
+    )
+    return res
 
 def remove_duplicates(dics):
     """

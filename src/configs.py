@@ -17,7 +17,15 @@ import json
     BLACKLIST,
     TERMINOLOGY_MARKER_URI,
     VALUESET_MARKER_URI,
+    TYPE_PREDICATE_URI,
+    DATATYPE_PROP_URI,
+    OBJECT_PROP_URI,
+    COMMENT_URI
 ) = [
+    None,
+    None,
+    None,
+    None,
     None,
     None,
     None,
@@ -46,9 +54,11 @@ import json
     ROOT_PATH,
     UNITS,
     METADATA_PATH,
-) = [None, None, None, None, None, None, None, None, None, None]
+    XML_PATTERN
+) = [None, None, None, None, None, None, None, None, None, None, None]
 ONTOLOGY_DROP_DIC = {}
-MERGE_DIC = {}
+DATA_LEAVES = {}
+EQUIVALENCES = {}
 with open("files/ontology_config.json") as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():

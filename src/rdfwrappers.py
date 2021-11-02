@@ -30,7 +30,7 @@ class Component:
         self.shortname = resource.graph.namespace_manager.normalizeUri(
             resource.identifier
         )
-        self.comment = resource.value(COMMENT_URI)
+        self.comment = resource.value(COMMENT_URI).toPython()
         self.set_label()
 
     def get_children(self, *kwargs):
@@ -115,7 +115,7 @@ class Concept(Component):
         self.subconcepts.extend(self.resolver.explore_valueset())
 
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
-        # Note generic concepts are dealt with in the Property.mute_range method which casts them as leaf concepts
+        # Note generic concepts are dealt with in the Property.sort_silent_range method which flags them as leaf concepts
         self.properties.extend(self.resolver.explore_properties())
         for predicate in self.properties:
             predicate.digin_ranges()
@@ -129,8 +129,8 @@ class Concept(Component):
             sub.find_subconcepts(filter_mode)
 
 
-class GenericConcept(Concept):
-    """A family of concepts we want to treat as leaves concepts, i.e we are not interested in expanding their subconcepts but only their properties.
+class LeafConcept(Concept):
+    """A family of concepts we want to treat as leaves concepts, i.e we are not interested in expanding their subconcepts.
     This allows for example to have a concept "Condition" with a free text property, but still having as subconcepts terminology classes such as ICD-10 or ICD-9.
     This way, every ICD-10 concept indeed is a descendant of "Condition", but an ontology element of type "Condition" will only be defined by a free text.
     In other words, it allows to instantiate a class that would otherwise be abstract.
@@ -142,9 +142,9 @@ class GenericConcept(Concept):
         return []
 
 
-class ValuesetIndividual(Concept):
+class ValuesetIndividual(LeafConcept):
     """
-    Individuals are leaves of the concept tree, by definition. They cannot have children nor properties and will match observation instances.
+    Individuals are leaves of the tree, by definition. They cannot have children nor properties and will match observation instances.
     """
 
     def explore_children(self):
@@ -162,23 +162,30 @@ class Property(Component):
 
     def digin_ranges(self):
         if self.resource.value(TYPE_PREDICATE_URI)==DATATYPE_PROP_URI:
-            pass
-            """
-            if self.resource is a datatype property, no need to do anything on the ranges but return them and somehow flag self/them as datatype/as a leaf
-            """
-
-            #TODO :  if is a datatype, do not call mute range but write and call another function that just turns the range_res into range concept objects
-            #  (or leaf objects that will work with i2b2 metadata), and return
+            # If we are a Datatype property, we are a leaf object in the ontology tree. stop there.
+            # TODO: find a way to pass the info that we are bearing a datatype that will end up in the i2b2 metadataxml field
+            # the solution to write the range as a concept is dumb because it will create an extra level in the i2b2 tree...
+            # UNLESS i2b2 takes care of not writing concepts which uri fall in the MERGE_DIC category as new ontology items but as xml details of the parent.
+            # this looks like the only corect solution else it conditions the rdfwrapper behaviour on an i2b2 objective. do put it as a concept.
+            return
 
         elif self.resource.value(TYPE_PREDICATE_URI)==OBJECT_PROP_URI:
-            self.ranges = self.mute_ranges()
+            processed_range_res = self.sort_silent_ranges()
+            self.ranges = self.instantiate_ranges(processed_range_res)
             for obj in self.ranges:
                 # The explore method will trigger subclasses and properties discovery
                 obj.explore_children()
 
-    def mute_ranges(self):
+    def instantiate_ranges(self, range_resources_dic):
         """
-        Create Concept or GenericConcept based on the resources stored in self.range_res and populate self.range with them.
+        Instantiate the ranges as Concepts or LeafConcepts
+        """
+        return [Concept(reg) for reg in range_resources_dic["regular"]] + [LeafConcept(gen) for gen in range_resources_dic["muted"]]
+
+
+    def sort_silent_ranges(self):
+        """
+        Create Concept or LeafConcept based on the resources stored in self.range_res and populate self.range with them.
         Comsequence will be that concept.explore_children() will only return properties of such muted concepts.
         The overwriting rule is typically dependent on the RDF implementation. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
 
@@ -187,9 +194,11 @@ class Property(Component):
         To achieve this, we find the ranges having "terminology brothers" and mute their subconcepts.
 
         """
+        final_ranges = {"muted":[], "regular":[]}
+
         if ALWAYS_DEEP:
+            final_ranges["regular"]=self.range_res
             return 0
-        final_ranges = []
 
         # Extract the indices of self.ranges_res which belong to an external terminology
         termins = [
@@ -215,11 +224,10 @@ class Property(Component):
         # Now search in self.ranges_res which range belong to an ontology and have brother in it.
         # When found, prune its subconcepts so it cannot be expanded
         for rn_idx in range(len(self.ranges_res)):
-            if rn_idx in idx_termsinrange:
-                if counts[self.resource.graph.qname(self.ranges_res[rn_idx])] > 1:
-                    final_ranges.append(GenericConcept(self.ranges_res[rn_idx]))
-                    continue
-            final_ranges.append(Concept(self.ranges_res[rn_idx]))
+            if rn_idx in idx_termsinrange and counts[self.resource.graph.qname(self.ranges_res[rn_idx])] > 1:
+                final_ranges["muted"].append(self.ranges_res[rn_idx])
+                continue
+            final_ranges["regular"].append(self.ranges_res[rn_idx])
 
         return final_ranges 
 

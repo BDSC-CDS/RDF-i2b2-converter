@@ -1,5 +1,5 @@
 from rdfwrappers import *
-from utils import db_to_csv
+from utils import db_to_csv, generate_xml
 
 
 def drop(attribute):
@@ -69,6 +69,7 @@ class I2B2Converter:
 
 class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
+        
         self.parent = parent
         self.component = graph_component
         self.basecode_handler = I2B2BasecodeHandler(self)
@@ -76,6 +77,8 @@ class I2B2OntologyElement:
         self.set_path()
         self.set_code()
         self.set_level()
+        self.set_comment()
+        self.line_updates={}
 
     def set_path(self):
         self.path = self.path_handler.get_path()
@@ -86,40 +89,56 @@ class I2B2OntologyElement:
     def set_level(self):
         self.level = self.path.count("\\")
 
+    def set_comment(self):
+        self.comment = self.component.get_comment()
+
     def get_concept(self):
         pass
+    
+    def mutate_valueinfo(self, datatype_string):
+        """
+        Some observations can store a value. In that case, the corresponding ontology element should specify the value type both in the valuetype_cd and in the XML form.
+        """
+        ont_values_cells = EQUIVALENCES[datatype_string]
+        metadata = generate_xml(ont_values_cells["METADATA_XML"])
+        self.line_updates = ont_values_cells.update({"METADATA_XML":metadata})
 
     def walk_mtree(self):
         res = []
         submods = self.get_filtered_children()
-        for k in submods:
-            cur = I2B2Modifier(k, parent=self, applied_path=self.applied_path)
-            next = cur.walk_mtree()
-            res.append(cur)
-            res.extend(next)
+        for component in submods:
+            # Check if the child's URI is a primary data type. If so, its information does not justify creating a new ontology item but is written in the xml field.
+            cur_uri = component.get_uri()
+            if cur_uri in DATA_LEAVES.keys():
+                self.mutate_valueinfo(DATA_LEAVES[cur_uri])
+            else:
+                cur = I2B2Modifier(component, parent=self, applied_path=self.applied_path)
+                next = cur.walk_mtree()
+                res.append(cur)
+                res.extend(next)
         return res
 
     def single_line(self, nodetype=""):
         return {
-            "c_hlevel": str(self.level),
-            "c_fullname": self.path,
-            "c_name": self.label,
-            "c_synonym_cd": "N",
-            "c_basecode": self.basecode,
-            "c_comment": self.comment,
-            "c_dimcode": self.path,
-            "c_tooltip": "",
-            "c_totalnum": "",
-            "update_date": "",
-            "download_date": "",
-            "import_date": "",
-            "sourcesystem_cd": "",
-            "valuetype_cd": "",
-            "m_exclusion_cd": "",
-            "c_path": self.parent.path,
-            "c_symbol": self.path[len(self.parent.path) :],
-            "c_metadataxml": "",
-        }
+            "C_HLEVEL": str(self.level),
+            "C_FULLNAME": self.path,
+            "C_NAME": self.label,
+            "C_SYNONYM_CD": "N",
+            "C_BASECODE": self.basecode,
+            "C_COMMENT": self.comment,
+            "C_DIMCODE": self.path,
+            "C_TOOLTIP": "",
+            "C_TOTALNUM": "",
+            "UPDATE_DATE": "",
+            "DOWNLOAD_DATE": "",
+            "IMPORT_DATE": "",
+            "SOURCESYSTEM_CD": "",
+            "VALUETYPE_CD": "",
+            "M_EXCLUSION_CD": "",
+            "C_PATH": self.parent.path,
+            "C_SYMBOL": self.path[len(self.parent.path) :],
+            "C_METADATAXML": "",
+        }.update(self.line_updates)
 
     def get_filtered_children(self):
         """
@@ -143,13 +162,13 @@ class I2B2OntologyElement:
         line = []
         line.extend(self.parent.get_info())
         for el in line:
-            el["c_visualattributes"] = "FA"
+            el["C_VISUALATTRIBUTES"] = "FA"
         previous = line[-1]
         line.append(
             self.single_line(
                 type="concept",
-                level=str(int(previous["c_hlevel"]) + 1),
-                prefix=previous["c_fullname"],
+                level=str(int(previous["C_HLEVEL"]) + 1),
+                prefix=previous["C_FULLNAME"],
             )
         )
         return line
@@ -170,13 +189,13 @@ class I2B2Concept(I2B2OntologyElement):
         info = super().get_info()
         info.update(
             {
-                "c_facttablecolumn": "CONCEPT_CD",
-                "c_tablename": "CONCEPT_DIMENSION",
-                "c_columnname": "CONCEPT_PATH",
-                "c_columndatatype": "T",
-                "c_operator": "LIKE",
-                "c_visualattributes": "FA",
-                "m_applied_path": "@",
+                "C_FACTTABLECOLUMN": "CONCEPT_CD",
+                "C_TABLENAME": "CONCEPT_DIMENSION",
+                "C_COLUMNNAME": "CONCEPT_PATH",
+                "C_COLUMNDATATYPE": "T",
+                "C_OPERATOR": "LIKE",
+                "C_VISUALATTRIBUTES": "FA",
+                "M_APPLIED_PATH": "@",
             }
         )
         return info
