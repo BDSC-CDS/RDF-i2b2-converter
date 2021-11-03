@@ -214,7 +214,7 @@ def test_implicitlist():
 
 
 def test_explorevalueset():
-    vst = ONTOLOGY_GRAPH.resource(rdflib.URIRef(VALUESET_MARKER_URI))
+    vst = ONTOLOGY_GRAPH.resource(VALUESET_MARKER_URI)
     candids = [e for e in vst.subjects(RDFS.subClassOf)]
     cur = random.choice(candids)
     conc = Concept(cur)
@@ -247,8 +247,16 @@ def test_datatype():
     """)
     dattp = [k[0] for k in res]
     totest = random.choices(dattp, k=min(10, len(dattp)))
-    
-    props = None
+    prop = PropertyFilter(None)
+    prop.resources = [ONTOLOGY_GRAPH.resource(tot) for tot in totest]
+    properties = prop.get_properties()
+    rngs = []
+    for pp in properties:
+        pp.digin_ranges()
+        rngs.extend(pp.ranges)
+    assert len(rngs)>0 and all([type(rn)==LeafConcept for rn in rngs])
+
+
 
 def test_valueset():
     res = ONTOLOGY_GRAPH.query("""
@@ -260,3 +268,4 @@ def test_valueset():
     """, initBindings={"vs":VALUESET_MARKER_URI})
     dattp = [k[0] for k in res]
     totest = random.choices(dattp, k=min(10, len(dattp)))
+

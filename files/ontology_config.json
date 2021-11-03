@@ -15,7 +15,7 @@
         "PROJECT_RDF_NAMESPACE": "https://biomedit.ch/rdf/sphn-ontology/sphn#",
         "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
         "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-        "DATATYPE_PROP_URI": "http://www.w3.org/2002/07/owl#DataTypeProperty",
+        "DATATYPE_PROP_URI": "http://www.w3.org/2002/07/owl#DatatypeProperty",
         "OBJECT_PROP_URI" : "http://www.w3.org/2002/07/owl#ObjectProperty",
         "COMMENT_URI": "http://www.w3.org/2000/01/rdf-schema#comment",
         "ENTRY_CONCEPTS": [

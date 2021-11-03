@@ -1,5 +1,5 @@
 import json
-
+import rdflib
 (
     ONTOLOGY_GRAPH_LOCATION,
     TERMINOLOGIES_LOCATION,
@@ -64,7 +64,7 @@ with open("files/ontology_config.json") as ff:
 for key, val in config["parameters"].items():
     globals()[key] = val
 for key, val in config["uris"].items():
-    globals()[key] = val
+    globals()[key] = rdflib.URIRef(val) if type(val)==str else [rdflib.URIRef(k) for k in val]
 
 with open("files/i2b2_rdf_mapping.json") as ff:
     config = json.load(ff)

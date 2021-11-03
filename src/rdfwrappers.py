@@ -30,7 +30,8 @@ class Component:
         self.shortname = resource.graph.namespace_manager.normalizeUri(
             resource.identifier
         )
-        self.comment = resource.value(COMMENT_URI).toPython()
+        com = resource.value(COMMENT_URI)
+        self.comment = com.toPython() if com is not None else com
         self.set_label()
 
     def get_children(self, *kwargs):
@@ -161,23 +162,16 @@ class Property(Component):
         return self.ranges
 
     def digin_ranges(self):
-        if self.resource.value(TYPE_PREDICATE_URI)==DATATYPE_PROP_URI:
+        if self.resource.value(TYPE_PREDICATE_URI).identifier==DATATYPE_PROP_URI:
             # The ranges are tree leaf objects without properties and without subclasses
-            self.ranges = self.instantiate_ranges({"regular":[], "muted":self.ranges_res})
+            self.ranges = [LeafConcept(reg) for reg in self.ranges_res]
 
-        elif self.resource.value(TYPE_PREDICATE_URI)==OBJECT_PROP_URI:
+        elif self.resource.value(TYPE_PREDICATE_URI).identifier==OBJECT_PROP_URI:
             processed_range_res = self.sort_silent_ranges()
-            self.ranges = self.instantiate_ranges(processed_range_res)
+            self.ranges = [Concept(reg) for reg in processed_range_res["regular"]] + [ChildfreeConcept(gen) for gen in processed_range_res["muted"]]
             for obj in self.ranges:
                 # The explore method will trigger subclasses and properties discovery
                 obj.explore_children()
-
-    def instantiate_ranges(self, range_resources_dic):
-        """
-        Instantiate the ranges as Concepts or ChildfreeConcepts
-        """
-        return [Concept(reg) for reg in range_resources_dic["regular"]] + [ChildfreeConcept(gen) for gen in range_resources_dic["muted"]]
-
 
     def sort_silent_ranges(self):
         """
@@ -401,9 +395,8 @@ class OntologyDepthExplorer:
         If the concept is a child of "Valueset", then all possible instances should be specified as children of this concept.
         At data loading, these instances should be treated differently as other instances (for which only the class is important)
         """
-        if self.concept.resource.value(
-            rdflib.URIRef(SUBCLASS_PRED_URI)
-        ).identifier != rdflib.URIRef(VALUESET_MARKER_URI):
+        if self.concept.resource.value(SUBCLASS_PRED_URI
+        ).identifier != VALUESET_MARKER_URI:
             return []
         graph = self.concept.resource.graph
         res2 = graph.query(
@@ -415,4 +408,4 @@ class OntologyDepthExplorer:
         """,
             initBindings={"o": self.concept.resource.identifier},
         )
-        return [ValuesetIndividual(graph.resource(row[0])) for row in res2]
+        return [LeafConcept(graph.resource(row[0])) for row in res2]

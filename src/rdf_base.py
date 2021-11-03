@@ -53,24 +53,6 @@ def format_global(ontograph=ONTOLOGY_GRAPH_LOCATION, to_filter=[]):
     return forbidden
 
 
-def setup():
-    """
-    Load the ontology graph in memory.
-    Extract the instantiable Concepts ; a Concept is a RDF element of type owl:Class, NOT specified as "abstract" by the ABSTRACT_CLASSES macro.
-    It reflects the elements in the hierarchy that are instantiable on their own (compared to properties, never instantiated alone)
-    """
-    g = rdflib.Graph()
-    g.parse(ONTOLOGY_GRAPH_LOCATION, format=RDF_FORMAT)
-    classes_uris = list_all_classes_uri(g)
-    primaries = [
-        I2B2Concept(g.resource(k)) for k in classes_uris if k not in EXCLUDED_COMPONENT
-    ]
-    db_lines = []
-    for element in primaries:
-        db_lines.append(element.get_lines())
-    return db_lines
-
-
 def unify_graph(graphs=DATA_GRAPHS_LOCATION):
     g = rdflib.Graph()
     for target in graphs:
