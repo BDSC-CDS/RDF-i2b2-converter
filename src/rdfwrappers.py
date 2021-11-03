@@ -115,7 +115,7 @@ class Concept(Component):
         self.subconcepts.extend(self.resolver.explore_valueset())
 
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
-        # Note generic concepts are dealt with in the Property.sort_silent_range method which flags them as leaf concepts
+        # Note generic concepts are dealt with in the Property.sort_silent_range method which flags them as child-free concepts
         self.properties.extend(self.resolver.explore_properties())
         for predicate in self.properties:
             predicate.digin_ranges()
@@ -129,8 +129,8 @@ class Concept(Component):
             sub.find_subconcepts(filter_mode)
 
 
-class LeafConcept(Concept):
-    """A family of concepts we want to treat as leaves concepts, i.e we are not interested in expanding their subconcepts.
+class ChildfreeConcept(Concept):
+    """A family of concepts for which we are not interested in expanding their subconcepts, either because they don't have any by nature, or they are irrelevant.
     This allows for example to have a concept "Condition" with a free text property, but still having as subconcepts terminology classes such as ICD-10 or ICD-9.
     This way, every ICD-10 concept indeed is a descendant of "Condition", but an ontology element of type "Condition" will only be defined by a free text.
     In other words, it allows to instantiate a class that would otherwise be abstract.
@@ -142,9 +142,9 @@ class LeafConcept(Concept):
         return []
 
 
-class ValuesetIndividual(LeafConcept):
+class LeafConcept(ChildfreeConcept):
     """
-    Individuals are leaves of the tree, by definition. They cannot have children nor properties and will match observation instances.
+    LeafConcepts are leaves of the tree, by definition. By the ChildfreeConcept inheritance, they have no subconcepts. On top of that, they have no useful properties.
     """
 
     def explore_children(self):
@@ -162,12 +162,8 @@ class Property(Component):
 
     def digin_ranges(self):
         if self.resource.value(TYPE_PREDICATE_URI)==DATATYPE_PROP_URI:
-            # If we are a Datatype property, we are a leaf object in the ontology tree. stop there.
-            # TODO: find a way to pass the info that we are bearing a datatype that will end up in the i2b2 metadataxml field
-            # the solution to write the range as a concept is dumb because it will create an extra level in the i2b2 tree...
-            # UNLESS i2b2 takes care of not writing concepts which uri fall in the MERGE_DIC category as new ontology items but as xml details of the parent.
-            # this looks like the only corect solution else it conditions the rdfwrapper behaviour on an i2b2 objective. do put it as a concept.
-            return
+            # The ranges are tree leaf objects without properties and without subclasses
+            self.ranges = self.instantiate_ranges({"regular":[], "muted":self.ranges_res})
 
         elif self.resource.value(TYPE_PREDICATE_URI)==OBJECT_PROP_URI:
             processed_range_res = self.sort_silent_ranges()
@@ -178,14 +174,14 @@ class Property(Component):
 
     def instantiate_ranges(self, range_resources_dic):
         """
-        Instantiate the ranges as Concepts or LeafConcepts
+        Instantiate the ranges as Concepts or ChildfreeConcepts
         """
-        return [Concept(reg) for reg in range_resources_dic["regular"]] + [LeafConcept(gen) for gen in range_resources_dic["muted"]]
+        return [Concept(reg) for reg in range_resources_dic["regular"]] + [ChildfreeConcept(gen) for gen in range_resources_dic["muted"]]
 
 
     def sort_silent_ranges(self):
         """
-        Create Concept or LeafConcept based on the resources stored in self.range_res and populate self.range with them.
+        Create Concept or ChildfreeConcept based on the resources stored in self.range_res and populate self.range with them.
         Comsequence will be that concept.explore_children() will only return properties of such muted concepts.
         The overwriting rule is typically dependent on the RDF implementation. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
 

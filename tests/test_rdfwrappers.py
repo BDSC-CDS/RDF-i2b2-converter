@@ -235,3 +235,28 @@ def test_explorevalueset():
     assert set([e.resource.identifier.toPython() for e in elems]) == set(
         [k.resource.identifier.toPython() for k in conc.subconcepts]
     )
+
+
+def test_datatype():
+    # Check the datatype properties correctly instantiate their range objects as ChildfreeConcepts
+    res = ONTOLOGY_GRAPH.query("""
+        select ?r 
+        where {
+            ?r rdf:type owl:DatatypeProperty
+        }
+    """)
+    dattp = [k[0] for k in res]
+    totest = random.choices(dattp, k=min(10, len(dattp)))
+    
+    props = None
+
+def test_valueset():
+    res = ONTOLOGY_GRAPH.query("""
+        select ?s 
+        where {
+            ?r rdfs:range ?o .
+            ?o rdfs:subClassOf ?vs
+        }
+    """, initBindings={"vs":VALUESET_MARKER_URI})
+    dattp = [k[0] for k in res]
+    totest = random.choices(dattp, k=min(10, len(dattp)))

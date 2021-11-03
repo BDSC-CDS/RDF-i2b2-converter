@@ -13,9 +13,6 @@ def drop(attribute):
     return False
 
 
-# TODO maybe all this merge thing is too complex. just see if the property is a datatype and make an equivalence to the valuetype_cd code.
-# Include default metadataxml depending on the datatype. when finding a unit, overwrite the unit field of the metadataxml
-# But first check for distinct units usage. Or exceptionnally go fetch the equivalent loinc equivalence... Maybe in a separate module
 class I2B2Converter:
     """
     The converter object initialized with a python rdfwrappers.Concept instance.
