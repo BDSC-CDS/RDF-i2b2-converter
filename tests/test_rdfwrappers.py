@@ -259,13 +259,22 @@ def test_datatype():
 
 
 def test_valueset():
+    # Check valueset elements do span a valueset of LeafConcepts and have no properties
     res = ONTOLOGY_GRAPH.query("""
         select ?s 
         where {
-            ?r rdfs:range ?o .
+            ?s rdfs:range ?o .
             ?o rdfs:subClassOf ?vs
         }
     """, initBindings={"vs":VALUESET_MARKER_URI})
     dattp = [k[0] for k in res]
     totest = random.choices(dattp, k=min(10, len(dattp)))
+    prop = PropertyFilter(None)
+    prop.resources = [ONTOLOGY_GRAPH.resource(tot) for tot in totest]
+    properties = prop.get_properties()
+    rngs = []
+    for pp in properties:
+        pp.digin_ranges()
+        rngs.extend(pp.ranges)
+    assert len(rngs)>0 and all ([rn.subconcepts!=[] and all([type(ind)==LeafConcept for ind in rn.subconcepts]) and rn.properties==[] for rn in rngs])
 

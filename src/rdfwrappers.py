@@ -122,12 +122,13 @@ class Concept(Component):
             predicate.digin_ranges()
 
     def find_subconcepts(self, filter_mode="blacklist"):
-        if len(self.subconcepts)>0:
-            return self.subconcepts
-        self.subconcepts = self.resolver.explore_subclasses(filter_mode)
-        # Trigger recursive call on first-level children
-        for sub in self.subconcepts:
-            sub.find_subconcepts(filter_mode)
+        if len(self.subconcepts)==0:
+            self.subconcepts = self.resolver.explore_subclasses(filter_mode)
+            # Trigger recursive call on first-level children
+            for sub in self.subconcepts:
+                sub.find_subconcepts(filter_mode)
+    
+        return self.subconcepts
 
 
 class ChildfreeConcept(Concept):
@@ -149,7 +150,7 @@ class LeafConcept(ChildfreeConcept):
     """
 
     def explore_children(self):
-        return
+        return 
 
 
 class Property(Component):
@@ -371,13 +372,15 @@ class OntologyDepthExplorer:
         Fetch the direct subclasses of the concept. Reference the parent concept.
         """
         subs = self.concept.resource.subjects(SUBCLASS_PRED)
+        if subs is None:
+            return []
         if filter_mode == "blacklist":
             return [
                 Concept(sub, parent=self.concept)
                 for sub in subs
                 if sub.identifier.toPython() not in BLACKLIST
             ]
-        if filter_mode == "whitelist":
+        elif filter_mode == "whitelist":
             return [
                 Concept(sub, parent=self.concept)
                 for sub in subs
