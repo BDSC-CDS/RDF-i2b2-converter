@@ -1,13 +1,13 @@
 from rdf_base import *
 
 # add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
-BLACKLIST = BLACKLIST + [k for k in ONTOLOGY_DROP_DIC.values()]
+BLACKLIST = BLACKLIST + [rdflib.URIRef(k) for k in ONTOLOGY_DROP_DIC.values()]
 
 
 def filter_valid(res_list):
     # Discards elements referenced in the blacklist, proceed with the other
     filtered = [
-        item for item in res_list if item.identifier.toPython() not in BLACKLIST
+        item for item in res_list if item.identifier not in BLACKLIST
     ]
     return filtered
 
@@ -27,6 +27,7 @@ class Component:
 
     def __init__(self, resource):
         self.resource = resource
+        # Question: should we use normalized uri or simply qname here?
         self.shortname = resource.graph.namespace_manager.normalizeUri(
             resource.identifier
         )
@@ -102,12 +103,17 @@ class Concept(Component):
     def get_children(self):
         """
         Trigger the recursion and return the first level children.
+        Only does so if both subconcepts and properties are empty, else consider the search has already been done.
         """
-        if self.properties == [] or self.subconcepts == []:
+        # TODO :  is it ok to skip properties search for items that already have only subconcepts?
+        if self.properties == [] and self.subconcepts == []:
             self.explore_children()
         return self.properties + self.subconcepts
 
     def explore_children(self):
+        """
+        Recursively populate the subconcepts and properties.
+        """
         for k in self.find_subconcepts():
             k.explore_children()
         if terminology_indicator(self):
@@ -206,7 +212,7 @@ class Property(Component):
         # Now count occurrence of each specific terminology
         counts = {}
         for cur_idx in idx_termsinrange:
-            cur_terminology = self.resource.graph.qname(self.ranges_res[cur_idx])
+            cur_terminology = self.resource.graph.qname(self.ranges_res[cur_idx].identifier)
             if cur_terminology in counts.keys():
                 counts[cur_terminology] = counts[cur_terminology] + 1
             else:
@@ -215,7 +221,7 @@ class Property(Component):
         # Now search in self.ranges_res which range belong to an ontology and have brother in it.
         # When found, prune its subconcepts so it cannot be expanded
         for rn_idx in range(len(self.ranges_res)):
-            if rn_idx in idx_termsinrange and counts[self.resource.graph.qname(self.ranges_res[rn_idx])] > 1:
+            if rn_idx in idx_termsinrange and counts[self.resource.graph.qname(self.ranges_res[rn_idx].identifier)] > 1:
                 final_ranges["muted"].append(self.ranges_res[rn_idx])
                 continue
             final_ranges["regular"].append(self.ranges_res[rn_idx])
@@ -287,6 +293,7 @@ class PropertyFilter:
         ranges = self.filter_ranges()
         if len(ranges) != len(self.resources):
             raise Exception("Bad property-range matching")
+        print("concept ", self.concept, "has properties:", [k.identifier.toPython() for k in self.resources])
         return [
             Property(self.resources[i], ranges[i]) for i in range(len(self.resources))
         ]
@@ -320,7 +327,6 @@ class PropertyFilter:
         """
         if self.resources != []:
             return
-        print("Fetching properties for concept " + self.concept.__repr__())
         self_res = self.concept.resource
         # TODO enhance this
         response = self_res.graph.query(
@@ -378,16 +384,16 @@ class OntologyDepthExplorer:
             return [
                 Concept(sub, parent=self.concept)
                 for sub in subs
-                if sub.identifier.toPython() not in BLACKLIST
+                if sub.identifier not in BLACKLIST
             ]
         elif filter_mode == "whitelist":
             return [
                 Concept(sub, parent=self.concept)
                 for sub in subs
-                if sub.identifier.toPython() in ENTRY_CONCEPTS
+                if sub.identifier in ENTRY_CONCEPTS
             ]
 
-    def explore_properties(self, entrypoint=None):
+    def explore_properties(self):
         """
         Fetch the properties
         """

@@ -7,7 +7,7 @@ def drop(attribute):
     If the attribute should be dropped as mentioned in the config file, skip it
     """
     for rn in attribute.get_children():
-        cur_uri = rn.get_identifier()
+        cur_uri = rn.get_uri()
         if cur_uri in ONTOLOGY_DROP_DIC.values():
             return True
     return False
@@ -30,20 +30,8 @@ class I2B2Converter:
         concept.get_entry_desc()
         for sub in concept.subconcepts:  # TODO is that a correct recursion?
             self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
-        self.left_tosearch = self.i2b2concepts
+        self.left_tosearch = self.i2b2concepts.copy()
         self.towrite = []
-
-        """
-        self.i2b2concepts = [I2B2Concept(concept, i2b2parent)]
-        self.concept_object = concept
-    
-    def populate(self)
-        if len(self.i2b2concepts)>1:
-            return
-        for sub in self.concept_object.subconcepts:
-            self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
-        self.left_tosearch = self.i2b2concepts
-        """
 
     def get_batch(self):
         try:
@@ -53,7 +41,7 @@ class I2B2Converter:
         cur.set_path()
         cur.set_code()
         cur.extract_modelems()
-        self.towrite = [k.get_lines() for k in [cur] + cur.modifiers]
+        self.towrite = [k.get_db_line() for k in [cur] + cur.modifiers]
         return True
 
     def write(self, filepath):
@@ -69,7 +57,7 @@ class I2B2OntologyElement:
         
         self.parent = parent
         self.component = graph_component
-        self.basecode_handler = I2B2BasecodeHandler(self)
+        self.basecode_handler = I2B2BasecodeHandler(self, ph=self.get_parent_codehdler())
         self.path_handler = I2B2PathResolver(self)
         self.set_path()
         self.set_code()
@@ -81,10 +69,13 @@ class I2B2OntologyElement:
         self.path = self.path_handler.get_path()
 
     def set_code(self):
-        self.code = self.basecode_handler.extract_basecode()
+        self.code = self.basecode_handler.get_basecode()
 
     def set_level(self):
-        self.level = self.path.count("\\")
+        if self.parent is None:
+            self.level =1
+        else:
+            self.level = self.parent.level +1
 
     def set_comment(self):
         self.comment = self.component.get_comment()
@@ -97,8 +88,8 @@ class I2B2OntologyElement:
         Some observations can store a value. In that case, the corresponding ontology element should specify the value type both in the valuetype_cd and in the XML form.
         """
         ont_values_cells = EQUIVALENCES[datatype_string]
-        metadata = generate_xml(ont_values_cells["METADATA_XML"])
-        self.line_updates = ont_values_cells.update({"METADATA_XML":metadata})
+        metadata = generate_xml(ont_values_cells["C_METADATAXML"])
+        self.line_updates = ont_values_cells.copy().update({"C_METADATAXML":metadata})
 
     def walk_mtree(self):
         res = []
@@ -115,10 +106,11 @@ class I2B2OntologyElement:
                 res.extend(next)
         return res
 
-    def single_line(self, nodetype=""):
+    def get_db_line(self):
+        self.line_updates = self.get_class_info().update(self.line_updates)
         return {
             "C_HLEVEL": str(self.level),
-            "C_FULLNAME": self.path,
+            "C_FULLNAME": ROOT_PATH + self.path,
             "C_NAME": self.label,
             "C_SYNONYM_CD": "N",
             "C_BASECODE": self.basecode,
@@ -148,28 +140,6 @@ class I2B2OntologyElement:
                 modifiers_tobe.append(attr)
         return modifiers_tobe
 
-    def get_info(self):
-        """
-        Create a db line as dictionary for a concept, using the single_line function.
-        This function looks at potential macro-concepts and allows to use multi-leveled concepts.
-        Return a list of dictionaries, one for each concept found on the way.
-        """
-        if self.parent is None:
-            return [self.single_line(nodetype="root")]
-        line = []
-        line.extend(self.parent.get_info())
-        for el in line:
-            el["C_VISUALATTRIBUTES"] = "FA"
-        previous = line[-1]
-        line.append(
-            self.single_line(
-                type="concept",
-                level=str(int(previous["C_HLEVEL"]) + 1),
-                prefix=previous["C_FULLNAME"],
-            )
-        )
-        return line
-
     def __repr__(self):
         return self.__class__.__name__ + " at " + self.component.__repr__()
 
@@ -182,7 +152,7 @@ class I2B2Concept(I2B2OntologyElement):
     def get_concept(self):
         return self
 
-    def get_info(self):
+    def get_class_info(self):
         info = super().get_info()
         info.update(
             {
@@ -196,6 +166,12 @@ class I2B2Concept(I2B2OntologyElement):
             }
         )
         return info
+
+    def get_parent_codehdler(self):
+        """
+        For an i2b2 concept, we do not need to embed the hierarchy in the basecode: the concept URI is enough.
+        """
+        return None
 
 
 class I2B2PathResolver:
@@ -218,25 +194,21 @@ class I2B2BasecodeHandler:
     Compute and extract the basecode for a Class or a Property existing in the ontology.
     Access the attributes of the embedded RDF resource.
     If a value is specified, it will be included in the basecode computation.
-    If the initializing element has a parent element with an existing basecode, it will also be included in the basecode computation.
+    If an other handler is specified as "ph" at construction, its code will be embedded in the computation. (this helps encapsulating hierarchy in codes)
     """
 
-    def __init__(self, i2b2element, value=None):
-        self.value = value
+    def __init__(self, i2b2element, ph=None, value=""):
+        self.value = value # if child of terminology append : + code, don't go through the whole tree. only problem is if LOINC> $loincel has several possible paths
         self.basecode = None
         self.core = i2b2element.component.get_uri()
-        self.prefix = (
-            i2b2element.parent.basecode_handler.extract_basecode()
-            if i2b2element.parent is not None
-            else ""
-        )
+        self.prefix = ph.get_basecode() if ph is not None else ""
 
-    def extract_basecode(self):
+    def get_basecode(self):
         if self.basecode is not None:
             return self.basecode
         return self.reduce_basecode()
 
-    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LENGTH):
+    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LENGTH): # TODO: only take into account the current concept, not concept superclass
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
         The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
@@ -244,22 +216,55 @@ class I2B2BasecodeHandler:
         and to be computable both from the ontology side and from the data loader side.
         The resulting code is the joining key between data tables and ontology tables.
         """
-        return ""
         rdf_uri = self.core
         value = self.value
         prefix = self.prefix
+        
+        if rdf_uri[-1] != "\\":
+            rdf_uri = rdf_uri + "\\"
+
         if len(value) > 0 and value[0] == "\\":
             value = value[1:]
-        if rdf_uri[-1] != "\\":
-            tmp_uri = rdf_uri + "\\"
-        tohash = tmp_uri + value
-        return tohash if debug else hashlib.sha256(tohash.encode()).hexdigest()[:cap]
+            tohash = rdf_uri + ":"+value
+        else :
+            to_hash = rdf_uri
+        return tohash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
 
 
 class I2B2Modifier(I2B2OntologyElement):
-    def __init__(self, component2, parent=None, applied_path=None):
+    def __init__(self, component2, parent, applied_path=None):
         # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
-        if parent is not None and parent.path == applied_path:
+        if parent.path == applied_path:
+            self.applied_concept = parent
             parent = None
+        if parent is not None:
+            parent.visual = "DA"
+            self.applied_concept = parent.applied_concept
         super().__init__(component2, parent)
         self.applied_path = applied_path
+        self.visual = "RA"
+
+
+    def get_class_info(self):
+        info = super().get_info()
+        info.update(
+            {
+                "C_FACTTABLECOLUMN": "MODIFIER_CD",
+                "C_TABLENAME": "MODIFIER_DIMENSION",
+                "C_COLUMNNAME": "MODIFIER_PATH",
+                "C_COLUMNDATATYPE": "T",
+                "C_OPERATOR": "LIKE",
+                "C_VISUALATTRIBUTES": self.visual,
+                "M_APPLIED_PATH": self.applied_path
+            }
+        )
+        return info
+
+    def get_parent_codehdler(self):
+        """
+        For an i2b2 modifier, we embed the hierarchy in the basecode since collisions can happen.
+        If we are at the root of the modifier hierarchy, embed the applied concept
+        """
+        if self.parent is not None:
+            return self.parent.basecode_hdler
+        return self.applied_concept.basecode_hdler

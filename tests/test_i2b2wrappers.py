@@ -7,6 +7,7 @@ myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
 
 from initsts import *
+from utils import from_csv
 from i2b2wrappers import *
 
 global_db = []
@@ -22,14 +23,14 @@ def construct_property(uri):
 
 
 def test_converterclass():
-    root_concept = Concept(
+    root_rdfconcept = Concept(
         ONTOLOGY_GRAPH.resource(
             "https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept"
         )
     )
-    converter = I2B2Converter(root_concept)
+    converter = I2B2Converter(root_rdfconcept)
     all_concepts = converter.i2b2concepts
-    assert [k.modifiers == [] for k in all_concepts]
+    assert len(all_concepts)>0 and not all([conc.level == all_concepts[0].level for conc in all_concepts])
 
 
 def test_modifiers():
@@ -46,19 +47,17 @@ def test_i2b2ontelem():
     test_c = I2B2Concept(inter_conc, parent=None)
     test_c.extract_modelems()
     mod_mod = test_c.modifiers
-    pdb.set_trace()
+    assert all([type(k)==I2B2Modifier for k in mod_mod])
 
 
 def test_interface():
 
     # Step 1: generate python objects from the entry concept list specified in the config file
-    entry_concept_resources = CONCEPT_LIST
-
+    entry_concepts = CONCEPT_LIST
     # Step 2: For each concept, create an I2B2 converter and extract info from it.
     # This might be suboptimal in terms of memory usage when an entry concept is in fact a directory having a lot of subconcepts
-    for concept_res in entry_concept_resources:
-        concept = Concept(concept_res)
-        concept.explore_subclasses()
+    for concept_i in entry_concepts:
+        concept = Concept(concept_i.resource)
 
         # Initialize the converter using the list of objects
         converter = I2B2Converter(concept)
@@ -68,6 +67,17 @@ def test_interface():
             converter.write(METADATA_PATH)
 
 
+def test_basecode():
+    prop = construct_property(
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasFOPHDiagnosisCode"
+    )
+    i2b2mod = I2B2Modifier(prop[0], parent=None, applied_path=None)
+    modlist = i2b2mod.walk_mtree()
+    assert [len(k.code) == 50 for k in modlist]
+
+def test_e2e():
+    pass
+
 def test_duplicate_paths():
     """
     Check all paths and basecodes are unique.
@@ -76,3 +86,9 @@ def test_duplicate_paths():
     db = from_csv(METADATA_PATH, usecols=col_names)
     if len(db) > 0:
         assert not any([len(set(db[key])) < len(db[key]) for key in col_names])
+
+
+def test_levels():
+    """
+    Check ontology elements all have coherent levels i.e modifiers levels are decoupled from concept levels, and incrementation is correct.
+    """

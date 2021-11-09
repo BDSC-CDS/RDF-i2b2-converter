@@ -231,7 +231,7 @@ def test_explorevalueset():
     """,
         initBindings={"s": cur.identifier},
     )
-    elems = [ValuesetIndividual(ONTOLOGY_GRAPH.resource(e[0])) for e in res]
+    elems = [LeafConcept(ONTOLOGY_GRAPH.resource(e[0])) for e in res]
     assert set([e.resource.identifier.toPython() for e in elems]) == set(
         [k.resource.identifier.toPython() for k in conc.subconcepts]
     )
