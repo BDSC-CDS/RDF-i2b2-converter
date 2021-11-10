@@ -28,7 +28,7 @@ class I2B2Converter:
         cur = I2B2Concept(concept, i2b2parent)
         self.i2b2concepts = [cur]
         concept.get_entry_desc()
-        for sub in concept.subconcepts:  # TODO is that a correct recursion?
+        for sub in concept.subconcepts: 
             self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
         self.left_tosearch = self.i2b2concepts.copy()
         self.towrite = []
@@ -208,7 +208,7 @@ class I2B2BasecodeHandler:
             return self.basecode
         return self.reduce_basecode()
 
-    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LENGTH): # TODO: only take into account the current concept, not concept superclass
+    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LENGTH): # TODO: check only taking into account one concept is enough. test.
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
         The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.

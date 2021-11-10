@@ -20,7 +20,7 @@ def generate_ontology_table():
         globals()[key.upper()] = rdflib.Namespace(val)
 
     # Step 1: generate python objects from the entry concept list specified in the config file
-    entry_concept_resources = give_entry_concepts()
+    entry_concept_resources = give_entry_concepts() # TODO write a bootstrap classe that extracts the entry objs from the graph file/location?
 
     # Step 2: For each concept, create an I2B2 converter and extract info from it.
     # This might be suboptimal in terms of memory usage when an entry concept is in fact a directory having a lot of subconcepts
@@ -39,6 +39,11 @@ def generate_ontology_table():
 
     # Step 4 (maybe outside this script?): use SQL to derive I2B2 concept_dimension and modifier_dimension from the ontology table using C_TABLENAME or equivalent
 
+
+def generate_ontology_table():
+    parser = GraphParser([ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION])
+    parser.define_namespaces()
+    resources = parser.get_entrypoints([ROOT_URI])
 
 def generate_event_tables():
     pass

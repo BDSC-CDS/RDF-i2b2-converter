@@ -59,7 +59,7 @@ import rdflib
 ONTOLOGY_DROP_DIC = {}
 DATA_LEAVES = {}
 EQUIVALENCES = {}
-with open("files/ontology_config.json") as ff:
+with open("files/graph_config.json") as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():
     globals()[key] = val

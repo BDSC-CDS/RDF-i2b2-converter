@@ -1,9 +1,10 @@
 import rdflib
 import hashlib
 import json
-import sys
+import sys, os
 import pdb
 from configs import *
+from utils import *
 
 """
 This file features RDF functions used by both the ontology builder and the data loader, but also other utility functions that do not fit 
@@ -24,6 +25,31 @@ def give_entry_concepts():
     return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]"""
 SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
 
+class GraphParser:
+    def __init__(self, paths):
+        self.graph = rdflib.Graph()
+        myPath = os.path.dirname(os.path.abspath(__file__))
+        for path in paths:
+            print("Exploring directory "+ path)
+            g_path = myPath + path
+            if os.path.isdir(g_path):
+                files = os.listdir(g_path)
+                with alive_bar(len(files)) as bar:
+                    for filek in files:
+                        self.graph.parse(g_path+filek)
+                        bar()
+            else:
+                self.graph.parse(g_path)
+        print("Graph is fully loaded in memory.")
+
+    def define_namespaces(self):
+        ns = [e for e in self.graph.namespace_manager.namespaces()]
+        for tupp in ns:
+            key, val = tupp
+            globals()[key.upper()] = rdflib.Namespace(val)
+
+    def get_entrypoints(self, list=ENTRY_CONCEPTS):
+        return [self.graph.resource(uri) for uri in list]
 
 def rname(uri, graph):
     full = graph.qname(uri)
