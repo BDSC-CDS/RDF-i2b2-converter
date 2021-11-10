@@ -2,6 +2,7 @@ from rdflib.graph import Graph
 from data_loader import DataLoader
 from rdfwrappers import *
 from i2b2wrappers import *
+from starschema import *
 
 pdb.set_trace()
 
