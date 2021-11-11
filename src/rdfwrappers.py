@@ -47,6 +47,9 @@ class Component:
         """
         pass
 
+    def get_label(self):
+        return self.label
+
     def get_uri(self):
         return self.resource.identifier.toPython()
 
@@ -293,7 +296,6 @@ class PropertyFilter:
         ranges = self.filter_ranges()
         if len(ranges) != len(self.resources):
             raise Exception("Bad property-range matching")
-        print("concept ", self.concept, "has properties:", [k.identifier.toPython() for k in self.resources])
         return [
             Property(self.resources[i], ranges[i]) for i in range(len(self.resources))
         ]

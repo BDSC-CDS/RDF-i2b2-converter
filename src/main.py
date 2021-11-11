@@ -40,7 +40,9 @@ def generate_ontology_table():
 
     # Step 3: Write the root information in the DB file then merge all concept files into it
 
-    # Step 4 (maybe outside this script?): use SQL to derive I2B2 concept_dimension and modifier_dimension from the ontology table using C_TABLENAME or equivalent
+    # Step 4 
+    gen_concept_modifier_dim(metadata=METADATA_PATH)
+    gen_table_access(metadata=METADATA_PATH)
 
 
 def generate_ontology_table():

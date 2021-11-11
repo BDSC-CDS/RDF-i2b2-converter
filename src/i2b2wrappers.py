@@ -61,12 +61,17 @@ class I2B2OntologyElement:
         self.path_handler = I2B2PathResolver(self)
         self.set_path()
         self.set_code()
+        self.set_displayname()
         self.set_level()
         self.set_comment()
         self.line_updates={}
+        self.visual = None
 
     def set_path(self):
         self.path = self.path_handler.get_path()
+
+    def set_displayname(self):
+        self.displayname = self.component.get_label()
 
     def set_code(self):
         self.code = self.basecode_handler.get_basecode()
@@ -89,7 +94,8 @@ class I2B2OntologyElement:
         """
         ont_values_cells = EQUIVALENCES[datatype_string]
         metadata = generate_xml(ont_values_cells["C_METADATAXML"])
-        self.line_updates = ont_values_cells.copy().update({"C_METADATAXML":metadata})
+        ont_values_cells.copy().update({"C_METADATAXML":metadata})
+        return ont_values_cells
 
     def walk_mtree(self):
         res = []
@@ -98,22 +104,34 @@ class I2B2OntologyElement:
             # Check if the child's URI is a primary data type. If so, its information does not justify creating a new ontology item but is written in the xml field.
             cur_uri = component.get_uri()
             if cur_uri in DATA_LEAVES.keys():
-                self.mutate_valueinfo(DATA_LEAVES[cur_uri])
+                self.line_updates= self.mutate_valueinfo(DATA_LEAVES[cur_uri])
             else:
                 cur = I2B2Modifier(component, parent=self, applied_path=self.applied_path)
+                self.set_visual("folder")
                 next = cur.walk_mtree()
                 res.append(cur)
                 res.extend(next)
         return res
 
     def get_db_line(self):
-        self.line_updates = self.get_class_info().update(self.line_updates)
+        # First gather the class-specific information
+        spec_dir = self.get_class_info()
+        # Then update them with the item-specific information
+        spec_dir.update(self.line_updates)
+        # Then update the base dict with this specific dir and return.
+
+        if self.parent is not None:
+            parpath = self.parent.path 
+            symbol = self.path[len(self.parent.path) :]
+        else:
+            parpath=""
+            symbol =self.path
         return {
             "C_HLEVEL": str(self.level),
             "C_FULLNAME": ROOT_PATH + self.path,
-            "C_NAME": self.label,
+            "C_NAME": self.displayname,
             "C_SYNONYM_CD": "N",
-            "C_BASECODE": self.basecode,
+            "C_BASECODE": self.code,
             "C_COMMENT": self.comment,
             "C_DIMCODE": self.path,
             "C_TOOLTIP": "",
@@ -124,10 +142,10 @@ class I2B2OntologyElement:
             "SOURCESYSTEM_CD": "",
             "VALUETYPE_CD": "",
             "M_EXCLUSION_CD": "",
-            "C_PATH": self.parent.path,
-            "C_SYMBOL": self.path[len(self.parent.path) :],
+            "C_PATH": parpath,
+            "C_SYMBOL": symbol,
             "C_METADATAXML": "",
-        }.update(self.line_updates)
+        }.update(spec_dir)
 
     def get_filtered_children(self):
         """
@@ -152,19 +170,25 @@ class I2B2Concept(I2B2OntologyElement):
     def get_concept(self):
         return self
 
+    def set_visual(self, type):
+        """
+        Default is folder anyway for now (for concepts). For later uses can be switched to other visual attributes.
+        """
+        if type=="folder":
+            self.visual == "FA"
+
     def get_class_info(self):
-        info = super().get_info()
-        info.update(
-            {
+        if self.visual is None:
+            self.visual = "FA"
+        info = {
                 "C_FACTTABLECOLUMN": "CONCEPT_CD",
                 "C_TABLENAME": "CONCEPT_DIMENSION",
                 "C_COLUMNNAME": "CONCEPT_PATH",
                 "C_COLUMNDATATYPE": "T",
                 "C_OPERATOR": "LIKE",
-                "C_VISUALATTRIBUTES": "FA",
+                "C_VISUALATTRIBUTES": self.visual,
                 "M_APPLIED_PATH": "@",
             }
-        )
         return info
 
     def get_parent_codehdler(self):
@@ -236,19 +260,21 @@ class I2B2Modifier(I2B2OntologyElement):
         # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
         if parent.path == applied_path:
             self.applied_concept = parent
-            parent = None
-        if parent is not None:
-            parent.visual = "DA"
+        else:
             self.applied_concept = parent.applied_concept
         super().__init__(component2, parent)
         self.applied_path = applied_path
         self.visual = "RA"
 
+    def set_visual(self, type):
+        """
+        Default is leaf, can be switched to folder. For later uses can be switched to other visual attributes.
+        """
+        if type=="folder":
+            self.visual == "DA"
 
     def get_class_info(self):
-        info = super().get_info()
-        info.update(
-            {
+        info = {
                 "C_FACTTABLECOLUMN": "MODIFIER_CD",
                 "C_TABLENAME": "MODIFIER_DIMENSION",
                 "C_COLUMNNAME": "MODIFIER_PATH",
@@ -257,7 +283,6 @@ class I2B2Modifier(I2B2OntologyElement):
                 "C_VISUALATTRIBUTES": self.visual,
                 "M_APPLIED_PATH": self.applied_path
             }
-        )
         return info
 
     def get_parent_codehdler(self):
@@ -266,5 +291,5 @@ class I2B2Modifier(I2B2OntologyElement):
         If we are at the root of the modifier hierarchy, embed the applied concept
         """
         if self.parent is not None:
-            return self.parent.basecode_hdler
-        return self.applied_concept.basecode_hdler
+            return self.parent.basecode_handler
+        return self.applied_concept.basecode_handler

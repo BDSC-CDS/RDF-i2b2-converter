@@ -37,9 +37,10 @@ def test_modifiers():
     prop = construct_property(
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasInhaledOxygenConcentrationDrugAdministrationEvent"
     )
-    i2b2mod = I2B2Modifier(prop[0], parent=None, applied_path=None)
+    conc = I2B2Concept(Concept(ONTOLOGY_GRAPH.resource(TEST_URI)))
+    i2b2mod = I2B2Modifier(prop[0], parent=conc, applied_path=conc.path)
     modlist = i2b2mod.walk_mtree()
-    assert len(modlist) > 1
+    assert len(modlist) > 1 and i2b2mod.visual=="RA" and all([k.visual=="RA" for k in modlist if "VALUETYPE_CD" in k.line_updates.keys()])
 
 
 def test_i2b2ontelem():
@@ -71,7 +72,8 @@ def test_basecode():
     prop = construct_property(
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasFOPHDiagnosisCode"
     )
-    i2b2mod = I2B2Modifier(prop[0], parent=None, applied_path=None)
+    conc = I2B2Concept(Concept(ONTOLOGY_GRAPH.resource(TEST_URI)))
+    i2b2mod = I2B2Modifier(prop[0], parent=conc, applied_path=conc.path)
     modlist = i2b2mod.walk_mtree()
     assert [len(k.code) == 50 for k in modlist]
 
@@ -84,11 +86,22 @@ def test_duplicate_paths():
     """
     col_names = ["c_fullname", "c_basecode"]
     db = from_csv(METADATA_PATH, usecols=col_names)
-    if len(db) > 0:
-        assert not any([len(set(db[key])) < len(db[key]) for key in col_names])
+    assert not any([len(set(db[key])) < len(db[key]) for key in col_names])
 
 
 def test_levels():
     """
-    Check ontology elements all have coherent levels i.e modifiers levels are decoupled from concept levels, and incrementation is correct.
+    Check ontology elements all have exactly one parent in the tree, and their levels are consistent.
     """
+    df = pd.read_csv(METADATA_PATH, usecols=["C_HLEVEL", "C_FULLNAME"])
+    samples = df.samples(n=10)
+    res=[]
+    for row in samples:
+        if row["C_HLEVEL"]>0:
+            parent_path = row["C_FULLNAME"].rfind("\\", 0, -1)
+            parlev = df.loc[df["C_FULLNAME"]==parent_path]
+            if len(parlev) !=1:
+                res.append(False)
+            else:
+                res.append(parlev["C_HLEVEL"]==row["C_HLEVEL"]-1)
+    assert all(res)

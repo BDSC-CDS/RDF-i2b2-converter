@@ -98,7 +98,7 @@ class InformationTree:
     def get_info_dics(self):
         pass
 
-    def go_fish(self):
+    def go_fish(self): # TODO : SUPER IMPORTANT: only gather LEAVES i.e datatypeprops modifiers with their value OR objetpropmodifiers with 0 predicates OR individuals
         for obs in observations:
             extractor = FeatureExtractor(obs)
             info = ObservationRegister(obs) #TODO: rewrite all this block
