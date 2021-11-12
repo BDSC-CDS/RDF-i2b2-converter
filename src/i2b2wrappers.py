@@ -56,8 +56,10 @@ class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
         
         self.parent = parent
+        self.logical_parent = parent if parent.is_creator else parent.logical_parent
+        self.is_creator = graph_component.is_creator() # TODO implement and find a better naming
         self.component = graph_component
-        self.basecode_handler = I2B2BasecodeHandler(self, ph=self.get_parent_codehdler())
+        self.basecode_handler = I2B2BasecodeHandler(self)
         self.path_handler = I2B2PathResolver(self)
         self.set_path()
         self.set_code()
@@ -191,12 +193,6 @@ class I2B2Concept(I2B2OntologyElement):
             }
         return info
 
-    def get_parent_codehdler(self):
-        """
-        For an i2b2 concept, we do not need to embed the hierarchy in the basecode: the concept URI is enough.
-        """
-        return None
-
 
 class I2B2PathResolver:
     def __init__(self, i2b2ontelem):
@@ -221,11 +217,11 @@ class I2B2BasecodeHandler:
     If an other handler is specified as "ph" at construction, its code will be embedded in the computation. (this helps encapsulating hierarchy in codes)
     """
 
-    def __init__(self, i2b2element, ph=None, value=""):
+    def __init__(self, i2b2element, value=""):
         self.value = value # if child of terminology append : + code, don't go through the whole tree. only problem is if LOINC> $loincel has several possible paths
         self.basecode = None
         self.core = i2b2element.component.get_uri()
-        self.prefix = ph.get_basecode() if ph is not None else ""
+        self.prefix = i2b2element.logical_parent.get_basecode() if i2b2element.logical_parent is not None else ""
 
     def get_basecode(self):
         if self.basecode is not None:
@@ -256,12 +252,14 @@ class I2B2BasecodeHandler:
 
 
 class I2B2Modifier(I2B2OntologyElement):
-    def __init__(self, component2, parent, applied_path=None):
+    def __init__(self, component2, parent, logical_parent, applied_path):
         # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
         if parent.path == applied_path:
             self.applied_concept = parent
+            parent = None
         else:
             self.applied_concept = parent.applied_concept
+
         super().__init__(component2, parent)
         self.applied_path = applied_path
         self.visual = "RA"
@@ -284,12 +282,3 @@ class I2B2Modifier(I2B2OntologyElement):
                 "M_APPLIED_PATH": self.applied_path
             }
         return info
-
-    def get_parent_codehdler(self):
-        """
-        For an i2b2 modifier, we embed the hierarchy in the basecode since collisions can happen.
-        If we are at the root of the modifier hierarchy, embed the applied concept
-        """
-        if self.parent is not None:
-            return self.parent.basecode_handler
-        return self.applied_concept.basecode_handler
