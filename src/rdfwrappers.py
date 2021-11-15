@@ -25,12 +25,13 @@ class Component:
     Component is a wrapper for the rdflib.Resource class.
     """
 
-    def __init__(self, resource):
+    def __init__(self, resource, parent_class=None):
         self.resource = resource
         # Question: should we use normalized uri or simply qname here?
         self.shortname = resource.graph.namespace_manager.normalizeUri(
             resource.identifier
         )
+        self.parent_class = parent_class
         com = resource.value(COMMENT_URI)
         self.comment = com.toPython() if com is not None else com
         self.set_label()
@@ -46,6 +47,13 @@ class Component:
         Dig the ontology from the current point only considering subclass relations.
         """
         pass
+
+    def get_logic_indicator(self):
+        """
+        State if the current object is a subclass or a property of the object which instantiated it.
+        By construction, we set parent_class to None by default and to the superclass when applicable so these criteria are equivalent.
+        """
+        return self.parent_class is None
 
     def get_label(self):
         return self.label
@@ -89,11 +97,10 @@ class Component:
 
 
 class Concept(Component):
-    def __init__(self, resource, parent=None):
-        super().__init__(resource)
+    def __init__(self, resource, parent_class=None):
+        super().__init__(resource, parent_class)
         self.subconcepts = []
         self.properties = []
-        self.parent = parent
         self.resolver = OntologyDepthExplorer(self)
 
     def get_entry_desc(self):
@@ -377,20 +384,20 @@ class OntologyDepthExplorer:
 
     def explore_subclasses(self, filter_mode):
         """
-        Fetch the direct subclasses of the concept. Reference the parent concept.
+        Fetch the direct subclasses of the concept. Reference the parent_class concept.
         """
         subs = self.concept.resource.subjects(SUBCLASS_PRED)
         if subs is None:
             return []
         if filter_mode == "blacklist":
             return [
-                Concept(sub, parent=self.concept)
+                Concept(sub, parent_class=self.concept)
                 for sub in subs
                 if sub.identifier not in BLACKLIST
             ]
         elif filter_mode == "whitelist":
             return [
-                Concept(sub, parent=self.concept)
+                Concept(sub, parent_class=self.concept)
                 for sub in subs
                 if sub.identifier in ENTRY_CONCEPTS
             ]

@@ -56,8 +56,7 @@ class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
         
         self.parent = parent
-        self.logical_parent = parent if parent.is_creator else parent.logical_parent
-        self.is_creator = graph_component.is_creator() # TODO implement and find a better naming
+        self.logical_parent = parent if graph_component.get_logic_indicator() else parent.logical_parent
         self.component = graph_component
         self.basecode_handler = I2B2BasecodeHandler(self)
         self.path_handler = I2B2PathResolver(self)
@@ -221,7 +220,7 @@ class I2B2BasecodeHandler:
         self.value = value # if child of terminology append : + code, don't go through the whole tree. only problem is if LOINC> $loincel has several possible paths
         self.basecode = None
         self.core = i2b2element.component.get_uri()
-        self.prefix = i2b2element.logical_parent.get_basecode() if i2b2element.logical_parent is not None else ""
+        self.prefix = i2b2element.logical_parent.basecode_handler.get_basecode() if i2b2element.logical_parent is not None else ""
 
     def get_basecode(self):
         if self.basecode is not None:
@@ -252,7 +251,7 @@ class I2B2BasecodeHandler:
 
 
 class I2B2Modifier(I2B2OntologyElement):
-    def __init__(self, component2, parent, logical_parent, applied_path):
+    def __init__(self, component2, parent, applied_path):
         # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
         if parent.path == applied_path:
             self.applied_concept = parent

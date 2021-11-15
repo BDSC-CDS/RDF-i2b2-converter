@@ -21,7 +21,6 @@ def construct_property(uri):
         k.digin_ranges()
     return properties
 
-
 def test_converterclass():
     root_rdfconcept = Concept(
         ONTOLOGY_GRAPH.resource(
@@ -43,6 +42,25 @@ def test_modifiers():
     assert len(modlist) > 1 and i2b2mod.visual=="RA" and all([k.visual=="RA" for k in modlist if "VALUETYPE_CD" in k.line_updates.keys()])
 
 
+def test_logicalindicators():
+    prop = construct_property("https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubstanceCode")
+    conc = I2B2Concept(Concept(ONTOLOGY_GRAPH.resource(TEST_URI)))
+    i2b2mod = I2B2Modifier(prop[0], parent=conc, applied_path=conc.path)
+    modlist = i2b2mod.walk_mtree()
+    directs = []
+    indirects = []
+    subclatc = []
+    for k in modlist:
+        if k.parent == i2b2mod:
+            directs.append(k)
+        elif k.parent.parent == i2b2mod and "hasCode" in k.path:
+            indirects.append(k)
+        else:
+            subclatc.append(k)
+            
+    assert len(directs)>0 and len(subclatc)>0 and [k.logical_parent == k.parent for k in directs] and [k.logical_parent==i2b2mod and k.parent.logical_parent==i2b2mod for k in subclatc]
+
+    
 def test_i2b2ontelem():
     inter_conc = CONCEPT_LIST[0]
     test_c = I2B2Concept(inter_conc, parent=None)
@@ -87,7 +105,6 @@ def test_duplicate_paths():
     col_names = ["c_fullname", "c_basecode"]
     db = from_csv(METADATA_PATH, usecols=col_names)
     assert not any([len(set(db[key])) < len(db[key]) for key in col_names])
-
 
 def test_levels():
     """
