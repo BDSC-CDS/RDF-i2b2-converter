@@ -20,10 +20,10 @@ class I2B2Converter:
     From this object can be triggered the modifiers generation.
     """
 
-    def __init__(self, concept, i2b2parent=None):
+    def __init__(self, concept, i2b2parent=None, isroot=False):
         """
         Extract and instantiate all the i2b2concepts for this run.
-        They are foud by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
+        They are found by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
         cur = I2B2Concept(concept, i2b2parent)
         self.i2b2concepts = [cur]
@@ -49,7 +49,7 @@ class I2B2Converter:
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly oncein the file.
         """
-        db_to_csv(self.towrite, METADATA_PATH)
+        db_to_csv(self.towrite, METADATA_PATH, "a")
 
 
 class I2B2OntologyElement:
@@ -79,7 +79,7 @@ class I2B2OntologyElement:
 
     def set_level(self):
         if self.parent is None:
-            self.level =1
+            self.level =0
         else:
             self.level = self.parent.level +1
 
@@ -127,7 +127,7 @@ class I2B2OntologyElement:
         else:
             parpath=""
             symbol =self.path
-        return {
+        res=  {
             "C_HLEVEL": str(self.level),
             "C_FULLNAME": ROOT_PATH + self.path,
             "C_NAME": self.displayname,
@@ -146,7 +146,9 @@ class I2B2OntologyElement:
             "C_PATH": parpath,
             "C_SYMBOL": symbol,
             "C_METADATAXML": "",
-        }.update(spec_dir)
+        }
+        res.update(spec_dir)
+        return res
 
     def get_filtered_children(self):
         """

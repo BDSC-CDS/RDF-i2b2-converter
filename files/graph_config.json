@@ -21,7 +21,6 @@
         "ENTRY_CONCEPTS": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHProcedure",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#CivilStatus",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#Consent",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate",

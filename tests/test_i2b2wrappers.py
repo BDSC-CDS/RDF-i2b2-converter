@@ -3,11 +3,13 @@ import sys
 import pytest
 import random
 
+
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
 
 from initsts import *
 from utils import from_csv
+from main import generate_ontology_table
 from i2b2wrappers import *
 
 global_db = []
@@ -57,7 +59,7 @@ def test_logicalindicators():
             indirects.append(k)
         else:
             subclatc.append(k)
-            
+
     assert len(directs)>0 and len(subclatc)>0 and [k.logical_parent == k.parent for k in directs] and [k.logical_parent==i2b2mod and k.parent.logical_parent==i2b2mod for k in subclatc]
 
     
@@ -70,7 +72,8 @@ def test_i2b2ontelem():
 
 
 def test_interface():
-
+    # Step 0: clear existing metadata file
+    #TODO : fix so it doesn't systematically overwrite but can append if something was already written
     # Step 1: generate python objects from the entry concept list specified in the config file
     entry_concepts = CONCEPT_LIST
     # Step 2: For each concept, create an I2B2 converter and extract info from it.
@@ -79,12 +82,12 @@ def test_interface():
         concept = Concept(concept_i.resource)
 
         # Initialize the converter using the list of objects
-        converter = I2B2Converter(concept)
+        converter = I2B2Converter(concept) 
         # Get the i2b2 db lines related to this concept
         buffer = converter.get_batch()
         while buffer:
             converter.write(METADATA_PATH)
-
+            buffer = converter.get_batch()
 
 def test_basecode():
     prop = construct_property(
@@ -96,7 +99,7 @@ def test_basecode():
     assert [len(k.code) == 50 for k in modlist]
 
 def test_e2e():
-    pass
+    generate_ontology_table()
 
 def test_duplicate_paths():
     """

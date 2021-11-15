@@ -56,8 +56,7 @@ def db_to_csv(db, filename, mode="w"):
     Argument is only the target filename, will be written in the output_tables directory.
     """
     df = pd.DataFrame(db)
-    #TODO fix path shit
-    df.to_csv(path_or_buf=filename, mode=mode, header=(mode != "a"))
+    df.to_csv(path_or_buf=filename, mode=mode, header=(mode != "a"), index=False)
 
 
 def from_csv(filename):

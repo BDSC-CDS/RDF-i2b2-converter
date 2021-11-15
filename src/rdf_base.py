@@ -48,7 +48,8 @@ class GraphParser:
             key, val = tupp
             globals()[key.upper()] = rdflib.Namespace(val)
 
-    def get_entrypoints(self, list=ENTRY_CONCEPTS):
+    def get_entrypoints(self, list=[ROOT_URI]):
+        # TODO :  support entrypoints other than root (i.e the ontology file should still work AND root line still be written)
         return [self.graph.resource(uri) for uri in list]
 
 def rname(uri, graph):

@@ -1,7 +1,7 @@
 from i2b2wrappers import *
 
 
-def gen_concept_modifier_dim(folder_path=os.path.dirname(METADATA_PATH), metadata_filename="METADATA"):
+def gen_concept_modifier_dim(folder_path=os.path.dirname(METADATA_PATH), metadata_filename="METADATA.csv"):
     """
     Build two tables: i2b2's CONCEPT_DIMENSION and MODIFIER_DIMENSION that stores the concepts and modifiers codes as well as the full paths used in the ontology.
     These informations are needed to join CRC tables to ontology tables.

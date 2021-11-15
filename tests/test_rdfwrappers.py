@@ -278,3 +278,15 @@ def test_valueset():
         rngs.extend(pp.ranges)
     assert len(rngs)>0 and all ([rn.subconcepts!=[] and all([type(ind)==LeafConcept for ind in rn.subconcepts]) and rn.properties==[] for rn in rngs])
 
+def test_sparql():
+    res = ONTOLOGY_GRAPH.query(
+        """
+        select distinct ?cl
+        where {
+            ?prop rdfs:domain ?cl .
+            ?other rdfs:subClassOf ?cl
+        }
+        """
+    )
+    rows = [k[0] for k in res]
+    pdb.set_trace()

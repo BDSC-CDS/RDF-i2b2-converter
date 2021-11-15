@@ -4,7 +4,7 @@
     "DEFAULT_DATE": 730000,
     "ROOT_PATH": "\\SPHNv2020.1\\",
     "UNITS": {"Height": "cm", "Weight": "kg"},
-    "METADATA_PATH": "../files/output_tables/METADATA.csv",
+    "METADATA_PATH": "files/output_tables/METADATA.csv",
     "ONTOLOGY_DROP_DIC": {
         "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
         "PATIENT_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",

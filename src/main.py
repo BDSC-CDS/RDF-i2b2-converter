@@ -4,30 +4,17 @@ from rdfwrappers import *
 from i2b2wrappers import *
 from starschema import *
 
-pdb.set_trace()
-
-
 def check_macros():
     """
     Check the config files are properly formatted and the concepts to use as entrypoints are consistent, without duplicates.
     """
     pass
 
-
 def generate_ontology_table():
-    # Now adding the namespaces so we can refer to them as macros e.g RDF stands for rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-    # or whatever is in the graph
-    ns = [e for e in ONTOLOGY_GRAPH.namespace_manager.namespaces()]
-    for tupp in ns:
-        key, val = tupp
-        globals()[key.upper()] = rdflib.Namespace(val)
-
-    # Step 1: generate python objects from the entry concept list specified in the config file
-    entry_concept_resources = give_entry_concepts() # TODO write a bootstrap classe that extracts the entry objs from the graph file/location?
-
-    # Step 2: For each concept, create an I2B2 converter and extract info from it.
-    # This might be suboptimal in terms of memory usage when an entry concept is in fact a directory having a lot of subconcepts
-    for concept_res in entry_objs:
+    parser = GraphParser([ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION])
+    parser.define_namespaces()    
+    entries = parser.get_entrypoints([ROOT_URI])
+    for concept_res in entries:
         concept = Concept(concept_res)
         concept.explore_children()
 
@@ -39,16 +26,14 @@ def generate_ontology_table():
             converter.write(METADATA_PATH)
 
     # Step 3: Write the root information in the DB file then merge all concept files into it
+    # Already done if the parser.get_entrypoints was given the root uri
+    # Else, we have to make sure the root line is always written (or table will be invalid!)
+    # TODO: perhaps always write the root line explicitly instead of in the loop. 
+    # If so, change the "level=0" option in the set_level since only the root (= the line accessible through table_access) should have level 0
 
     # Step 4 
-    gen_concept_modifier_dim(metadata=METADATA_PATH)
-    gen_table_access(metadata=METADATA_PATH)
-
-
-def generate_ontology_table():
-    parser = GraphParser([ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION])
-    parser.define_namespaces()
-    resources = parser.get_entrypoints([ROOT_URI])
+    gen_concept_modifier_dim(folder_path="files/output/", metadata_filename="metadata.csv")
+    gen_table_access(path="files/output_tables/table_access.csv")
 
 def load_observations():
     class_resources = GraphParser(paths=[DATA_GRAPHS_LOCATION])
