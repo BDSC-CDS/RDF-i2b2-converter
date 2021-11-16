@@ -8,7 +8,7 @@ from rdfwrappers import *
 ONTOLOGY_GRAPH = rdflib.Graph()
 ONTOLOGY_GRAPH.parse(ONTOLOGY_GRAPH_LOCATION, format="turtle")
 for file in os.listdir(TERMINOLOGIES_LOCATION):
-    print("Adding " + file + " to the graph, from i2b2 wrappers test file")
+    print("Adding " + file + " to the graph, from initsts test file")
     if "snomed" in file or "loinc" in file:
         continue
     ONTOLOGY_GRAPH.parse(TERMINOLOGIES_LOCATION + file, format="turtle")

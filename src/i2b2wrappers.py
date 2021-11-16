@@ -20,36 +20,48 @@ class I2B2Converter:
     From this object can be triggered the modifiers generation.
     """
 
-    def __init__(self, concept, i2b2parent=None, isroot=False):
+    def __init__(self, concept, i2b2parent=None):
         """
         Extract and instantiate all the i2b2concepts for this run.
         They are found by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
-        cur = I2B2Concept(concept, i2b2parent)
-        self.i2b2concepts = [cur]
-        concept.get_entry_desc()
-        for sub in concept.subconcepts: 
-            self.i2b2concepts.extend(I2B2Converter(sub, cur).i2b2concepts)
-        self.left_tosearch = self.i2b2concepts.copy()
         self.towrite = []
+        self.i2b2voidconcepts = []
+        self.left_tosearch = []
+        # Exploring into our concept
+        cur = I2B2Concept(concept, i2b2parent)
+        concept.get_entry_desc()
+        # If it's not a directory, register it to be modifier-expanded. Stop condition of the recursion.
+        if concept.subconcepts == []:
+            self.left_tosearch.append(cur)
+            return
+        # Else, register it to be written out - but not expanded, and renew the operation on its subconcepts
+        self.i2b2voidconcepts.append(cur)
+        for sub in concept.subconcepts: 
+            next = I2B2Converter(sub, cur)
+            self.left_tosearch.extend(next.left_tosearch)
+            self.i2b2voidconcepts.extend(next.i2b2voidconcepts)
+
 
     def get_batch(self):
+        # First flush the directory concepts (that do not span modifiers) if any
+        self.towrite.extend([k.get_db_line() for k in self.i2b2voidconcepts])
+        self.i2b2voidconcepts = []
+        # Then taking the next real concept (spanning a modifier tree) 
         try:
             cur = self.left_tosearch.pop()
         except:
             return False
-        cur.set_path()
-        cur.set_code()
         cur.extract_modelems()
-        self.towrite = [k.get_db_line() for k in [cur] + cur.modifiers]
+        self.towrite.extend([k.get_db_line() for k in [cur] + cur.modifiers])
         return True
 
-    def write(self, filepath):
+    def write(self, filepath, init_table=False):
         """
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly oncein the file.
         """
-        db_to_csv(self.towrite, METADATA_PATH, "a")
+        db_to_csv(self.towrite, METADATA_PATH, init_table)
 
 
 class I2B2OntologyElement:
@@ -79,6 +91,7 @@ class I2B2OntologyElement:
 
     def set_level(self):
         if self.parent is None:
+            # TODO take care, this should never be 0 unless for a unique node that is root... i think? is it allowed for more than one node?
             self.level =0
         else:
             self.level = self.parent.level +1

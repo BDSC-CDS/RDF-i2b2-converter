@@ -76,7 +76,8 @@ def test_unique_properties_specific():
     )
     test_concept = Concept(res1)
     test_concept.explore_children()
-    assert len(test_concept.properties) == 6
+    count=2 if all([rdflib.URIRef(k) in BLACKLIST for k in ONTOLOGY_DROP_DIC.values()]) else 6
+    assert len(test_concept.properties) == count
 
 
 def test_explore_children():
@@ -210,7 +211,7 @@ def test_implicitlist():
         initBindings={"s": uri.identifier},
     )
 
-    assert len(res) == 2
+    assert len(res) == 1
 
 
 def test_explorevalueset():
@@ -289,4 +290,3 @@ def test_sparql():
         """
     )
     rows = [k[0] for k in res]
-    pdb.set_trace()

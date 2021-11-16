@@ -78,15 +78,6 @@ class ObservationRegister:
         smerge = fmerge.update(stronger_info)
         return smerge
 
-class FeatureExtractor:
-    """
-    Extract the relevant information from a RDF resource regarding a set of predefined features.
-    """
-    def __init__(self, resource):
-        pass
-    def extract_features(self):
-        pass
-
 class InformationTree:
     """
     This class is in charge of the graph exploration given a set of entrypoints. It will trigger the collection of observation informations.
@@ -96,20 +87,43 @@ class InformationTree:
         self.observations = resources_list
 
     def get_info_dics(self):
-        pass
+        return self.explore_subtree()
 
-    def go_fish(self): 
+    def walk_obstree(self): 
         # TODO : SUPER IMPORTANT: only gather LEAVES i.e datatypeprops modifiers with their value OR objetpropmodifiers with 0 predicates OR individuals
         # TODO : for basecode, 
-        for obs in observations:
-            extractor = FeatureExtractor(obs)
-            info = ObservationRegister(obs) #TODO: rewrite all this block
+        for obs in self.observations:
+            for feature in extractor.get_features_and_values():
+                pass
             info.merge_dics(extractor.extract_features())
+            # TODO: keep track of the basecode when performing the exploration
+            # TODO: check if element is a child of valueset at this stage
+
+
+
+
+
+            """
             children_info = self.explore_subtree(obs, upper_info = info)
+            info = ObservationRegister(obs) 
             return [info]+children_info
+            """
 
     def explore_subtree(self, resource, upper_info):
-        for pred, obj in resource.predicate_objects():
-            pass
+        """
+        Recursive function, stop when the current resource has no predicates (leaf).
+        Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
+        Special case for the information that is not conceptual but related to patient, site, encounter
+        """
+        gen = resource.predicate_objects()
+        if len(gen)==0:
+            return
+        for pred, obj in gen:
+            if pred.identifier in BLACKLIST:
+                continue
+            self.explore_subtree(obj, upper_info)
+            
+    def reduce_basecode(resource, prefix):
+        return ""
 
 # TODO: fill the dicts. fill the other dimensions. write unit tests.

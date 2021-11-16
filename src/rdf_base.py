@@ -28,18 +28,21 @@ SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
 class GraphParser:
     def __init__(self, paths):
         self.graph = rdflib.Graph()
-        myPath = os.path.dirname(os.path.abspath(__file__))
+        my_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
         for path in paths:
             print("Exploring directory "+ path)
-            g_path = myPath + path
+            g_path = my_path + path
             if os.path.isdir(g_path):
                 files = os.listdir(g_path)
                 with alive_bar(len(files)) as bar:
                     for filek in files:
-                        self.graph.parse(g_path+filek)
+                        if "snomed" in filek:
+                            continue
+                        print("Loading file: "+ filek)
+                        self.graph.parse(g_path+filek, format="turtle")
                         bar()
             else:
-                self.graph.parse(g_path)
+                self.graph.parse(g_path, format="turtle")
         print("Graph is fully loaded in memory.")
 
     def define_namespaces(self):

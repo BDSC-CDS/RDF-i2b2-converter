@@ -179,16 +179,16 @@ class Property(Component):
         return self.ranges
 
     def digin_ranges(self):
-        if self.resource.value(TYPE_PREDICATE_URI).identifier==DATATYPE_PROP_URI:
-            # The ranges are tree leaf objects without properties and without subclasses
-            self.ranges = [LeafConcept(reg) for reg in self.ranges_res]
-
-        elif self.resource.value(TYPE_PREDICATE_URI).identifier==OBJECT_PROP_URI:
+        prop_type = self.resource.value(TYPE_PREDICATE_URI)
+        if prop_type is None or prop_type.identifier==OBJECT_PROP_URI:
             processed_range_res = self.sort_silent_ranges()
             self.ranges = [Concept(reg) for reg in processed_range_res["regular"]] + [ChildfreeConcept(gen) for gen in processed_range_res["muted"]]
             for obj in self.ranges:
                 # The explore method will trigger subclasses and properties discovery
                 obj.explore_children()
+        elif prop_type.identifier==DATATYPE_PROP_URI:
+            # The ranges are tree leaf objects without properties and without subclasses
+            self.ranges = [LeafConcept(reg) for reg in self.ranges_res]
 
     def sort_silent_ranges(self):
         """

@@ -49,14 +49,26 @@ def add_spaces(oname):
             fname = fname + oname[i]
     return fname + oname[-1]
 
+def wipe_directory(dir_path, names=[]):
+    """
+    Delete files in the given directory.
+    """
+    if names == []:
+        names = os.listdir(dir_path)
+    for k in names:
+        os.remove(dir_path+k)
+        print("Removed file: ", dir_path+k)
 
-def db_to_csv(db, filename, mode="w"):
+
+def db_to_csv(db, filename, init=False):
     """
     Simple tool writing a list of dictionaries with matching keys to a csv database-ready file.
     Argument is only the target filename, will be written in the output_tables directory.
     """
     df = pd.DataFrame(db)
-    df.to_csv(path_or_buf=filename, mode=mode, header=(mode != "a"), index=False)
+    mode = "w" if init else "a"
+    header = init
+    df.to_csv(path_or_buf=filename, mode=mode, header=header, index=False)
 
 
 def from_csv(filename):

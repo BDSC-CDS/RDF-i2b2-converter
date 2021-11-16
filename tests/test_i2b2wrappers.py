@@ -30,7 +30,7 @@ def test_converterclass():
         )
     )
     converter = I2B2Converter(root_rdfconcept)
-    all_concepts = converter.i2b2concepts
+    all_concepts = converter.i2b2voidconcepts+converter.left_tosearch
     assert len(all_concepts)>0 and not all([conc.level == all_concepts[0].level for conc in all_concepts])
 
 
@@ -73,21 +73,23 @@ def test_i2b2ontelem():
 
 def test_interface():
     # Step 0: clear existing metadata file
-    #TODO : fix so it doesn't systematically overwrite but can append if something was already written
     # Step 1: generate python objects from the entry concept list specified in the config file
     entry_concepts = CONCEPT_LIST
+    # Now prepare the directory and writing
+    wipe_directory(OUTPUT_TABLES)
+    init = True
     # Step 2: For each concept, create an I2B2 converter and extract info from it.
     # This might be suboptimal in terms of memory usage when an entry concept is in fact a directory having a lot of subconcepts
     for concept_i in entry_concepts:
         concept = Concept(concept_i.resource)
-
         # Initialize the converter using the list of objects
         converter = I2B2Converter(concept) 
         # Get the i2b2 db lines related to this concept
         buffer = converter.get_batch()
         while buffer:
-            converter.write(METADATA_PATH)
+            converter.write(METADATA_PATH, init_table=init)
             buffer = converter.get_batch()
+            init = False
 
 def test_basecode():
     prop = construct_property(
@@ -105,9 +107,10 @@ def test_duplicate_paths():
     """
     Check all paths and basecodes are unique.
     """
-    col_names = ["c_fullname", "c_basecode"]
-    db = from_csv(METADATA_PATH, usecols=col_names)
-    assert not any([len(set(db[key])) < len(db[key]) for key in col_names])
+    col_names = ["C_FULLNAME", "C_BASECODE"]
+    db = pd.read_csv(METADATA_PATH, usecols=col_names)
+
+    assert all((db[key].is_unique for key in col_names))
 
 def test_levels():
     """
