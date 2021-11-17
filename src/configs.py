@@ -1,5 +1,7 @@
 import json
 import rdflib
+import os
+import sys
 (
     ONTOLOGY_GRAPH_LOCATION,
     TERMINOLOGIES_LOCATION,
@@ -57,16 +59,18 @@ import rdflib
     XML_PATTERN
 ) = [None, None, None, None, None, None, None, None, None, None, None]
 ONTOLOGY_DROP_DIC = {}
+COLUMNS = {}
 DATA_LEAVES = {}
 EQUIVALENCES = {}
-with open("files/graph_config.json") as ff:
+cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
+with open(cur_path+"files/graph_config.json") as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():
     globals()[key] = val
 for key, val in config["uris"].items():
     globals()[key] = rdflib.URIRef(val) if type(val)==str else [rdflib.URIRef(k) for k in val]
 
-with open("files/i2b2_rdf_mapping.json") as ff:
+with open(cur_path+"files/i2b2_rdf_mapping.json") as ff:
     config = json.load(ff)
 for key, val in config.items():
     globals()[key] = val

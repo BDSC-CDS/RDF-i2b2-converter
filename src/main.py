@@ -39,10 +39,14 @@ def generate_ontology_table():
     # If so, change the "level=0" option in the set_level since only the root (= the line accessible through table_access) should have level 0
 
     # Step 4 
-    gen_concept_modifier_dim(folder_path="files/output_tables/", metadata_filename="METADATA.csv")
-    gen_table_access(path="files/output_tables/TABLE_ACCESS.csv")
+
+    gen_concept_modifier_dim(folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv")
+    gen_table_access(path=OUTPUT_TABLES+"TABLE_ACCESS.csv")
 
 def load_observations():
     class_resources = GraphParser(paths=[DATA_GRAPHS_LOCATION])
     dl = DataLoader(class_resources, filename=OUTPUT_TABLES+"OBSERVATION_FACT", reset_file=True)
     dl.write_db()
+
+if __name__ == "__main__":
+    generate_ontology_table()

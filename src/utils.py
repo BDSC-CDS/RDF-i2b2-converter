@@ -60,12 +60,12 @@ def wipe_directory(dir_path, names=[]):
         print("Removed file: ", dir_path+k)
 
 
-def db_to_csv(db, filename, init=False):
+def db_to_csv(db, filename, init=False, columns=[]):
     """
     Simple tool writing a list of dictionaries with matching keys to a csv database-ready file.
     Argument is only the target filename, will be written in the output_tables directory.
     """
-    df = pd.DataFrame(db)
+    df = pd.DataFrame(db, columns=columns) if columns!=[] else pd.DataFrame(db)
     mode = "w" if init else "a"
     header = init
     df.to_csv(path_or_buf=filename, mode=mode, header=header, index=False)

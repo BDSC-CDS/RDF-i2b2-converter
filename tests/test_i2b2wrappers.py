@@ -3,7 +3,6 @@ import sys
 import pytest
 import random
 
-
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
 
@@ -117,14 +116,12 @@ def test_levels():
     Check ontology elements all have exactly one parent in the tree, and their levels are consistent.
     """
     df = pd.read_csv(METADATA_PATH, usecols=["C_HLEVEL", "C_FULLNAME"])
-    samples = df.samples(n=10)
+    samples = df.sample(n=10)
+    samples = samples[samples["C_HLEVEL"]!=0].T.to_dict().values()
     res=[]
     for row in samples:
-        if row["C_HLEVEL"]>0:
-            parent_path = row["C_FULLNAME"].rfind("\\", 0, -1)
-            parlev = df.loc[df["C_FULLNAME"]==parent_path]
-            if len(parlev) !=1:
-                res.append(False)
-            else:
-                res.append(parlev["C_HLEVEL"]==row["C_HLEVEL"]-1)
+        stop = row["C_FULLNAME"].rfind("\\", 0, -1)
+        parent_path = row["C_FULLNAME"][:stop]
+        parlev = df.loc[df["C_FULLNAME"]==parent_path]
+        res.append((parlev["C_HLEVEL"]==row["C_HLEVEL"]-1).bool())
     assert all(res)

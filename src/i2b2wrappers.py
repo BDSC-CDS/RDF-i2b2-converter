@@ -25,7 +25,6 @@ class I2B2Converter:
         Extract and instantiate all the i2b2concepts for this run.
         They are found by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
-        self.towrite = []
         self.i2b2voidconcepts = []
         self.left_tosearch = []
         # Exploring into our concept
@@ -45,13 +44,12 @@ class I2B2Converter:
 
     def get_batch(self):
         # First flush the directory concepts (that do not span modifiers) if any
-        self.towrite.extend([k.get_db_line() for k in self.i2b2voidconcepts])
+        self.towrite = [k.get_db_line() for k in self.i2b2voidconcepts]
         self.i2b2voidconcepts = []
         # Then taking the next real concept (spanning a modifier tree) 
-        try:
-            cur = self.left_tosearch.pop()
-        except:
+        if self.left_tosearch == []:
             return False
+        cur = self.left_tosearch.pop()
         cur.extract_modelems()
         self.towrite.extend([k.get_db_line() for k in [cur] + cur.modifiers])
         return True
@@ -59,14 +57,13 @@ class I2B2Converter:
     def write(self, filepath, init_table=False):
         """
         Write all the db at once through a pandas dataframe.
-        If updating this function to enable append mode, do not forget to make sure header is written exactly oncein the file.
+        If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.
         """
-        db_to_csv(self.towrite, METADATA_PATH, init_table)
+        db_to_csv(self.towrite, METADATA_PATH, init_table, columns=COLUMNS["METADATA"])
 
 
 class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
-        
         self.parent = parent
         self.logical_parent = parent if graph_component.get_logic_indicator() else parent.logical_parent
         self.component = graph_component
@@ -234,7 +231,7 @@ class I2B2BasecodeHandler:
     def __init__(self, i2b2element, value=""):
         self.value = value # if child of terminology append : + code, don't go through the whole tree. only problem is if LOINC> $loincel has several possible paths
         self.basecode = None
-        self.core = i2b2element.component.get_uri()
+        self.core = i2b2element.component.get_shortname()
         self.prefix = i2b2element.logical_parent.basecode_handler.get_basecode() if i2b2element.logical_parent is not None else ""
 
     def get_basecode(self):
@@ -262,7 +259,8 @@ class I2B2BasecodeHandler:
             tohash = rdf_uri + ":"+value
         else :
             to_hash = rdf_uri
-        return tohash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
+        to_hash = prefix + to_hash
+        return to_hash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
 
 
 class I2B2Modifier(I2B2OntologyElement):
