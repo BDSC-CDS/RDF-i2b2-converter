@@ -33,6 +33,6 @@ def gen_provider_dim():
 
 def gen_table_access(path=OUTPUT_TABLES+"TABLE_ACCESS.csv"):
     table_access = pd.DataFrame(columns=COLUMNS["TABLE_ACCESS"])
-    table_access = table_access.append({"C_TABLE_CD":"test" ,"C_TABLE_NAME":"test" ,"C_PROTECTED_ACCESS":"N","C_HLEVEL":0, "C_FULLNAME":ROOT_PATH, "C_NAME": ONTOLOGY_NAME,"C_SYNONYM_CD":"N", "C_VISUALATTRIBUTES":"CA", "C_FACTTABLECOLUMN":"CONCEPT_CD", "C_DIMTABLENAME":"CONCEPT_DIMENSION", "C_COLUMNNAME":"CONCEPT_PATH","C_COLUMNDATATYPE":"T", "C_OPERATOR":"LIKE", "C_DIMCODE":ROOT_PATH},
+    table_access = table_access.append({"C_TABLE_CD":"sphn" ,"C_TABLE_NAME":"sphn" ,"C_PROTECTED_ACCESS":"N","C_HLEVEL":0, "C_FULLNAME":ROOT_PATH, "C_NAME": ONTOLOGY_NAME,"C_SYNONYM_CD":"N", "C_VISUALATTRIBUTES":"CA", "C_FACTTABLECOLUMN":"CONCEPT_CD", "C_DIMTABLENAME":"CONCEPT_DIMENSION", "C_COLUMNNAME":"CONCEPT_PATH","C_COLUMNDATATYPE":"T", "C_OPERATOR":"LIKE", "C_DIMCODE":ROOT_PATH},
             ignore_index=True)	
     table_access.fillna("").to_csv(path, index=False)

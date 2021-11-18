@@ -28,9 +28,7 @@ class Component:
     def __init__(self, resource, parent_class=None):
         self.resource = resource
         # Question: should we use normalized uri or simply qname here?
-        self.shortname = resource.graph.namespace_manager.normalizeUri(
-            resource.identifier
-        )
+        self.set_shortname()
         self.parent_class = parent_class
         com = resource.value(COMMENT_URI)
         self.comment = com.toPython() if com is not None else com
@@ -66,6 +64,23 @@ class Component:
 
     def get_comment(self):
         return self.comment
+
+    def set_shortname(self):
+        """
+        Reduce the resource URI. 
+        In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
+        The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
+        """
+        shortname = self.resource.graph.namespace_manager.normalizeUri(self.resource.identifier)
+        uri = self.resource.identifier
+        if uri in shortname:
+            ns = self.resource.graph.namespace_manager.namespaces()
+            best_guess_len=0
+            for key, value in ns:
+                if value in uri and len(value)>best_guess_len:
+                    best_guess_len= len(value)
+                    shortname = key + ":" +uri[len(value):]
+        self.shortname=shortname
 
     def set_label(self):
         """

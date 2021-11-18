@@ -59,6 +59,24 @@ class I2B2Converter:
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.
         """
+        if init_table:
+            self.towrite.append({
+                "C_HLEVEL":0,
+                "C_FULLNAME":ROOT_PATH,
+                "C_NAME":"SPHN ontology",
+                "C_SYNONYM_CD":"N",
+                "C_VISUALATTRIBUTES":"FA ",
+                "C_BASECODE":"2b701f32968adc91efa94a2174b3883fea4335f60a083f1f5",
+                "C_FACTTABLECOLUMN":"CONCEPT_CD",
+                "C_TABLENAME":"CONCEPT_DIMENSION",
+                "C_COLUMNNAME":"CONCEPT_PATH",
+                "C_COLUMNDATATYPE":"T",
+                "C_OPERATOR":"LIKE",
+                "C_COMMENT":"",
+                "C_DIMCODE":ROOT_PATH,
+                "C_TOOLTIP":"SPHN.2020.1",
+                "M_APPLIED_PATH":"@"
+            })
         db_to_csv(self.towrite, METADATA_PATH, init_table, columns=COLUMNS["METADATA"])
 
 
@@ -89,7 +107,7 @@ class I2B2OntologyElement:
     def set_level(self):
         if self.parent is None:
             # TODO take care, this should never be 0 unless for a unique node that is root... i think? is it allowed for more than one node?
-            self.level =0
+            self.level =1
         else:
             self.level = self.parent.level +1
 
@@ -133,13 +151,12 @@ class I2B2OntologyElement:
 
         if self.parent is not None:
             parpath = self.parent.path 
-            symbol = self.path[len(self.parent.path) :]
+            symbol = self.path[len(self.parent.path) :]+"\\"
         else:
             parpath=""
             symbol =self.path
         res=  {
             "C_HLEVEL": str(self.level),
-            "C_FULLNAME": ROOT_PATH + self.path,
             "C_NAME": self.displayname,
             "C_SYNONYM_CD": "N",
             "C_BASECODE": self.code,
@@ -183,6 +200,9 @@ class I2B2Concept(I2B2OntologyElement):
     def get_concept(self):
         return self
 
+    def get_root(self):
+        return ROOT_PATH
+
     def set_visual(self, type):
         """
         Default is folder anyway for now (for concepts). For later uses can be switched to other visual attributes.
@@ -195,6 +215,7 @@ class I2B2Concept(I2B2OntologyElement):
             self.visual = "FA"
         info = {
                 "C_FACTTABLECOLUMN": "CONCEPT_CD",
+                "C_FULLNAME": self.path,
                 "C_TABLENAME": "CONCEPT_DIMENSION",
                 "C_COLUMNNAME": "CONCEPT_PATH",
                 "C_COLUMNDATATYPE": "T",
@@ -216,8 +237,8 @@ class I2B2PathResolver:
                 parent_path = ""
             else:
                 parent_path = self.element.parent.path_handler.get_path()
-            self.path = parent_path + "\\" + self.element.component.get_shortname()
-        return self.path
+            self.path = parent_path + self.element.component.get_shortname()+ "\\"
+        return self.element.get_root() + self.path
 
 
 class I2B2BasecodeHandler:
@@ -281,12 +302,17 @@ class I2B2Modifier(I2B2OntologyElement):
         Default is leaf, can be switched to folder. For later uses can be switched to other visual attributes.
         """
         if type=="folder":
+            pdb.set_trace()
             self.visual == "DA"
+
+    def get_root(self):
+        return "\\"
 
     def get_class_info(self):
         info = {
                 "C_FACTTABLECOLUMN": "MODIFIER_CD",
                 "C_TABLENAME": "MODIFIER_DIMENSION",
+                "C_FULLNAME": self.path,
                 "C_COLUMNNAME": "MODIFIER_PATH",
                 "C_COLUMNDATATYPE": "T",
                 "C_OPERATOR": "LIKE",

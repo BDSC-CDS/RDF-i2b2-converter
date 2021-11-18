@@ -121,7 +121,10 @@ def test_levels():
     res=[]
     for row in samples:
         stop = row["C_FULLNAME"].rfind("\\", 0, -1)
-        parent_path = row["C_FULLNAME"][:stop]
+        parent_path = row["C_FULLNAME"][:stop]+"\\"
         parlev = df.loc[df["C_FULLNAME"]==parent_path]
+        if len(parlev)==0:
+            res.append(False)
+            continue
         res.append((parlev["C_HLEVEL"]==row["C_HLEVEL"]-1).bool())
     assert all(res)
