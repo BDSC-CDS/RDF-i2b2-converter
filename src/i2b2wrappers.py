@@ -122,6 +122,7 @@ class I2B2OntologyElement:
         Some observations can store a value. In that case, the corresponding ontology element should specify the value type both in the valuetype_cd and in the XML form.
         """
         ont_values_cells = EQUIVALENCES[datatype_string]
+        # TODO: debug
         metadata = generate_xml(ont_values_cells["C_METADATAXML"])
         ont_values_cells.copy().update({"C_METADATAXML":metadata})
         return ont_values_cells
@@ -130,17 +131,33 @@ class I2B2OntologyElement:
         res = []
         submods = self.get_filtered_children()
         for component in submods:
-            # Check if the child's URI is a primary data type. If so, its information does not justify creating a new ontology item but is written in the xml field.
-            cur_uri = component.get_uri()
-            if cur_uri in DATA_LEAVES.keys():
-                self.line_updates= self.mutate_valueinfo(DATA_LEAVES[cur_uri])
-            else:
+            if "Birth" in self.displayname:
+                pdb.set_trace() #monitor carefully the hasdatetime here
+            if not self.fully_process_child_info(component):
                 cur = I2B2Modifier(component, parent=self, applied_path=self.applied_path)
-                self.set_visual("folder")
                 next = cur.walk_mtree()
                 res.append(cur)
                 res.extend(next)
+        # Last check: if all the children are hidden, self should not appear as a directory
+        if all([mod.visual[1]=='H' for mod in res]):
+            self.set_visual("leaf")
         return res
+
+    def fully_process_child_info(self, child_component):
+        # Check if the child's URI is a primary data type. If so, its information does not justify creating a new ontology item but is written in the xml field.
+        cur_uri = child_component.get_uri()
+        to_unhide = cur_uri in UNHIDDEN_LEAVES.keys() and UNHIDDEN_LEAVES[cur_uri] == self.component.get_uri()
+        if cur_uri in HIDDEN_LEAVES.keys() and not to_unhide:
+            # Hide self if a child is a trigger for it. e.g the "hasDate" property pointing to a date element should not appear in the ontology
+            # Unhide is specified so in the config (fine-grained rule)
+            self.set_visual("hidden")
+            return False
+        if cur_uri in DATA_LEAVES.keys():
+            # Merge the information in the xml panel of the current element, do not display the child
+            self.line_updates= self.mutate_valueinfo(DATA_LEAVES[cur_uri])
+            return True
+        self.set_visual("folder")
+        return False
 
     def get_db_line(self):
         # First gather the class-specific information
@@ -183,7 +200,8 @@ class I2B2OntologyElement:
         In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
         """
         modifiers_tobe = []
-        for attr in self.component.get_children():
+        children = self.component.get_children() # TODO find a way to keep date if it's the only one??
+        for attr in children:
             if not drop(attr):
                 modifiers_tobe.append(attr)
         return modifiers_tobe
@@ -203,16 +221,20 @@ class I2B2Concept(I2B2OntologyElement):
     def get_root(self):
         return ROOT_PATH
 
-    def set_visual(self, type):
+    def set_visual(self, typev):
         """
         Default is folder anyway for now (for concepts). For later uses can be switched to other visual attributes.
         """
-        if type=="folder":
-            self.visual == "FA"
+        if typev=="folder":
+            self.visual = "FA"
+        elif typev=="hidden":
+            self.visual = "LH"
+        elif typev=="leaf":
+            self.visual = "LA"
 
     def get_class_info(self):
         if self.visual is None:
-            self.visual = "FA"
+            self.visual = "LA"
         info = {
                 "C_FACTTABLECOLUMN": "CONCEPT_CD",
                 "C_FULLNAME": self.path,
@@ -295,20 +317,24 @@ class I2B2Modifier(I2B2OntologyElement):
 
         super().__init__(component2, parent)
         self.applied_path = applied_path
-        self.visual = "RA"
 
-    def set_visual(self, type):
+    def set_visual(self, typev):
         """
         Default is leaf, can be switched to folder. For later uses can be switched to other visual attributes.
         """
-        if type=="folder":
-            pdb.set_trace()
-            self.visual == "DA"
+        if typev=="folder":
+            self.visual = "DA"
+        elif typev=="hidden":
+            self.visual = "RH"
+        elif typev=="leaf":
+            self.visual = "RA"
 
     def get_root(self):
         return "\\"
 
     def get_class_info(self):
+        if self.visual is None:
+            self.visual = "RA"
         info = {
                 "C_FACTTABLECOLUMN": "MODIFIER_CD",
                 "C_TABLENAME": "MODIFIER_DIMENSION",

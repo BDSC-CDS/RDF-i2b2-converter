@@ -7,17 +7,24 @@
     "ONTOLOGY_DROP_DIC": {
         "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
         "PATIENT_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",
-        "PROVIDER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute",
-        "DATE_DESCRIPTOR": "http://www.w3.org/2001/XMLSchema#dateTime",
-        "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"
+        "PROVIDER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute"
+    },
+    "HIDDEN_LEAVES": {
+        "http://www.w3.org/2001/XMLSchema#dateTime": "DATE_DESCRIPTOR",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit" : "UNIT_DESCRIPTOR"
+    },
+    "UNHIDDEN_LEAVES":{
+        "http://www.w3.org/2001/XMLSchema#dateTime": ["https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate"]
     },
     "DATA_LEAVES": {
         "http://www.w3.org/2001/XMLSchema#string" :"STRING_DESCRIPTOR",
-        "http://www.w3.org/2001/XMLSchema#double":"DOUBLE_DESCRIPTOR"
+        "http://www.w3.org/2001/XMLSchema#double":"DOUBLE_DESCRIPTOR",
+        "http://www.w3.org/2001/XMLSchema#dateTime":"DATE_DESCRIPTOR"
     },
     "EQUIVALENCES": {
         "STRING_DESCRIPTOR": {"VALUETYPE_CD": "T", "C_METADATAXML": {"Datatype": "String"}},
-        "DOUBLE_DESCRIPTOR": {"VALUETYPE_CD": "N", "C_METADATAXML": {"Datatype":"PosFloat"}}
+        "DOUBLE_DESCRIPTOR": {"VALUETYPE_CD": "N", "C_METADATAXML": {"Datatype":"PosFloat"}},
+        "DATE_DESCRIPTOR": {"VALUETYPE_CD": "N", "C_METADATAXML": {"Datatype":"PosInteger", "Units":"(YYYY)"}}
     },
     "XML_PATTERN" : "<?xml version='1.0'?><ValueMetadata><Version>3.02</Version><CreationDateTime>08/14/2008 01:22:59</CreationDateTime><TestID></TestID><TestName></TestName><DataType></DataType><CodeType></CodeType><Flagstouse></Flagstouse><Oktousevalues>Y</Oktousevalues><MaxStringLength></MaxStringLength><EnumValues></EnumValues><CommentsDeterminingExclusion><Com></Com></CommentsDeterminingExclusion><UnitValues><NormalUnits></NormalUnits><EqualUnits></EqualUnits><ExcludingUnits></ExcludingUnits><ConvertingUnits><Units></Units><MultiplyingFactor></MultiplyingFactor></ConvertingUnits></UnitValues><Analysis><Enums /><Counts /><New /></Analysis></ValueMetadata>",
     "COLUMNS": {

@@ -1,7 +1,6 @@
 from rdf_base import *
 
 # add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
-BLACKLIST = BLACKLIST + [rdflib.URIRef(k) for k in ONTOLOGY_DROP_DIC.values()]
 
 
 def filter_valid(res_list):

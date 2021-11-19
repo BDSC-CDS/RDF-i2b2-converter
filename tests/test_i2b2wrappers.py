@@ -90,6 +90,9 @@ def test_interface():
             buffer = converter.get_batch()
             init = False
 
+def test_metadataxml():
+    pass
+
 def test_basecode():
     prop = construct_property(
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasFOPHDiagnosisCode"
@@ -128,3 +131,9 @@ def test_levels():
             continue
         res.append((parlev["C_HLEVEL"]==row["C_HLEVEL"]-1).bool())
     assert all(res)
+
+def test_leaves():
+    """
+    Select elements with a visual attribute of a leaf, check no children matching their path exist in the DB.
+    """
+    pass

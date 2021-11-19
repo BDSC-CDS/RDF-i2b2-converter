@@ -28,7 +28,9 @@
             "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth"
         ],
-        "BLACKLIST": [],
+        "BLACKLIST": [
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnit"
+        ],
         "TERMINOLOGY_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",
         "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet"
     }

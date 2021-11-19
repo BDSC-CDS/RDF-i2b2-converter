@@ -2,13 +2,14 @@ import json
 import rdflib
 import os
 import sys
+# TODO: remove all the initialisations to None, were there only to avoid getting red underlining in VScode
 (
     ONTOLOGY_GRAPH_LOCATION,
     TERMINOLOGIES_LOCATION,
     ONTOLOGY_NAME,
     DATA_GRAPHS_LOCATION,
     OUTPUT_TABLES,
-    USE_DUMMY_DATESt,
+    USE_DUMMY_DATES,
     ALWAYS_DEEP,
     RDF_FORMAT,
     PREF_LANGUAGE,
@@ -61,6 +62,8 @@ import sys
 ONTOLOGY_DROP_DIC = {}
 COLUMNS = {}
 DATA_LEAVES = {}
+HIDDEN_LEAVES = {}
+UNHIDDEN_LEAVES = {}
 EQUIVALENCES = {}
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
 with open(cur_path+"files/graph_config.json") as ff:
