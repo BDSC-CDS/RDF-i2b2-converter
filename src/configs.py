@@ -62,8 +62,7 @@ import sys
 ONTOLOGY_DROP_DIC = {}
 COLUMNS = {}
 DATA_LEAVES = {}
-HIDDEN_LEAVES = {}
-UNHIDDEN_LEAVES = {}
+UNDROP_LEAVES = {}
 EQUIVALENCES = {}
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
 with open(cur_path+"files/graph_config.json") as ff:

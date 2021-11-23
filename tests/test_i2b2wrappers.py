@@ -40,7 +40,8 @@ def test_modifiers():
     conc = I2B2Concept(Concept(ONTOLOGY_GRAPH.resource(TEST_URI)))
     i2b2mod = I2B2Modifier(prop[0], parent=conc, applied_path=conc.path)
     modlist = i2b2mod.walk_mtree()
-    assert len(modlist) > 1 and i2b2mod.visual=="RA" and all([k.visual=="RA" for k in modlist if "VALUETYPE_CD" in k.line_updates.keys()])
+    [k.get_class_info() for k in modlist]
+    assert len(modlist) > 1 and i2b2mod.visual=="DA" and all([k.visual=="RA" for k in modlist if "VALUETYPE_CD" in k.line_updates.keys()])
 
 
 def test_logicalindicators():

@@ -64,7 +64,7 @@ def test_genericcode():
 
     test_concept = Concept(res)
     test_concept.explore_children()
-    assert len(test_concept.properties) == 1
+    assert len(test_concept.properties) == 5 # This is 5 if the unwanted elements are dropped in the i2b2 part
 
 
 def test_unique_properties_specific():

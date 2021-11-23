@@ -4,14 +4,21 @@ from utils import db_to_csv, generate_xml
 
 def drop(attribute):
     """
-    If the attribute should be dropped as mentioned in the config file, skip it
+    If the attribute should be dropped because it points to a class referenced in the config file, skip it
     """
     for rn in attribute.get_children():
         cur_uri = rn.get_uri()
         if cur_uri in ONTOLOGY_DROP_DIC.values():
-            return True
+            return cur_uri
     return False
 
+def save_from_drop(droppy_uri, parent_uri):
+    """
+    Handles corner cases for attributes that are normally dropped but are exceptionally kept.
+    """
+    if droppy_uri in UNDROP_LEAVES.keys() and parent_uri in UNDROP_LEAVES[droppy_uri]:
+        return True
+    return False
 
 class I2B2Converter:
     """
@@ -131,27 +138,16 @@ class I2B2OntologyElement:
         res = []
         submods = self.get_filtered_children()
         for component in submods:
-            if "Birth" in self.displayname:
-                pdb.set_trace() #monitor carefully the hasdatetime here
-            if not self.fully_process_child_info(component):
+            if not self.absorb_child_info(component):
                 cur = I2B2Modifier(component, parent=self, applied_path=self.applied_path)
                 next = cur.walk_mtree()
                 res.append(cur)
                 res.extend(next)
-        # Last check: if all the children are hidden, self should not appear as a directory
-        if all([mod.visual[1]=='H' for mod in res]):
-            self.set_visual("leaf")
         return res
 
-    def fully_process_child_info(self, child_component):
+    def absorb_child_info(self, child_component):
         # Check if the child's URI is a primary data type. If so, its information does not justify creating a new ontology item but is written in the xml field.
         cur_uri = child_component.get_uri()
-        to_unhide = cur_uri in UNHIDDEN_LEAVES.keys() and UNHIDDEN_LEAVES[cur_uri] == self.component.get_uri()
-        if cur_uri in HIDDEN_LEAVES.keys() and not to_unhide:
-            # Hide self if a child is a trigger for it. e.g the "hasDate" property pointing to a date element should not appear in the ontology
-            # Unhide is specified so in the config (fine-grained rule)
-            self.set_visual("hidden")
-            return False
         if cur_uri in DATA_LEAVES.keys():
             # Merge the information in the xml panel of the current element, do not display the child
             self.line_updates= self.mutate_valueinfo(DATA_LEAVES[cur_uri])
@@ -200,9 +196,10 @@ class I2B2OntologyElement:
         In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
         """
         modifiers_tobe = []
-        children = self.component.get_children() # TODO find a way to keep date if it's the only one??
+        children = self.component.get_children() 
         for attr in children:
-            if not drop(attr):
+            found_drop_criterion = drop(attr)
+            if (not found_drop_criterion) or save_from_drop(found_drop_criterion, self.component.get_uri()):
                 modifiers_tobe.append(attr)
         return modifiers_tobe
 
@@ -256,11 +253,11 @@ class I2B2PathResolver:
     def get_path(self):
         if self.path == "":
             if self.element.parent is None:
-                parent_path = ""
+                parent_path = self.element.get_root()
             else:
                 parent_path = self.element.parent.path_handler.get_path()
             self.path = parent_path + self.element.component.get_shortname()+ "\\"
-        return self.element.get_root() + self.path
+        return self.path
 
 
 class I2B2BasecodeHandler:

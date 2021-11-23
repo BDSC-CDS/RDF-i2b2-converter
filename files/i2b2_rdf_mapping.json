@@ -7,13 +7,11 @@
     "ONTOLOGY_DROP_DIC": {
         "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
         "PATIENT_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",
-        "PROVIDER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute"
+        "PROVIDER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute",
+        "DATE_DESCRIPTOR": "http://www.w3.org/2001/XMLSchema#dateTime",
+        "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"
     },
-    "HIDDEN_LEAVES": {
-        "http://www.w3.org/2001/XMLSchema#dateTime": "DATE_DESCRIPTOR",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit" : "UNIT_DESCRIPTOR"
-    },
-    "UNHIDDEN_LEAVES":{
+    "UNDROP_LEAVES":{
         "http://www.w3.org/2001/XMLSchema#dateTime": ["https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate"]
     },
     "DATA_LEAVES": {
