@@ -8,10 +8,11 @@ from rdfwrappers import *
 
 gp = GraphParser([ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION])
 ns = gp.define_namespaces()
-ONTOLOGY_GRAPH=gp.graph
+ONTOLOGY_GRAPH = gp.graph
 for tupp in ns:
     key, val = tupp
     globals()[key.upper()] = rdflib.Namespace(val)
+
 
 def give_entry_concepts():
     return [ONTOLOGY_GRAPH.resource(e) for e in ENTRY_CONCEPTS]

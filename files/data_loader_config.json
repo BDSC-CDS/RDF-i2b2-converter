@@ -1,0 +1,9 @@
+{
+    "TO_IGNORE":[
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeCodingSystemAndVersion",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
+    ]
+
+
+}

@@ -2,6 +2,7 @@ import json
 import rdflib
 import os
 import sys
+
 # TODO: remove all the initialisations to None, were there only to avoid getting red underlining in VScode
 (
     ONTOLOGY_GRAPH_LOCATION,
@@ -23,7 +24,7 @@ import sys
     TYPE_PREDICATE_URI,
     DATATYPE_PROP_URI,
     OBJECT_PROP_URI,
-    COMMENT_URI
+    COMMENT_URI,
 ) = [
     None,
     None,
@@ -57,24 +58,26 @@ import sys
     ROOT_PATH,
     UNITS,
     METADATA_PATH,
-    XML_PATTERN
+    XML_PATTERN,
 ) = [None, None, None, None, None, None, None, None, None, None, None]
 ONTOLOGY_DROP_DIC = {}
 COLUMNS = {}
 DATA_LEAVES = {}
-TERMINOLOGIES_GRAPHS={}
-TERMINOLOGIES_FILES={}
+TERMINOLOGIES_GRAPHS = {}
+TERMINOLOGIES_FILES = {}
 UNDROP_LEAVES = {}
 EQUIVALENCES = {}
-cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
-with open(cur_path+"files/graph_config.json") as ff:
+cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
+with open(cur_path + "files/graph_config.json") as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():
     globals()[key] = val
 for key, val in config["uris"].items():
-    globals()[key] = rdflib.URIRef(val) if type(val)==str else [rdflib.URIRef(k) for k in val]
+    globals()[key] = (
+        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
+    )
 
-with open(cur_path+"files/i2b2_rdf_mapping.json") as ff:
+with open(cur_path + "files/i2b2_rdf_mapping.json") as ff:
     config = json.load(ff)
 for key, val in config.items():
     globals()[key] = val

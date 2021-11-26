@@ -22,7 +22,9 @@
             "https://loinc.org/rdf/":"sphn_loinc_2.71-1", 
             "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/":"sphn_icd-10-gm_2021-1",
             "https://biomedit.ch/rdf/sphn-resource/chop":"sphn_chop_2021-1",
-            "https://www.whocc.no/atc_ddd_index/?code=":"sphn_atc_2021-3"
+            "https://www.whocc.no/atc_ddd_index/?code=":"sphn_atc_2021-3",
+            "https://biomedit.ch/rdf/sphn-resource/atc/":"sphn_atc_2021-3",
+            "https://biomedit.ch/rdf/sphn-resource/loinc/":"sphn_loinc_2.71-1"
         }
     },
     "uris": {
@@ -42,9 +44,7 @@
             "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth"
         ],
-        "BLACKLIST": [
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnit"
-        ],
+        "BLACKLIST": [],
         "TERMINOLOGY_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",
         "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet"
     }

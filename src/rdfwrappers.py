@@ -1,13 +1,11 @@
-from rdf_base import *
+from utils import *
 
 # add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
 
 
 def filter_valid(res_list):
     # Discards elements referenced in the blacklist, proceed with the other
-    filtered = [
-        item for item in res_list if item.identifier not in BLACKLIST
-    ]
+    filtered = [item for item in res_list if item.identifier not in BLACKLIST]
     return filtered
 
 
@@ -16,7 +14,7 @@ def terminology_indicator(resource):
     Determine if it is worth looking for properties of this concept or not.
     In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
     """
-    return PROJECT_RDF_NAMESPACE not in resource.identifier
+    return any([k in resource.identifier for k in TERMINOLOGIES_GRAPHS.keys()])
 
 
 class Component:
@@ -26,7 +24,9 @@ class Component:
 
     def __init__(self, resource, parent_class=None):
         self.is_terminology_term = terminology_indicator(resource)
-        self.resource = self.switch_graph(resource) if self.is_terminology_term else resource
+        self.resource = (
+            self.switch_graph(resource) if self.is_terminology_term else resource
+        )
         self.set_shortname()
         self.parent_class = parent_class
         com = resource.value(COMMENT_URI)
@@ -78,16 +78,18 @@ class Component:
         In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
         The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
         """
-        shortname = self.resource.graph.namespace_manager.normalizeUri(self.resource.identifier)
+        shortname = self.resource.graph.namespace_manager.normalizeUri(
+            self.resource.identifier
+        )
         uri = self.resource.identifier
         if uri in shortname:
             ns = self.resource.graph.namespace_manager.namespaces()
-            best_guess_len=0
+            best_guess_len = 0
             for key, value in ns:
-                if value in uri and len(value)>best_guess_len:
-                    best_guess_len= len(value)
-                    shortname = key + ":" +uri[len(value):]
-        self.shortname=shortname
+                if value in uri and len(value) > best_guess_len:
+                    best_guess_len = len(value)
+                    shortname = key + ":" + uri[len(value) :]
+        self.shortname = shortname
 
     def set_label(self):
         """
@@ -103,7 +105,9 @@ class Component:
         self.label = self.shortname if fmtd_label == "" else fmtd_label.toPython()
 
         if self.is_terminology_term:
-            self.label=self.shortname[self.shortname.rfind(":")+1:] + " - " +self.label
+            code = self.shortname[self.shortname.rfind(":") + 1 :]
+            if code not in self.label:
+                self.label = code + " - " + self.label
 
     def __repr__(self):
         return (
@@ -160,12 +164,12 @@ class Concept(Component):
             predicate.digin_ranges()
 
     def find_subconcepts(self, filter_mode="blacklist"):
-        if len(self.subconcepts)==0:
+        if len(self.subconcepts) == 0:
             self.subconcepts = self.resolver.explore_subclasses(filter_mode)
             # Trigger recursive call on first-level children
             for sub in self.subconcepts:
                 sub.find_subconcepts(filter_mode)
-    
+
         return self.subconcepts
 
 
@@ -188,7 +192,7 @@ class LeafConcept(ChildfreeConcept):
     """
 
     def explore_children(self):
-        return 
+        return
 
 
 class Property(Component):
@@ -202,13 +206,15 @@ class Property(Component):
 
     def digin_ranges(self):
         prop_type = self.resource.value(TYPE_PREDICATE_URI)
-        if prop_type is None or prop_type.identifier==OBJECT_PROP_URI:
+        if prop_type is None or prop_type.identifier == OBJECT_PROP_URI:
             processed_range_res = self.sort_silent_ranges()
-            self.ranges = [Concept(reg) for reg in processed_range_res["regular"]] + [ChildfreeConcept(gen) for gen in processed_range_res["muted"]]
+            self.ranges = [Concept(reg) for reg in processed_range_res["regular"]] + [
+                ChildfreeConcept(gen) for gen in processed_range_res["muted"]
+            ]
             for obj in self.ranges:
                 # The explore method will trigger subclasses and properties discovery
                 obj.explore_children()
-        elif prop_type.identifier==DATATYPE_PROP_URI:
+        elif prop_type.identifier == DATATYPE_PROP_URI:
             # The ranges are tree leaf objects without properties and without subclasses
             self.ranges = [LeafConcept(reg) for reg in self.ranges_res]
 
@@ -223,11 +229,9 @@ class Property(Component):
         To achieve this, we find the ranges having "terminology brothers" and mute their subconcepts.
 
         """
-        final_ranges = {"muted":[], "regular":[]}
-        if "rugAdministrationEventReasonToSto" in self.shortname:
-            pdb.set_trace()
+        final_ranges = {"muted": [], "regular": []}
         if ALWAYS_DEEP:
-            final_ranges["regular"]=self.range_res
+            final_ranges["regular"] = self.range_res
             return 0
 
         # Extract the indices of self.ranges_res which belong to an external terminology
@@ -238,7 +242,7 @@ class Property(Component):
         counts = {}
         for cur_idx in idx_termsinrange:
             qnam = self.resource.graph.qname(self.ranges_res[cur_idx].identifier)
-            cur_terminology = qnam[:qnam.rfind(":")]
+            cur_terminology = qnam[: qnam.rfind(":")]
             if cur_terminology in counts.keys():
                 counts[cur_terminology].append(self.ranges_res[cur_idx])
             else:
@@ -246,13 +250,15 @@ class Property(Component):
 
         # Ranges that live in the same terminology are muted
         for val in counts.values():
-            if len(val)>1:
+            if len(val) > 1:
                 final_ranges["muted"].extend(val)
-        
-        # Other ranges are normal
-        final_ranges["regular"].extend(list(set(self.ranges_res)-set(final_ranges["muted"])))
 
-        return final_ranges 
+        # Other ranges are normal
+        final_ranges["regular"].extend(
+            list(set(self.ranges_res) - set(final_ranges["muted"]))
+        )
+
+        return final_ranges
 
 
 class RangeFilter:
@@ -430,8 +436,10 @@ class OntologyDepthExplorer:
         If the concept is a child of "Valueset", then all possible instances should be specified as children of this concept.
         At data loading, these instances should be treated differently as other instances (for which only the class is important)
         """
-        if self.concept.resource.value(SUBCLASS_PRED_URI
-        ).identifier != VALUESET_MARKER_URI:
+        if (
+            self.concept.resource.value(SUBCLASS_PRED_URI).identifier
+            != VALUESET_MARKER_URI
+        ):
             return []
         graph = self.concept.resource.graph
         res2 = graph.query(

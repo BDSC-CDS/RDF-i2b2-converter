@@ -22,6 +22,7 @@ def construct_property(uri):
         k.digin_ranges()
     return properties
 
+
 def test_converterclass():
     root_rdfconcept = Concept(
         ONTOLOGY_GRAPH.resource(
@@ -29,8 +30,10 @@ def test_converterclass():
         )
     )
     converter = I2B2Converter(root_rdfconcept)
-    all_concepts = converter.i2b2voidconcepts+converter.left_tosearch
-    assert len(all_concepts)>0 and not all([conc.level == all_concepts[0].level for conc in all_concepts])
+    all_concepts = converter.i2b2voidconcepts + converter.left_tosearch
+    assert len(all_concepts) > 0 and not all(
+        [conc.level == all_concepts[0].level for conc in all_concepts]
+    )
 
 
 def test_modifiers():
@@ -41,11 +44,23 @@ def test_modifiers():
     i2b2mod = I2B2Modifier(prop[0], parent=conc, applied_path=conc.path)
     modlist = i2b2mod.walk_mtree()
     [k.get_class_info() for k in modlist]
-    assert len(modlist) > 1 and i2b2mod.visual=="DA" and all([k.visual=="RA" for k in modlist if "VALUETYPE_CD" in k.line_updates.keys()])
+    assert (
+        len(modlist) > 1
+        and i2b2mod.visual == "DA"
+        and all(
+            [
+                k.visual == "RA"
+                for k in modlist
+                if "VALUETYPE_CD" in k.line_updates.keys()
+            ]
+        )
+    )
 
 
 def test_logicalindicators():
-    prop = construct_property("https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubstanceCode")
+    prop = construct_property(
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasSubstanceCode"
+    )
     conc = I2B2Concept(Concept(ONTOLOGY_GRAPH.resource(TEST_URI)))
     i2b2mod = I2B2Modifier(prop[0], parent=conc, applied_path=conc.path)
     modlist = i2b2mod.walk_mtree()
@@ -60,15 +75,23 @@ def test_logicalindicators():
         else:
             subclatc.append(k)
 
-    assert len(directs)>0 and len(subclatc)>0 and [k.logical_parent == k.parent for k in directs] and [k.logical_parent==i2b2mod and k.parent.logical_parent==i2b2mod for k in subclatc]
+    assert (
+        len(directs) > 0
+        and len(subclatc) > 0
+        and [k.logical_parent == k.parent for k in directs]
+        and [
+            k.logical_parent == i2b2mod and k.parent.logical_parent == i2b2mod
+            for k in subclatc
+        ]
+    )
 
-    
+
 def test_i2b2ontelem():
     inter_conc = CONCEPT_LIST[0]
     test_c = I2B2Concept(inter_conc, parent=None)
     test_c.extract_modelems()
     mod_mod = test_c.modifiers
-    assert all([type(k)==I2B2Modifier for k in mod_mod])
+    assert all([type(k) == I2B2Modifier for k in mod_mod])
 
 
 def test_interface():
@@ -83,7 +106,7 @@ def test_interface():
     for concept_i in entry_concepts:
         concept = Concept(concept_i.resource)
         # Initialize the converter using the list of objects
-        converter = I2B2Converter(concept) 
+        converter = I2B2Converter(concept)
         # Get the i2b2 db lines related to this concept
         buffer = converter.get_batch()
         while buffer:
@@ -91,8 +114,10 @@ def test_interface():
             buffer = converter.get_batch()
             init = False
 
+
 def test_metadataxml():
     pass
+
 
 def test_basecode():
     prop = construct_property(
@@ -103,8 +128,6 @@ def test_basecode():
     modlist = i2b2mod.walk_mtree()
     assert [len(k.code) == 50 for k in modlist]
 
-def test_e2e():
-    generate_ontology_table()
 
 def test_duplicate_paths():
     """
@@ -115,23 +138,25 @@ def test_duplicate_paths():
 
     assert all((db[key].is_unique for key in col_names))
 
+
 def test_levels():
     """
     Check ontology elements all have exactly one parent in the tree, and their levels are consistent.
     """
     df = pd.read_csv(METADATA_PATH, usecols=["C_HLEVEL", "C_FULLNAME"])
     samples = df.sample(n=10)
-    samples = samples[samples["C_HLEVEL"]!=0].T.to_dict().values()
-    res=[]
+    samples = samples[samples["C_HLEVEL"] != 0].T.to_dict().values()
+    res = []
     for row in samples:
         stop = row["C_FULLNAME"].rfind("\\", 0, -1)
-        parent_path = row["C_FULLNAME"][:stop]+"\\"
-        parlev = df.loc[df["C_FULLNAME"]==parent_path]
-        if len(parlev)==0:
+        parent_path = row["C_FULLNAME"][:stop] + "\\"
+        parlev = df.loc[df["C_FULLNAME"] == parent_path]
+        if len(parlev) == 0:
             res.append(False)
             continue
-        res.append((parlev["C_HLEVEL"]==row["C_HLEVEL"]-1).bool())
+        res.append((parlev["C_HLEVEL"] == row["C_HLEVEL"] - 1).bool())
     assert all(res)
+
 
 def test_leaves():
     """

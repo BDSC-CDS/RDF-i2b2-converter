@@ -1,5 +1,6 @@
 import pandas as pd
 import pdb
+import glob
 import json, os, datetime
 from configs import *
 
@@ -7,6 +8,53 @@ from configs import *
 This file figures file and format utility functions.
 It initializes global variables by reading the "ontology_config" file.
 """
+
+SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
+
+
+class GraphParser:
+    def __init__(self, paths):
+        self.graph = rdflib.Graph()
+        my_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
+        result = []
+        for pathi in paths:
+            if os.path.isfile(my_path + pathi):
+                result.append(my_path + pathi)
+                continue
+            result.extend(glob.glob(my_path + pathi + "/**/*.ttl", recursive=True))
+        for filek in result:
+            print("Loading file: " + filek)
+            dot = filek.rfind(".")
+            slash = filek.rfind("/")
+            fname = filek[slash + 1 : dot]
+            if fname in TERMINOLOGIES_FILES.keys():
+                cur = rdflib.Graph()
+                cur.parse(filek, format="turtle")
+                TERMINOLOGIES_FILES.update({fname: cur})
+            else:
+                self.graph.parse(filek, format="turtle")
+        print("Graph is fully loaded in memory.")
+
+    def define_namespaces(self):
+        ns = [e for e in self.graph.namespace_manager.namespaces()]
+        return ns
+
+    def get_entrypoints(self, list=[ROOT_URI]):
+        # TODO :  support entrypoints other than root (i.e the ontology file should still work AND root line still be written)
+        return [self.graph.resource(uri) for uri in list]
+
+
+def rname(uri, graph):
+    full = graph.qname(uri)
+    return full[full.find(":") + 1 :]
+
+
+def which_graph(uri):
+    for key in TERMINOLOGIES_GRAPHS.keys():
+        if key in uri:
+            return TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
+    return False
+
 
 def sanitize(db, col_name):
     for el in db:
@@ -48,6 +96,7 @@ def add_spaces(oname):
             fname = fname + oname[i]
     return fname + oname[-1]
 
+
 def wipe_directory(dir_path, names=[]):
     """
     Delete files in the given directory.
@@ -55,8 +104,8 @@ def wipe_directory(dir_path, names=[]):
     if names == []:
         names = os.listdir(dir_path)
     for k in names:
-        os.remove(dir_path+k)
-        print("Removed file: ", dir_path+k)
+        os.remove(dir_path + k)
+        print("Removed file: ", dir_path + k)
 
 
 def db_to_csv(db, filename, init=False, columns=[]):
@@ -64,7 +113,7 @@ def db_to_csv(db, filename, init=False, columns=[]):
     Simple tool writing a list of dictionaries with matching keys to a csv database-ready file.
     Argument is only the target filename, will be written in the output_tables directory.
     """
-    df = pd.DataFrame(db, columns=columns) if columns!=[] else pd.DataFrame(db)
+    df = pd.DataFrame(db, columns=columns) if columns != [] else pd.DataFrame(db)
     mode = "w" if init else "a"
     header = init
     df.to_csv(path_or_buf=filename, mode=mode, header=header, index=False)
@@ -86,12 +135,12 @@ def generate_xml(metadata_dict):
     Default type is string but PosFloat, Integer, PosInteger, Float are accepted
     """
     keyz = metadata_dict.keys()
-    shortname =metadata_dict["TestName"]if "TestName" in keyz else ""
-    shortname =metadata_dict["TestName"]if "TestName" in keyz else ""
-    simple_type=metadata_dict["DataType"] if "DataType" in keyz else ""
-    valueset=metadata_dict["EnumValues"] if "EnumValues" in keyz else ""
-    test_id=metadata_dict["TestID"] if "TestID" in keyz else ""
-    units=metadata_dict["ValueMetadata"] if "Units" in keyz else ""
+    shortname = metadata_dict["TestName"] if "TestName" in keyz else ""
+    shortname = metadata_dict["TestName"] if "TestName" in keyz else ""
+    simple_type = metadata_dict["DataType"] if "DataType" in keyz else ""
+    valueset = metadata_dict["EnumValues"] if "EnumValues" in keyz else ""
+    test_id = metadata_dict["TestID"] if "TestID" in keyz else ""
+    units = metadata_dict["Units"] if "Units" in keyz else ""
     if simple_type is None:
         return
     res = XML_PATTERN
@@ -107,10 +156,9 @@ def generate_xml(metadata_dict):
         res = res.replace(
             "<EnumValues></EnumValues>", "<EnumValues>" + enumstr + "</EnumValues>"
         )
-    res = res.replace(
-        "</ValueMetadata>", units + "</ValueMetadata>"
-    )
+    res = res.replace("</ValueMetadata>", units + "</ValueMetadata>")
     return res
+
 
 def remove_duplicates(dics):
     """

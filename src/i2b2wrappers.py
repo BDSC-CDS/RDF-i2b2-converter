@@ -1,5 +1,5 @@
 from rdfwrappers import *
-from utils import db_to_csv, generate_xml
+import hashlib
 
 
 def drop(attribute):
@@ -12,6 +12,7 @@ def drop(attribute):
             return cur_uri
     return False
 
+
 def save_from_drop(droppy_uri, parent_uri):
     """
     Handles corner cases for attributes that are normally dropped but are exceptionally kept.
@@ -19,6 +20,7 @@ def save_from_drop(droppy_uri, parent_uri):
     if droppy_uri in UNDROP_LEAVES.keys() and parent_uri in UNDROP_LEAVES[droppy_uri]:
         return True
     return False
+
 
 class I2B2Converter:
     """
@@ -43,17 +45,16 @@ class I2B2Converter:
             return
         # Else, register it to be written out - but not expanded, and renew the operation on its subconcepts
         self.i2b2voidconcepts.append(cur)
-        for sub in concept.subconcepts: 
+        for sub in concept.subconcepts:
             next = I2B2Converter(sub, cur)
             self.left_tosearch.extend(next.left_tosearch)
             self.i2b2voidconcepts.extend(next.i2b2voidconcepts)
-
 
     def get_batch(self):
         # First flush the directory concepts (that do not span modifiers) if any
         self.towrite = [k.get_db_line() for k in self.i2b2voidconcepts]
         self.i2b2voidconcepts = []
-        # Then taking the next real concept (spanning a modifier tree) 
+        # Then taking the next real concept (spanning a modifier tree)
         if self.left_tosearch == []:
             return False
         cur = self.left_tosearch.pop()
@@ -68,30 +69,34 @@ class I2B2Converter:
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.
         """
         if init_table:
-            self.towrite.append({
-                "C_HLEVEL":0,
-                "C_FULLNAME":ROOT_PATH,
-                "C_NAME":"SPHN ontology",
-                "C_SYNONYM_CD":"N",
-                "C_VISUALATTRIBUTES":"FA ",
-                "C_BASECODE":"2b701f32968adc91efa94a2174b3883fea4335f60a083f1f5",
-                "C_FACTTABLECOLUMN":"CONCEPT_CD",
-                "C_TABLENAME":"CONCEPT_DIMENSION",
-                "C_COLUMNNAME":"CONCEPT_PATH",
-                "C_COLUMNDATATYPE":"T",
-                "C_OPERATOR":"LIKE",
-                "C_COMMENT":"",
-                "C_DIMCODE":ROOT_PATH,
-                "C_TOOLTIP":"SPHN.2020.1",
-                "M_APPLIED_PATH":"@"
-            })
+            self.towrite.append(
+                {
+                    "C_HLEVEL": 0,
+                    "C_FULLNAME": ROOT_PATH,
+                    "C_NAME": "SPHN ontology",
+                    "C_SYNONYM_CD": "N",
+                    "C_VISUALATTRIBUTES": "FA ",
+                    "C_BASECODE": "2b701f32968adc91efa94a2174b3883fea4335f60a083f1f5",
+                    "C_FACTTABLECOLUMN": "CONCEPT_CD",
+                    "C_TABLENAME": "CONCEPT_DIMENSION",
+                    "C_COLUMNNAME": "CONCEPT_PATH",
+                    "C_COLUMNDATATYPE": "T",
+                    "C_OPERATOR": "LIKE",
+                    "C_COMMENT": "",
+                    "C_DIMCODE": ROOT_PATH,
+                    "C_TOOLTIP": "SPHN.2020.1",
+                    "M_APPLIED_PATH": "@",
+                }
+            )
         db_to_csv(self.towrite, METADATA_PATH, init_table, columns=COLUMNS["METADATA"])
 
 
 class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
         self.parent = parent
-        self.logical_parent = parent if graph_component.get_logic_indicator() else parent.logical_parent
+        self.logical_parent = (
+            parent if graph_component.get_logic_indicator() else parent.logical_parent
+        )
         self.component = graph_component
         self.basecode_handler = I2B2BasecodeHandler(self)
         self.path_handler = I2B2PathResolver(self)
@@ -100,7 +105,7 @@ class I2B2OntologyElement:
         self.set_displayname()
         self.set_level()
         self.set_comment()
-        self.line_updates={}
+        self.line_updates = {}
         self.visual = None
 
     def set_path(self):
@@ -115,23 +120,23 @@ class I2B2OntologyElement:
     def set_level(self):
         if self.parent is None:
             # TODO take care, this should never be 0 unless for a unique node that is root... i think? is it allowed for more than one node?
-            self.level =1
+            self.level = 1
         else:
-            self.level = self.parent.level +1
+            self.level = self.parent.level + 1
 
     def set_comment(self):
         self.comment = self.component.get_comment()
 
     def get_concept(self):
         pass
-    
+
     def mutate_valueinfo(self, datatype_string):
         """
         Some observations can store a value. In that case, the corresponding ontology element should specify the value type both in the valuetype_cd and in the XML form.
         """
         ont_values_cells = EQUIVALENCES[datatype_string].copy()
         metadata = generate_xml(ont_values_cells["C_METADATAXML"])
-        ont_values_cells.update({"C_METADATAXML":metadata})
+        ont_values_cells.update({"C_METADATAXML": metadata})
         return ont_values_cells
 
     def walk_mtree(self):
@@ -139,7 +144,9 @@ class I2B2OntologyElement:
         submods = self.get_filtered_children()
         for component in submods:
             if not self.absorb_child_info(component):
-                cur = I2B2Modifier(component, parent=self, applied_path=self.applied_path)
+                cur = I2B2Modifier(
+                    component, parent=self, applied_path=self.applied_path
+                )
                 next = cur.walk_mtree()
                 res.append(cur)
                 res.extend(next)
@@ -150,10 +157,8 @@ class I2B2OntologyElement:
         cur_uri = child_component.get_uri()
         if cur_uri in DATA_LEAVES.keys():
             # Merge the information in the xml panel of the current element, do not display the child
-            self.line_updates= self.mutate_valueinfo(DATA_LEAVES[cur_uri])
+            self.line_updates = self.mutate_valueinfo(DATA_LEAVES[cur_uri])
             return True
-        if "Broken with" in self.component.label:
-            pdb.set_trace()
         self.set_visual("folder")
         return False
 
@@ -165,12 +170,12 @@ class I2B2OntologyElement:
         # Then update the base dict with this specific dir and return.
 
         if self.parent is not None:
-            parpath = self.parent.path 
+            parpath = self.parent.path
             symbol = self.path[len(self.parent.path) :]
         else:
-            parpath=""
-            symbol =self.path
-        res=  {
+            parpath = ""
+            symbol = self.path
+        res = {
             "C_HLEVEL": str(self.level),
             "C_NAME": self.displayname,
             "C_SYNONYM_CD": "N",
@@ -198,10 +203,12 @@ class I2B2OntologyElement:
         In particular, discard (default) the dates, patient number, clinical site ID, encounter ID.
         """
         modifiers_tobe = []
-        children = self.component.get_children() 
+        children = self.component.get_children()
         for attr in children:
             found_drop_criterion = drop(attr)
-            if (not found_drop_criterion) or save_from_drop(found_drop_criterion, self.component.get_uri()):
+            if (not found_drop_criterion) or save_from_drop(
+                found_drop_criterion, self.component.get_uri()
+            ):
                 modifiers_tobe.append(attr)
         return modifiers_tobe
 
@@ -224,26 +231,26 @@ class I2B2Concept(I2B2OntologyElement):
         """
         Default is folder anyway for now (for concepts). For later uses can be switched to other visual attributes.
         """
-        if typev=="folder":
+        if typev == "folder":
             self.visual = "FA"
-        elif typev=="hidden":
+        elif typev == "hidden":
             self.visual = "LH"
-        elif typev=="leaf":
+        elif typev == "leaf":
             self.visual = "LA"
 
     def get_class_info(self):
         if self.visual is None:
             self.visual = "LA"
         info = {
-                "C_FACTTABLECOLUMN": "CONCEPT_CD",
-                "C_FULLNAME": self.path,
-                "C_TABLENAME": "CONCEPT_DIMENSION",
-                "C_COLUMNNAME": "CONCEPT_PATH",
-                "C_COLUMNDATATYPE": "T",
-                "C_OPERATOR": "LIKE",
-                "C_VISUALATTRIBUTES": self.visual,
-                "M_APPLIED_PATH": "@",
-            }
+            "C_FACTTABLECOLUMN": "CONCEPT_CD",
+            "C_FULLNAME": self.path,
+            "C_TABLENAME": "CONCEPT_DIMENSION",
+            "C_COLUMNNAME": "CONCEPT_PATH",
+            "C_COLUMNDATATYPE": "T",
+            "C_OPERATOR": "LIKE",
+            "C_VISUALATTRIBUTES": self.visual,
+            "M_APPLIED_PATH": "@",
+        }
         return info
 
 
@@ -258,7 +265,7 @@ class I2B2PathResolver:
                 parent_path = self.element.get_root()
             else:
                 parent_path = self.element.parent.path_handler.get_path()
-            self.path = parent_path + self.element.component.get_shortname()+ "\\"
+            self.path = parent_path + self.element.component.get_shortname() + "\\"
         return self.path
 
 
@@ -271,17 +278,25 @@ class I2B2BasecodeHandler:
     """
 
     def __init__(self, i2b2element, value=""):
-        self.value = value # if child of terminology append : + code, don't go through the whole tree. only problem is if LOINC> $loincel has several possible paths
+        self.value = (
+            value
+        )  # if child of terminology append : + code, don't go through the whole tree. only problem is if LOINC> $loincel has several possible paths
         self.basecode = None
         self.core = i2b2element.component.get_shortname()
-        self.prefix = i2b2element.logical_parent.basecode_handler.get_basecode() if i2b2element.logical_parent is not None else ""
+        self.prefix = (
+            i2b2element.logical_parent.basecode_handler.get_basecode()
+            if i2b2element.logical_parent is not None
+            else ""
+        )
 
     def get_basecode(self):
         if self.basecode is not None:
             return self.basecode
         return self.reduce_basecode()
 
-    def reduce_basecode(self, debug=False, cap=MAX_BASECODE_LENGTH): # TODO: check only taking into account one concept is enough. test.
+    def reduce_basecode(
+        self, debug=False, cap=MAX_BASECODE_LENGTH
+    ):  # TODO: check only taking into account one concept is enough. test.
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
         The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
@@ -292,14 +307,14 @@ class I2B2BasecodeHandler:
         rdf_uri = self.core
         value = self.value
         prefix = self.prefix
-        
+
         if rdf_uri[-1] != "\\":
             rdf_uri = rdf_uri + "\\"
 
         if len(value) > 0 and value[0] == "\\":
             value = value[1:]
-            tohash = rdf_uri + ":"+value
-        else :
+            tohash = rdf_uri + ":" + value
+        else:
             to_hash = rdf_uri
         to_hash = prefix + to_hash
         return to_hash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
@@ -321,11 +336,11 @@ class I2B2Modifier(I2B2OntologyElement):
         """
         Default is leaf, can be switched to folder. For later uses can be switched to other visual attributes.
         """
-        if typev=="folder":
+        if typev == "folder":
             self.visual = "DA"
-        elif typev=="hidden":
+        elif typev == "hidden":
             self.visual = "RH"
-        elif typev=="leaf":
+        elif typev == "leaf":
             self.visual = "RA"
 
     def get_root(self):
@@ -335,13 +350,13 @@ class I2B2Modifier(I2B2OntologyElement):
         if self.visual is None:
             self.visual = "RA"
         info = {
-                "C_FACTTABLECOLUMN": "MODIFIER_CD",
-                "C_TABLENAME": "MODIFIER_DIMENSION",
-                "C_FULLNAME": self.path,
-                "C_COLUMNNAME": "MODIFIER_PATH",
-                "C_COLUMNDATATYPE": "T",
-                "C_OPERATOR": "LIKE",
-                "C_VISUALATTRIBUTES": self.visual,
-                "M_APPLIED_PATH": self.applied_path
-            }
+            "C_FACTTABLECOLUMN": "MODIFIER_CD",
+            "C_TABLENAME": "MODIFIER_DIMENSION",
+            "C_FULLNAME": self.path,
+            "C_COLUMNNAME": "MODIFIER_PATH",
+            "C_COLUMNDATATYPE": "T",
+            "C_OPERATOR": "LIKE",
+            "C_VISUALATTRIBUTES": self.visual,
+            "M_APPLIED_PATH": self.applied_path,
+        }
         return info
