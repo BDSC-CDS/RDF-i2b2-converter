@@ -1,5 +1,4 @@
 from rdflib.graph import Graph
-from data_loader import DataLoader
 from rdfwrappers import *
 from i2b2wrappers import *
 from starschema import *
@@ -45,7 +44,7 @@ def generate_ontology_table():
 
 def load_observations():
     class_resources = GraphParser(paths=[DATA_GRAPHS_LOCATION])
-    dl = DataLoader(class_resources, filename=OUTPUT_TABLES+"OBSERVATION_FACT", reset_file=True)
+    #dl = DataLoader(class_resources, filename=OUTPUT_TABLES+"OBSERVATION_FACT", reset_file=True)
     dl.write_db()
 
 if __name__ == "__main__":

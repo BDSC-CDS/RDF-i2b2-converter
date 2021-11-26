@@ -1,6 +1,13 @@
 from rdf_base import *
 from i2b2wrappers import I2B2BasecodeHandler
 
+cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
+with open(cur_path+"files/data_loader_config.json") as ff:
+    config = json.load(ff)
+for key, val in config["TO_IGNORE"].items():
+    globals()[key] = rdflib.URIRef(val) if type(val)==str else [rdflib.URIRef(k) for k in val]
+
+
 
 class DataLoader:
     """
@@ -67,9 +74,7 @@ class ObservationRegister:
     Create a proper database line as dict and manages the overwritings of local dict (typically extracted from a FeatureExtractor with other dicts.
     """
     def __init__(self):
-        self.default = {
-            "ENCOUNTER_NUM": "", "PATIENT_NUM": "", "CONCEPT_CD": "", "PROVIDER_ID": "", "START_DATE": "", "MODIFIER_CD": "", "INSTANCE_NUM": "", "VALTYPE_CD": "", "TVAL_CHAR": "", "NVAL_NUM": "", "VALUEFLAG_CD": "", "QUANTITY_NUM": "", "UNITS_CD": "", "END_DATE": "", "LOCATION_CD": "", "OBSERVATION_BLOB": "", "CONFIDENCE_NUM": "", "UPDATE_DATE": "", "DOWNLOAD_DATE": "", "IMPORT_DATE": "", "SOURCESYSTEM_CD": "", "UPLOAD_ID": "", "TEXT_SEARCH_INDEX": ""
-        }
+        self.default = COLUMNS["OBSERVATION_FACT"]
 
     def merge_dics(self, local_info, weaker_info, stronger_info):
         base_dic = self.default.copy()
@@ -88,6 +93,12 @@ class InformationTree:
 
     def get_info_dics(self):
         return self.explore_subtree()
+
+    def is_pathend(self, resource):
+        preds = resource.predicates()
+        for pre in preds:
+            if pre.identifier not in TO_IGNORE:
+                pass
 
     def walk_obstree(self): 
         # TODO : SUPER IMPORTANT: only gather LEAVES i.e datatypeprops modifiers with their value OR objetpropmodifiers with 0 predicates OR individuals

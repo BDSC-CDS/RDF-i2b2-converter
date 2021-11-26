@@ -1,7 +1,6 @@
 import pandas as pd
 import pdb
 import json, os, datetime
-from alive_progress import alive_bar
 from configs import *
 
 """"
@@ -92,7 +91,7 @@ def generate_xml(metadata_dict):
     simple_type=metadata_dict["DataType"] if "DataType" in keyz else ""
     valueset=metadata_dict["EnumValues"] if "EnumValues" in keyz else ""
     test_id=metadata_dict["TestID"] if "TestID" in keyz else ""
-    units=metadata_dict["ValueMetadata"] if "ValueMetadata" in keyz else ""
+    units=metadata_dict["ValueMetadata"] if "Units" in keyz else ""
     if simple_type is None:
         return
     res = XML_PATTERN

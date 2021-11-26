@@ -34,22 +34,23 @@ class GraphParser:
             g_path = my_path + path
             if os.path.isdir(g_path):
                 files = os.listdir(g_path)
-                with alive_bar(len(files)) as bar:
-                    for filek in files:
-                        if "snomed" in filek:
-                            continue
-                        print("Loading file: "+ filek)
+                for filek in files:
+                    print("Loading file: "+ filek)
+                    dot=filek.rfind(".")
+                    fname=filek[:dot]
+                    if fname in TERMINOLOGIES_FILES.keys():
+                        cur = rdflib.Graph()
+                        cur.parse(g_path+filek, format="turtle")
+                        TERMINOLOGIES_FILES.update({fname:cur})
+                    else:
                         self.graph.parse(g_path+filek, format="turtle")
-                        bar()
             else:
                 self.graph.parse(g_path, format="turtle")
         print("Graph is fully loaded in memory.")
 
     def define_namespaces(self):
         ns = [e for e in self.graph.namespace_manager.namespaces()]
-        for tupp in ns:
-            key, val = tupp
-            globals()[key.upper()] = rdflib.Namespace(val)
+        return ns
 
     def get_entrypoints(self, list=[ROOT_URI]):
         # TODO :  support entrypoints other than root (i.e the ontology file should still work AND root line still be written)
@@ -58,6 +59,12 @@ class GraphParser:
 def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
+
+def which_graph(uri):
+    for key in TERMINOLOGIES_GRAPHS.keys():
+        if key in uri:
+            return TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
+    return False
 
 
 def format_global(ontograph=ONTOLOGY_GRAPH_LOCATION, to_filter=[]):

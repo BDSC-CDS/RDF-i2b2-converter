@@ -11,12 +11,12 @@ def filter_valid(res_list):
     return filtered
 
 
-def terminology_indicator(concept):
+def terminology_indicator(resource):
     """
     Determine if it is worth looking for properties of this concept or not.
     In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
     """
-    return PROJECT_RDF_NAMESPACE not in concept.resource.identifier
+    return PROJECT_RDF_NAMESPACE not in resource.identifier
 
 
 class Component:
@@ -25,13 +25,21 @@ class Component:
     """
 
     def __init__(self, resource, parent_class=None):
-        self.resource = resource
-        # Question: should we use normalized uri or simply qname here?
+        self.is_terminology_term = terminology_indicator(resource)
+        self.resource = self.switch_graph(resource) if self.is_terminology_term else resource
         self.set_shortname()
         self.parent_class = parent_class
         com = resource.value(COMMENT_URI)
         self.comment = com.toPython() if com is not None else com
         self.set_label()
+
+    def switch_graph(self, resource):
+        if not self.is_terminology_term:
+            return resource
+        graph = which_graph(resource.identifier)
+        if graph is False:
+            return resource
+        return graph.resource(resource.identifier)
 
     def get_children(self, *kwargs):
         """
@@ -90,11 +98,12 @@ class Component:
         )
         if len(labels) > 0:
             self.label = labels[0][1].toPython()
-            return
-
         # If the resource had no language-tagged label, get the normal label. If it does not exist, say the label will be the URI suffix
-        fmtd_label = self.resource.graph.label(self.resource.identifier)
+        fmtd_label = self.resource.label()
         self.label = self.shortname if fmtd_label == "" else fmtd_label.toPython()
+
+        if self.is_terminology_term:
+            self.label=self.shortname[self.shortname.rfind(":")+1:] + " - " +self.label
 
     def __repr__(self):
         return (
@@ -140,11 +149,10 @@ class Concept(Component):
         """
         for k in self.find_subconcepts():
             k.explore_children()
-        if terminology_indicator(self):
+
+        if self.is_terminology_term:
             return
-
         self.subconcepts.extend(self.resolver.explore_valueset())
-
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
         # Note generic concepts are dealt with in the Property.sort_silent_range method which flags them as child-free concepts
         self.properties.extend(self.resolver.explore_properties())
@@ -170,7 +178,7 @@ class ChildfreeConcept(Concept):
     To implement this, simply override find_subconcepts.
     """
 
-    def find_subconcepts(self, resolver):
+    def find_subconcepts(self, filter_mode="blacklist"):
         return []
 
 
@@ -216,39 +224,33 @@ class Property(Component):
 
         """
         final_ranges = {"muted":[], "regular":[]}
-
+        if "rugAdministrationEventReasonToSto" in self.shortname:
+            pdb.set_trace()
         if ALWAYS_DEEP:
             final_ranges["regular"]=self.range_res
             return 0
 
         # Extract the indices of self.ranges_res which belong to an external terminology
-        termins = [
-            (
-                elem.identifier,
-                SUBCLASS_PRED * rdflib.paths.OneOrMore,
-                TERMINOLOGY_MARKER_URI,
-            )
-            in self.resource.graph
-            for elem in self.ranges_res
-        ]
+        termins = [terminology_indicator(elem) for elem in self.ranges_res]
         idx_termsinrange = [indx for indx, truth_val in enumerate(termins) if truth_val]
 
-        # Now count occurrence of each specific terminology
+        # Now for each specific terminology, keep track to which range it applies to
         counts = {}
         for cur_idx in idx_termsinrange:
-            cur_terminology = self.resource.graph.qname(self.ranges_res[cur_idx].identifier)
+            qnam = self.resource.graph.qname(self.ranges_res[cur_idx].identifier)
+            cur_terminology = qnam[:qnam.rfind(":")]
             if cur_terminology in counts.keys():
-                counts[cur_terminology] = counts[cur_terminology] + 1
+                counts[cur_terminology].append(self.ranges_res[cur_idx])
             else:
-                counts[cur_terminology] = 1
+                counts[cur_terminology] = [self.ranges_res[cur_idx]]
 
-        # Now search in self.ranges_res which range belong to an ontology and have brother in it.
-        # When found, prune its subconcepts so it cannot be expanded
-        for rn_idx in range(len(self.ranges_res)):
-            if rn_idx in idx_termsinrange and counts[self.resource.graph.qname(self.ranges_res[rn_idx].identifier)] > 1:
-                final_ranges["muted"].append(self.ranges_res[rn_idx])
-                continue
-            final_ranges["regular"].append(self.ranges_res[rn_idx])
+        # Ranges that live in the same terminology are muted
+        for val in counts.values():
+            if len(val)>1:
+                final_ranges["muted"].extend(val)
+        
+        # Other ranges are normal
+        final_ranges["regular"].extend(list(set(self.ranges_res)-set(final_ranges["muted"])))
 
         return final_ranges 
 
@@ -399,6 +401,7 @@ class OntologyDepthExplorer:
     def explore_subclasses(self, filter_mode):
         """
         Fetch the direct subclasses of the concept. Reference the parent_class concept.
+        If the current node is a terminology element, all its predicate can be in a separate graph.
         """
         subs = self.concept.resource.subjects(SUBCLASS_PRED)
         if subs is None:

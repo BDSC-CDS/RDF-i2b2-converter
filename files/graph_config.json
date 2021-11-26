@@ -9,7 +9,21 @@
         "USE_DUMMY_DATES": 0,
         "ALWAYS_DEEP": 0,
         "RDF_FORMAT": "turtle",
-        "PREF_LANGUAGE": "fr"
+        "PREF_LANGUAGE": "fr",
+        "TERMINOLOGIES_FILES": {
+            "snomed-ct-20210731":"",
+            "sphn_loinc_2.71-1":"", 
+            "sphn_icd-10-gm_2021-1":"",
+            "sphn_chop_2021-1":"",
+            "sphn_atc_2021-3":""
+        },
+        "TERMINOLOGIES_GRAPHS": {
+            "http://snomed.info/id/":"snomed-ct-20210731",
+            "https://loinc.org/rdf/":"sphn_loinc_2.71-1", 
+            "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/":"sphn_icd-10-gm_2021-1",
+            "https://biomedit.ch/rdf/sphn-resource/chop":"sphn_chop_2021-1",
+            "https://www.whocc.no/atc_ddd_index/?code=":"sphn_atc_2021-3"
+        }
     },
     "uris": {
         "ROOT_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept",

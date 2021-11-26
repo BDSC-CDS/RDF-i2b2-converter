@@ -62,6 +62,8 @@ import sys
 ONTOLOGY_DROP_DIC = {}
 COLUMNS = {}
 DATA_LEAVES = {}
+TERMINOLOGIES_GRAPHS={}
+TERMINOLOGIES_FILES={}
 UNDROP_LEAVES = {}
 EQUIVALENCES = {}
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')

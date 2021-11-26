@@ -57,6 +57,7 @@ class I2B2Converter:
         if self.left_tosearch == []:
             return False
         cur = self.left_tosearch.pop()
+        print("Exploring concept ", cur)
         cur.extract_modelems()
         self.towrite.extend([k.get_db_line() for k in [cur] + cur.modifiers])
         return True
@@ -128,10 +129,9 @@ class I2B2OntologyElement:
         """
         Some observations can store a value. In that case, the corresponding ontology element should specify the value type both in the valuetype_cd and in the XML form.
         """
-        ont_values_cells = EQUIVALENCES[datatype_string]
-        # TODO: debug
+        ont_values_cells = EQUIVALENCES[datatype_string].copy()
         metadata = generate_xml(ont_values_cells["C_METADATAXML"])
-        ont_values_cells.copy().update({"C_METADATAXML":metadata})
+        ont_values_cells.update({"C_METADATAXML":metadata})
         return ont_values_cells
 
     def walk_mtree(self):
@@ -152,6 +152,8 @@ class I2B2OntologyElement:
             # Merge the information in the xml panel of the current element, do not display the child
             self.line_updates= self.mutate_valueinfo(DATA_LEAVES[cur_uri])
             return True
+        if "Broken with" in self.component.label:
+            pdb.set_trace()
         self.set_visual("folder")
         return False
 
@@ -164,7 +166,7 @@ class I2B2OntologyElement:
 
         if self.parent is not None:
             parpath = self.parent.path 
-            symbol = self.path[len(self.parent.path) :]+"\\"
+            symbol = self.path[len(self.parent.path) :]
         else:
             parpath=""
             symbol =self.path
