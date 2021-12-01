@@ -1,8 +1,8 @@
 {
     "parameters": {
-        "ONTOLOGY_GRAPH_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/sphn_ontology.ttl",
+        "ONTOLOGY_GRAPH_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/main_ontologies/",
         "TERMINOLOGIES_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/external_terminologies/",
-        "ONTOLOGY_NAME": "SPHN ontology",
+        "ONTOLOGY_NAMES": ["SPHN ontology", "Swiss BioRef ontology"],
         "DATA_GRAPHS_LOCATION": "../rdf-synthetic-sphn/files/output_graphs/",
         "OUTPUT_TABLES": "files/output_tables/",
         "METADATA_PATH": "files/output_tables/METADATA.csv",
@@ -28,7 +28,7 @@
         }
     },
     "uris": {
-        "ROOT_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept",
+        "ROOT_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept", "https://biomedit.ch/rdf/sphn-ontology/swissbioref/SwissbiorefConcept"],
         "PROJECT_RDF_NAMESPACE": "https://biomedit.ch/rdf/sphn-ontology/sphn#",
         "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
         "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -41,8 +41,10 @@
             "https://biomedit.ch/rdf/sphn-ontology/sphn#CivilStatus",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#Consent",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate",
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus",
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth"
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth",
+            "https://biomedit.ch/rdf/sphn-ontology/swissbioref/Age"
         ],
         "BLACKLIST": [],
         "TERMINOLOGY_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",

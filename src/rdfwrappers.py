@@ -436,8 +436,9 @@ class OntologyDepthExplorer:
         If the concept is a child of "Valueset", then all possible instances should be specified as children of this concept.
         At data loading, these instances should be treated differently as other instances (for which only the class is important)
         """
+        mother = self.concept.resource.value(SUBCLASS_PRED_URI)
         if (
-            self.concept.resource.value(SUBCLASS_PRED_URI).identifier
+            mother is None or mother.identifier
             != VALUESET_MARKER_URI
         ):
             return []

@@ -34,6 +34,7 @@ class I2B2Converter:
         Extract and instantiate all the i2b2concepts for this run.
         They are found by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
+        pdb.set_trace()
         self.i2b2voidconcepts = []
         self.left_tosearch = []
         # Exploring into our concept
@@ -69,24 +70,25 @@ class I2B2Converter:
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.
         """
         if init_table:
-            self.towrite.append(
-                {
-                    "C_HLEVEL": 0,
-                    "C_FULLNAME": ROOT_PATH,
-                    "C_NAME": "SPHN ontology",
-                    "C_SYNONYM_CD": "N",
-                    "C_VISUALATTRIBUTES": "FA ",
-                    "C_BASECODE": "2b701f32968adc91efa94a2174b3883fea4335f60a083f1f5",
-                    "C_FACTTABLECOLUMN": "CONCEPT_CD",
-                    "C_TABLENAME": "CONCEPT_DIMENSION",
-                    "C_COLUMNNAME": "CONCEPT_PATH",
-                    "C_COLUMNDATATYPE": "T",
-                    "C_OPERATOR": "LIKE",
-                    "C_COMMENT": "",
-                    "C_DIMCODE": ROOT_PATH,
-                    "C_TOOLTIP": "SPHN.2020.1",
-                    "M_APPLIED_PATH": "@",
-                }
+            for idx in ROOT_PATHS:
+                self.towrite.append(
+                    {
+                        "C_HLEVEL": 0,
+                        "C_FULLNAME": ROOT_PATHS[idx],
+                        "C_NAME": ONTOLOGY_NAMES[idx],
+                        "C_SYNONYM_CD": "N",
+                        "C_VISUALATTRIBUTES": "CA ",
+                        "C_BASECODE": "",
+                        "C_FACTTABLECOLUMN": "CONCEPT_CD",
+                        "C_TABLENAME": "CONCEPT_DIMENSION",
+                        "C_COLUMNNAME": "CONCEPT_PATH",
+                        "C_COLUMNDATATYPE": "T",
+                        "C_OPERATOR": "LIKE",
+                        "C_COMMENT": "",
+                        "C_DIMCODE": ROOT_PATHS[idx],
+                        "C_TOOLTIP": ONTOLOGY_NAMES[idx],
+                        "M_APPLIED_PATH": "@",
+                    }
             )
         db_to_csv(self.towrite, METADATA_PATH, init_table, columns=COLUMNS["METADATA"])
 
@@ -94,9 +96,12 @@ class I2B2Converter:
 class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
         self.parent = parent
-        self.logical_parent = (
-            parent if graph_component.get_logic_indicator() else parent.logical_parent
-        )
+        try:
+            self.logical_parent = (
+                parent if graph_component.get_logic_indicator() else parent.logical_parent
+            )
+        except:
+            pdb.set_trace()
         self.component = graph_component
         self.basecode_handler = I2B2BasecodeHandler(self)
         self.path_handler = I2B2PathResolver(self)
@@ -225,7 +230,7 @@ class I2B2Concept(I2B2OntologyElement):
         return self
 
     def get_root(self):
-        return ROOT_PATH
+        return ROOT_PATH # TODO: return the appropriate root path for the concept.
 
     def set_visual(self, typev):
         """
@@ -344,7 +349,7 @@ class I2B2Modifier(I2B2OntologyElement):
             self.visual = "RA"
 
     def get_root(self):
-        return "\\"
+        return "\\" 
 
     def get_class_info(self):
         if self.visual is None:

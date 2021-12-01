@@ -39,8 +39,7 @@ class GraphParser:
         ns = [e for e in self.graph.namespace_manager.namespaces()]
         return ns
 
-    def get_entrypoints(self, list=[ROOT_URI]):
-        # TODO :  support entrypoints other than root (i.e the ontology file should still work AND root line still be written)
+    def get_entrypoints(self, list=ROOT_URIS):
         return [self.graph.resource(uri) for uri in list]
 
 

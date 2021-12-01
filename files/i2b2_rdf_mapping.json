@@ -2,7 +2,7 @@
     "MAX_BASECODE_LENGTH": 50,
     "START_SEARCH_INDEX": 95000,
     "DEFAULT_DATE": 730000,
-    "ROOT_PATH": "\\SPHNv2020.1\\",
+    "ROOT_PATHS": ["\\SPHNv2021\\", "\\SwissBioRef\\"],
     "UNITS": {"Height": "cm", "Weight": "kg"},
     "ONTOLOGY_DROP_DIC": {
         "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",

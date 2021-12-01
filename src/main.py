@@ -15,7 +15,7 @@ def generate_ontology_table():
     # First let's setup the graph navigation
     parser = GraphParser([ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION])
     parser.define_namespaces()
-    entries = parser.get_entrypoints([ROOT_URI])
+    entries = parser.get_entrypoints(ROOT_URIS)
 
     # Now prepare the directory and writing
     wipe_directory(OUTPUT_TABLES)
