@@ -2,7 +2,6 @@
     "parameters": {
         "ONTOLOGY_GRAPH_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/main_ontologies/",
         "TERMINOLOGIES_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/external_terminologies/",
-        "ONTOLOGY_NAMES": ["SPHN ontology", "Swiss BioRef ontology"],
         "DATA_GRAPHS_LOCATION": "../rdf-synthetic-sphn/files/output_graphs/",
         "OUTPUT_TABLES": "files/output_tables/",
         "METADATA_PATH": "files/output_tables/METADATA.csv",

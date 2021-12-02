@@ -44,28 +44,12 @@ def gen_provider_dim():
     pass
 
 
-def gen_table_access(path=OUTPUT_TABLES + "TABLE_ACCESS.csv"):
+def gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"]):
+    dfs=[pd.read_csv(folder_path + fname) for fname in metadata_filenames]
+    df = pd.concat(dfs) if len(dfs)>1 else dfs[0]
     table_access = pd.DataFrame(columns=COLUMNS["TABLE_ACCESS"])
-    if len(ROOT_URIS)!=len(ROOT_PATHS) or len(ROOT_URIS)!=len(ONTOLOGY_NAMES):
-        raise Exception("Please provide as many root URIs as root i2b2 paths as ontology names in the config files")
-    for idx in range(len(ROOT_URIS)):
-        table_access = table_access.append(
-            {
-                "C_TABLE_CD": "sphn",
-                "C_TABLE_NAME": "sphn",
-                "C_PROTECTED_ACCESS": "N",
-                "C_HLEVEL": 0,
-                "C_FULLNAME": ROOT_PATHS[idx],
-                "C_NAME": ONTOLOGY_NAMES[idx],
-                "C_SYNONYM_CD": "N",
-                "C_VISUALATTRIBUTES": "CA",
-                "C_FACTTABLECOLUMN": "CONCEPT_CD",
-                "C_DIMTABLENAME": "CONCEPT_DIMENSION",
-                "C_COLUMNNAME": "CONCEPT_PATH",
-                "C_COLUMNDATATYPE": "T",
-                "C_OPERATOR": "LIKE",
-                "C_DIMCODE": ROOT_PATHS[idx],
-            },
-            ignore_index=True,
-        )
-    table_access.fillna("").to_csv(path, index=False)
+    inter = table_access.columns.intersection(df.columns)
+    table_access[inter] = df.loc[df["C_HLEVEL"]==0, inter]
+    table_access["C_TABLE_CD"]=table_access["C_TOOLTIP"]
+    table_access["C_TABLE_NAME"]=table_access["C_TOOLTIP"]
+    table_access.fillna("").to_csv(folder_path+"TABLE_ACCESS.csv", index=False)

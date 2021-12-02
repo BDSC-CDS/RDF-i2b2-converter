@@ -51,7 +51,8 @@ def rname(uri, graph):
 def which_graph(uri):
     for key in TERMINOLOGIES_GRAPHS.keys():
         if key in uri:
-            return TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
+            res = TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
+            return res if res!='' and res is not None else False
     return False
 
 
@@ -115,7 +116,7 @@ def db_to_csv(db, filename, init=False, columns=[]):
     df = pd.DataFrame(db, columns=columns) if columns != [] else pd.DataFrame(db)
     mode = "w" if init else "a"
     header = init
-    df.to_csv(path_or_buf=filename, mode=mode, header=header, index=False)
+    df.fillna("").to_csv(path_or_buf=filename, mode=mode, header=header, index=False)
 
 
 def from_csv(filename):

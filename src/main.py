@@ -20,7 +20,6 @@ def generate_ontology_table():
     # Now prepare the directory and writing
     wipe_directory(OUTPUT_TABLES)
     init = True
-    pdb.set_trace()
     # Actual loop over the entrypoints
     for concept_res in root_entries:
         concept = Concept(concept_res)
@@ -44,7 +43,7 @@ def generate_ontology_table():
     gen_concept_modifier_dim(
         folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
     )
-    gen_table_access(path=OUTPUT_TABLES + "TABLE_ACCESS.csv")
+    gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"])
 
 
 def load_observations():
