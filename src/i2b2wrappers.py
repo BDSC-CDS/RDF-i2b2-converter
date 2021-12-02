@@ -34,7 +34,6 @@ class I2B2Converter:
         Extract and instantiate all the i2b2concepts for this run.
         They are found by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
-        pdb.set_trace()
         self.i2b2voidconcepts = []
         self.left_tosearch = []
         # Exploring into our concept
@@ -69,42 +68,19 @@ class I2B2Converter:
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.
         """
-        if init_table:
-            for idx in ROOT_PATHS:
-                self.towrite.append(
-                    {
-                        "C_HLEVEL": 0,
-                        "C_FULLNAME": ROOT_PATHS[idx],
-                        "C_NAME": ONTOLOGY_NAMES[idx],
-                        "C_SYNONYM_CD": "N",
-                        "C_VISUALATTRIBUTES": "CA ",
-                        "C_BASECODE": "",
-                        "C_FACTTABLECOLUMN": "CONCEPT_CD",
-                        "C_TABLENAME": "CONCEPT_DIMENSION",
-                        "C_COLUMNNAME": "CONCEPT_PATH",
-                        "C_COLUMNDATATYPE": "T",
-                        "C_OPERATOR": "LIKE",
-                        "C_COMMENT": "",
-                        "C_DIMCODE": ROOT_PATHS[idx],
-                        "C_TOOLTIP": ONTOLOGY_NAMES[idx],
-                        "M_APPLIED_PATH": "@",
-                    }
-            )
         db_to_csv(self.towrite, METADATA_PATH, init_table, columns=COLUMNS["METADATA"])
 
 
 class I2B2OntologyElement:
     def __init__(self, graph_component, parent=None):
         self.parent = parent
-        try:
-            self.logical_parent = (
-                parent if graph_component.get_logic_indicator() else parent.logical_parent
-            )
-        except:
-            pdb.set_trace()
+        self.logical_parent = (
+            parent if graph_component.get_logic_indicator() else parent.logical_parent
+        )
         self.component = graph_component
         self.basecode_handler = I2B2BasecodeHandler(self)
         self.path_handler = I2B2PathResolver(self)
+        self.set_root()
         self.set_path()
         self.set_code()
         self.set_displayname()
@@ -112,6 +88,15 @@ class I2B2OntologyElement:
         self.set_comment()
         self.line_updates = {}
         self.visual = None
+
+    def set_root(self):
+        if self.parent is not None:
+            if self.parent.root == "\\":
+                self.root = self.parent.path
+            else:
+                self.root = self.parent.root
+        else:
+            self.root="\\"
 
     def set_path(self):
         self.path = self.path_handler.get_path()
@@ -124,16 +109,12 @@ class I2B2OntologyElement:
 
     def set_level(self):
         if self.parent is None:
-            # TODO take care, this should never be 0 unless for a unique node that is root... i think? is it allowed for more than one node?
-            self.level = 1
+            self.level = 0
         else:
             self.level = self.parent.level + 1
 
     def set_comment(self):
         self.comment = self.component.get_comment()
-
-    def get_concept(self):
-        pass
 
     def mutate_valueinfo(self, datatype_string):
         """
@@ -226,11 +207,8 @@ class I2B2Concept(I2B2OntologyElement):
         self.applied_path = self.path
         self.modifiers = self.walk_mtree()
 
-    def get_concept(self):
-        return self
-
     def get_root(self):
-        return ROOT_PATH # TODO: return the appropriate root path for the concept.
+        return self.root
 
     def set_visual(self, typev):
         """

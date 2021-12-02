@@ -15,14 +15,14 @@ def generate_ontology_table():
     # First let's setup the graph navigation
     parser = GraphParser([ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION])
     parser.define_namespaces()
-    entries = parser.get_entrypoints(ROOT_URIS)
+    root_entries = parser.get_entrypoints(ROOT_URIS)
 
     # Now prepare the directory and writing
     wipe_directory(OUTPUT_TABLES)
     init = True
-
+    pdb.set_trace()
     # Actual loop over the entrypoints
-    for concept_res in entries:
+    for concept_res in root_entries:
         concept = Concept(concept_res)
         # Initialize the converter using the list of objects
         converter = I2B2Converter(concept)
