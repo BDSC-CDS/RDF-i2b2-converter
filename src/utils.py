@@ -156,7 +156,7 @@ def generate_xml(metadata_dict):
         res = res.replace(
             "<EnumValues></EnumValues>", "<EnumValues>" + enumstr + "</EnumValues>"
         )
-    res = res.replace("</ValueMetadata>", units + "</ValueMetadata>")
+    res = res.replace("<NormalUnits></NormalUnits>", "<NormalUnits>" + units + "</NormalUnits>")
     return res
 
 

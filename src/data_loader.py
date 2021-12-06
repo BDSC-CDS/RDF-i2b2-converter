@@ -103,7 +103,8 @@ class InformationTree:
     def get_info_dics(self):
         return self.explore_subtree()
 
-    def is_pathend(self, resource):
+    def is_pathend(self, predicate, object):
+        if object
         preds = resource.predicates()
         for pre in preds:
             if pre.identifier not in TO_IGNORE:
