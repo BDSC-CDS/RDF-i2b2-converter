@@ -3,7 +3,7 @@ from rdf_base import *
 UNITS_DIC = {}
 UNITS_EQUIVOCAL = []
 UNITS_FACTORS = {}
-XML_PATTERN = "<?xml version='1.0'?><ValueMetadata><Version>3.02</Version><CreationDateTime>08/14/2008 01:22:59</CreationDateTime><TestID></TestID><TestName></TestName><DataType></DataType><CodeType></CodeType><Flagstouse></Flagstouse><Oktousevalues>Y</Oktousevalues><MaxStringLength></MaxStringLength><EnumValues></EnumValues><CommentsDeterminingExclusion><Com></Com></CommentsDeterminingExclusion><UnitValues><NormalUnits></NormalUnits><EqualUnits></EqualUnits><ExcludingUnits></ExcludingUnits><ConvertingUnits><Units></Units><MultiplyingFactor></MultiplyingFactor></ConvertingUnits></UnitValues><Analysis><Enums /><Counts /><New /></Analysis></ValueMetadata>"
+XML_PATTERN = "<?xml version='1.0'?><ValueMetadata><Version>3.02</Version><CreationDateTime>08/14/2008 01:22:59</CreationDateTime><TestID></TestID><TestName></TestName><DataType></DataType><CodeType></CodeType><Flagstouse></Flagstouse><Oktousevalues>Y</Oktousevalues><MaxStringLength></MaxStringLength><EnumValues></EnumValues><CommentsDeterminingExclusion><Com></Com></CommentsDeterminingExclusion><Analysis><Enums /><Counts /><New /></Analysis></ValueMetadata>"
 """
 This file centralizes functions that help filling the c_metadataxml field.
 This includes collecting the units available in the data graph, storing them and retrieving them when needed during the ontology walk.
@@ -215,5 +215,6 @@ def import_units(shortname, path):
         + "".join([e for e in converting])
         + "</ConvertingUnits>"
     )
+    pdb.set_trace()
 
     return unit_list + "</UnitValues>"
