@@ -89,7 +89,7 @@ def filter_obsfact(attributes, toignore=OBSERVATION_INFO):
     modifiers = []
     for attr in attributes:
         idd = rname(attr.identifier, attr.graph)
-        if idd == RDF.type or any([el in idd for el in toignore]):
+        if attr.identifier == RDF.type or any([el in idd for el in toignore]):
             continue
         modifiers.append(attr)
     return modifiers

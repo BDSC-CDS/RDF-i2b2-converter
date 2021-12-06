@@ -215,6 +215,4 @@ def import_units(shortname, path):
         + "".join([e for e in converting])
         + "</ConvertingUnits>"
     )
-    pdb.set_trace()
-
     return unit_list + "</UnitValues>"

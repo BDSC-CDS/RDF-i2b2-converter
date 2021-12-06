@@ -3,7 +3,7 @@ ONTOLOGY_GRAPH_LOCATION # Path to the RDF ontology graph
 ONTOLOGY_NAME
 "SPHN ontology"
 DATA_GRAPHS_LOCATION    # Path to the RDF data graph(s) directory
-"../rdf-synthetic-sphn/files/output_graphs/"
+"../RDF-synthetizer/files/output_graphs/"
 "files/data/true_spo/splitv1/node_2/"
 EXTERNAL_LOCATION       # Path to the records for external terminologies
 "../common-data/ontologies/"
