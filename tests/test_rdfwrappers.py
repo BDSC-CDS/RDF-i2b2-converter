@@ -81,7 +81,7 @@ def test_unique_properties_specific():
     count = (
         2
         if all([rdflib.URIRef(k) in BLACKLIST for k in ONTOLOGY_DROP_DIC.values()])
-        else 6
+        else 7
     )
     assert len(test_concept.properties) == count
 

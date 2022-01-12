@@ -18,6 +18,8 @@ import sys
     PROJECT_RDF_NAMESPACE,
     SUBCLASS_PRED_URI,
     ENTRY_CONCEPTS,
+    LABEL_URI,
+    INDIVIDUAL_CLASS_URI,
     BLACKLIST,
     TERMINOLOGY_MARKER_URI,
     VALUESET_MARKER_URI,
@@ -26,6 +28,8 @@ import sys
     OBJECT_PROP_URI,
     COMMENT_URI,
 ) = [
+    None,
+    None,
     None,
     None,
     None,

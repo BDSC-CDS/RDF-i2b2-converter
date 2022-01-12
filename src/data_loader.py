@@ -1,4 +1,5 @@
-from rdf_base import *
+from configs import *
+from utils import *
 from i2b2wrappers import I2B2BasecodeHandler
 
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
@@ -103,30 +104,27 @@ class InformationTree:
     def get_info_dics(self):
         return self.explore_subtree()
 
-    def is_pathend(self, predicate, object):
-        if object
-        preds = resource.predicates()
-        for pre in preds:
-            if pre.identifier not in TO_IGNORE:
-                pass
+    def is_pathend(self, obj):
+        """
+        Check if the pointed object is the end of a search.
+        Criteria to be a search end are:
+            - be a datatype like xsd:string or xsd:double
+            - be an object with :
+                - type a class of a terminology (string-match the URI of external terminologies)
+                - no type or a SPHN type NamedIndividual without any other predicate
+        Else, the obj can be expanded into more predicates and then the search continues.
+        """
+        # Workaround to check if the predicate is a DataProperty or an ObjectProperty
+        if callable(obj.value):
+            if all([k.identifier in (TYPE_PREDICATE_URI, LABEL_URI) for k in obj.predicates()]):
+                return True
+            # We encounter an expandable object BUT it can still be a path end (if the item is a ValusetIndividual or an instance of a Terminology class)
+            if terminology_indicator(obj.value(TYPE_PREDICATE_URI)):
+                return True
+        else:
+            return True
 
-    def walk_obstree(self):
-        # TODO : SUPER IMPORTANT: only gather LEAVES i.e datatypeprops modifiers with their value OR objetpropmodifiers with 0 predicates OR individuals
-        # TODO : for basecode,
-        for obs in self.observations:
-            for feature in extractor.get_features_and_values():
-                pass
-            info.merge_dics(extractor.extract_features())
-            # TODO: keep track of the basecode when performing the exploration
-            # TODO: check if element is a child of valueset at this stage
-
-            """
-            children_info = self.explore_subtree(obs, upper_info = info)
-            info = ObservationRegister(obs) 
-            return [info]+children_info
-            """
-
-    def explore_subtree(self, resource, upper_info):
+    def explore_obstree(self, resource, upper_info):
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
@@ -138,10 +136,22 @@ class InformationTree:
         for pred, obj in gen:
             if pred.identifier in BLACKLIST:
                 continue
-            self.explore_subtree(obj, upper_info)
+            cur_info = self.package_info()
+            if self.is_pathend(obj):
+                return cur_info()
+            else:
+                cur_info.update(self.explore_subtree(obj, cur_info))
+                return self.explore_obstree(obj, upper_info)
 
-    def reduce_basecode(resource, prefix):
-        return ""
+    def cur_info(self, parent_info):
+        """
+        Extract the information at this level, using the parent info for some a priori values.
+        """
+        return {}
+
+    def get_basecode(self, resource, prefix):
+        hdler = I2B2BasecodeHandler()
+        self.basecode = hdler.reduce_basecode(resource, prefix.basecode)
 
 
 # TODO: fill the dicts. fill the other dimensions. write unit tests.

@@ -9,14 +9,6 @@ def filter_valid(res_list):
     return filtered
 
 
-def terminology_indicator(resource):
-    """
-    Determine if it is worth looking for properties of this concept or not.
-    In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
-    """
-    return any([k in resource.identifier for k in TERMINOLOGIES_GRAPHS.keys()])
-
-
 class Component:
     """
     Component is a wrapper for the rdflib.Resource class.

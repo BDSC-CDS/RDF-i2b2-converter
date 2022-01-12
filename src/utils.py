@@ -10,6 +10,7 @@ It initializes global variables by reading the "ontology_config" file.
 """
 
 SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
+TERMINOLOGIES_FILES = {}
 
 
 class GraphParser:
@@ -27,7 +28,7 @@ class GraphParser:
             dot = filek.rfind(".")
             slash = filek.rfind("/")
             fname = filek[slash + 1 : dot]
-            if fname in TERMINOLOGIES_FILES.keys():
+            if fname in TERMINOLOGIES_GRAPHS.values():
                 cur = rdflib.Graph()
                 cur.parse(filek, format="turtle")
                 TERMINOLOGIES_FILES.update({fname: cur})
@@ -47,10 +48,16 @@ def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
 
+def terminology_indicator(resource):
+    """
+    Determine if it is worth looking for properties of this concept or not.
+    In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
+    """
+    return any([k in resource.identifier for k in TERMINOLOGIES_GRAPHS.keys()])
 
 def which_graph(uri):
     for key in TERMINOLOGIES_GRAPHS.keys():
-        if key in uri:
+        if key in uri and TERMINOLOGIES_GRAPHS[key] in TERMINOLOGIES_FILES.keys():
             res = TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
             return res if res!='' and res is not None else False
     return False

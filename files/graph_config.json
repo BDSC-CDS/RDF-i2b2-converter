@@ -2,20 +2,9 @@
     "parameters": {
         "ONTOLOGY_GRAPH_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/main_ontologies/",
         "TERMINOLOGIES_LOCATION": "../common-data/ontologies/RDF_SPHN_2021/external_terminologies/",
-        "DATA_GRAPHS_LOCATION": "../rdf-synthetic-sphn/files/output_graphs/",
         "OUTPUT_TABLES": "files/output_tables/",
-        "METADATA_PATH": "files/output_tables/METADATA.csv",
-        "USE_DUMMY_DATES": 0,
-        "ALWAYS_DEEP": 0,
         "RDF_FORMAT": "turtle",
         "PREF_LANGUAGE": "fr",
-        "TERMINOLOGIES_FILES": {
-            "snomed-ct-20210731":"",
-            "sphn_loinc_2.71-1":"", 
-            "sphn_icd-10-gm_2021-1":"",
-            "sphn_chop_2021-1":"",
-            "sphn_atc_2021-3":""
-        },
         "TERMINOLOGIES_GRAPHS": {
             "http://snomed.info/id/":"snomed-ct-20210731",
             "https://loinc.org/rdf/":"sphn_loinc_2.71-1", 
@@ -27,13 +16,15 @@
         }
     },
     "uris": {
-        "ROOT_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept", "https://biomedit.ch/rdf/sphn-ontology/swissbioref/SwissbiorefConcept"],
+        "ROOT_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept"],
         "PROJECT_RDF_NAMESPACE": "https://biomedit.ch/rdf/sphn-ontology/sphn#",
         "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
         "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
         "DATATYPE_PROP_URI": "http://www.w3.org/2002/07/owl#DatatypeProperty",
         "OBJECT_PROP_URI" : "http://www.w3.org/2002/07/owl#ObjectProperty",
         "COMMENT_URI": "http://www.w3.org/2000/01/rdf-schema#comment",
+        "TERMINOLOGY_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",
+        "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet",
         "ENTRY_CONCEPTS": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
@@ -45,8 +36,8 @@
             "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth",
             "https://biomedit.ch/rdf/sphn-ontology/swissbioref/Age"
         ],
-        "BLACKLIST": [],
-        "TERMINOLOGY_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",
-        "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet"
+        "INDIVIDUAL_CLASS_URI": "http://www.w3.org/2002/07/owl#NamedIndividual",
+        "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
+        "BLACKLIST": []
     }
 }

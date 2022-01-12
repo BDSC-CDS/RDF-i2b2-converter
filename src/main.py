@@ -28,7 +28,7 @@ def generate_ontology_table():
         # Get the i2b2 db lines related to this concept
         buffer = converter.get_batch()
         while buffer:
-            converter.write(METADATA_PATH, init_table=init)
+            converter.write(OUTPUT_TABLES+"METADATA.csv", init_table=init)
             buffer = converter.get_batch()
             init = False
 

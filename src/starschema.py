@@ -52,7 +52,4 @@ def gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.cs
     table_access[inter] = df.loc[(df["C_HLEVEL"]==0) & (df["C_FACTTABLECOLUMN"]=="CONCEPT_CD"), inter]
     table_access["C_TABLE_CD"]=table_access["C_NAME"]
     table_access["C_TABLE_NAME"]="sphn"
-    pdb.set_trace()
     table_access.fillna("").to_csv(folder_path+"TABLE_ACCESS.csv", index=False)
-
-gen_table_access()

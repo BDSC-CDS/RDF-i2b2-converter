@@ -3,7 +3,26 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeCodingSystemAndVersion",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
-    ]
+    ],
+    "COLUMNS": {
+        "xsd:double" : {"col": "NVAL_NUM"},
+        "xsd:string" : {"col": "TVAL_CHAR"},
+        "sphn:SubjectPseudoIdentifier"  : {
+            "col": "PATIENT_NUM", 
+            "table" : [["PATIENT_DIMENSION", "PATIENT_NUM"]]
+        },
+        "sphn:AdministrativeEncounter"  : {
+            "col": "ENCOUNTER_NUM", 
+            "table" : [["VISIT_DIMENSION", "ENCOUNTER_NUM"], ["VISIT_DIMENSION", "PATIENT_NUM"]]
+        },
+        "sphn:DataProviderInstitute"    : {
+            "col": "PROVIDER_ID", 
+            "table" : [["PROVIDER_DIMENSION", "PROVIDER_ID"]]
+        },
+        "xsd:date"   : {"col": "START_DATE"},
+        "sphn:Unit"  : {"col": "UNITS_CD"}
+    },
+    "USE_DUMMY_DATES": 0
 
 
 }

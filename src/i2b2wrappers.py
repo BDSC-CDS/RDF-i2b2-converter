@@ -63,12 +63,12 @@ class I2B2Converter:
         self.towrite.extend([k.get_db_line() for k in [cur] + cur.modifiers])
         return True
 
-    def write(self, filepath, init_table=False):
+    def write(self, filepath=OUTPUT_TABLES+"METADATA.csv", init_table=False):
         """
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.
         """
-        db_to_csv(self.towrite, METADATA_PATH, init_table, columns=COLUMNS["METADATA"])
+        db_to_csv(self.towrite, filepath, init_table, columns=COLUMNS["METADATA"])
 
 
 class I2B2OntologyElement:
@@ -157,10 +157,11 @@ class I2B2OntologyElement:
 
         if self.parent is not None:
             parpath = self.parent.path
-            symbol = self.path[len(self.parent.path) :]
         else:
             parpath = ""
-            symbol = self.path
+        # Commented because i2b2 sets a limit on "symbol" len to 50
+        # symbol = self.path[len(self.parent.path) :] 
+        symbol=""
         res = {
             "C_HLEVEL": str(self.level),
             "C_NAME": self.displayname,
@@ -260,26 +261,24 @@ class I2B2BasecodeHandler:
     If an other handler is specified as "ph" at construction, its code will be embedded in the computation. (this helps encapsulating hierarchy in codes)
     """
 
-    def __init__(self, i2b2element, value=""):
-        self.value = (
-            value
-        )  # if child of terminology append : + code, don't go through the whole tree. only problem is if LOINC> $loincel has several possible paths
+    def __init__(self, i2b2element):
         self.basecode = None
-        self.core = i2b2element.component.get_shortname()
-        self.prefix = (
-            i2b2element.logical_parent.basecode_handler.get_basecode()
-            if i2b2element.logical_parent is not None
-            else ""
-        )
+        if i2b2element is not None:
+            self.core = i2b2element.component.get_shortname()
+            self.prefix = (
+                i2b2element.logical_parent.basecode_handler.get_basecode()
+                if i2b2element.logical_parent is not None
+                else ""
+            )
 
     def get_basecode(self):
         if self.basecode is not None:
             return self.basecode
-        return self.reduce_basecode()
+        return self.reduce_basecode(rdf_uri=self.core, prefix = self.prefix)
 
     def reduce_basecode(
-        self, debug=False, cap=MAX_BASECODE_LENGTH
-    ):  # TODO: check only taking into account one concept is enough. test.
+        self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
+    ): 
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
         The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
@@ -287,18 +286,11 @@ class I2B2BasecodeHandler:
         and to be computable both from the ontology side and from the data loader side.
         The resulting code is the joining key between data tables and ontology tables.
         """
-        rdf_uri = self.core
-        value = self.value
-        prefix = self.prefix
-
+        
         if rdf_uri[-1] != "\\":
             rdf_uri = rdf_uri + "\\"
 
-        if len(value) > 0 and value[0] == "\\":
-            value = value[1:]
-            tohash = rdf_uri + ":" + value
-        else:
-            to_hash = rdf_uri
+        to_hash = rdf_uri
         to_hash = prefix + to_hash
         return to_hash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
 
