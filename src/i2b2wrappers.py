@@ -307,6 +307,13 @@ class I2B2Modifier(I2B2OntologyElement):
         super().__init__(component2, parent)
         self.applied_path = applied_path
 
+    def set_level(self):
+        """
+        Modifier levels start at 1, not 0.
+        """
+        super().set_level()
+        self.level = self.level+1 if self.level==0 else self.level
+
     def set_visual(self, typev):
         """
         Default is leaf, can be switched to folder. For later uses can be switched to other visual attributes.
