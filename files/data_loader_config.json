@@ -4,6 +4,17 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
     ],
+    "ENTRY_DATA_CONCEPTS": [
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#CivilStatus",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#Consent",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth",
+        "https://biomedit.ch/rdf/sphn-ontology/swissbioref/Age"
+    ],
     "COLUMNS": {
         "xsd:double" : {"col": "NVAL_NUM"},
         "xsd:string" : {"col": "TVAL_CHAR"},

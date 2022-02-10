@@ -47,8 +47,10 @@ def generate_ontology_table():
 
 
 def load_observations():
-    class_resources = GraphParser(paths=[DATA_GRAPHS_LOCATION])
-    # dl = DataLoader(class_resources, filename=OUTPUT_TABLES+"OBSERVATION_FACT", reset_file=True)
+    parser = GraphParser(paths=[DATA_GRAPHS_LOCATION])
+    parser.define_namespaces()
+    entry_classes = parser.get_entrypoints(ENTRY_DATA_CONCEPTS)
+    # dl = DataLoader(parser, entry_classes, filename=OUTPUT_TABLES+"OBSERVATION_FACT", reset_file=True)
     dl.write_db()
 
 

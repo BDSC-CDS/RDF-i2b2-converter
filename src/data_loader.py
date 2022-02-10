@@ -13,18 +13,19 @@ for key, val in config["TO_IGNORE"].items():
 
 class DataLoader:
     """
-    Manage data conversion from an observation graph. 
+    Manage data conversion from an observation graph. TODO: is there a way to avoid loading the whole graph?
     Observations register is performed by batches defined by the type (class) of observations.
     """
 
-    def __init__(self, class_resources, filename, reset_file=True):
+    def __init__(self, parser, entrypoints, filename, reset_file=True):
         """
         Take a list of class resources.
         """
-        self.graph = class_resources[0].graph
-        self.class_resources = class_resources
+        self.graph = parser.graph
+        self.entry_class_resources = entrypoints
         self.filename = filename
         self.init = reset_file
+
 
     def write_db(self):
         """
@@ -62,7 +63,7 @@ class DataLoader:
         """
         Extract the next observations batch from the RDF graph.
         """
-        if self.class_resources == []:
+        if self.entry_class_resources == []:
             return []
         cur = self.class_resources.pop()
         obs = self.graph.query(
