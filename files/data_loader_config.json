@@ -15,7 +15,7 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth",
         "https://biomedit.ch/rdf/sphn-ontology/swissbioref/Age"
     ],
-    "COLUMNS": {
+    "COLUMNS_MAPPING": {
         "xsd:double" : {"col": "NVAL_NUM"},
         "xsd:string" : {"col": "TVAL_CHAR"},
         "sphn:SubjectPseudoIdentifier"  : {

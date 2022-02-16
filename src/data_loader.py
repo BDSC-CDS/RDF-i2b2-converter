@@ -17,7 +17,7 @@ class DataLoader:
     Observations register is performed by batches defined by the type (class) of observations.
     """
 
-    def __init__(self, parser, entrypoints, filename, reset_file=True):
+    def __init__(self, parser, entrypoints, filename="OBSERVATION_FACT.csv", reset_file=True):
         """
         Take a list of class resources.
         """
@@ -27,7 +27,7 @@ class DataLoader:
         self.init = reset_file
 
 
-    def write_db(self):
+    def extract_all(self):
         """
         Trigger sequential writing of batched observation database lines.
         """
@@ -50,7 +50,8 @@ class DataLoader:
 
     def convert_data(self):
         """
-        Iterate through the batch instances and launch exploration of the RDF observation graph.
+        Get the next batch of entry instances (typically one class at a time using get_next_class_instance), then
+            launch exploration of the RDF observation graph using an InformationTree object.
         Return the database lines for the current batch.
         """
         database_batch = []
@@ -65,7 +66,7 @@ class DataLoader:
         """
         if self.entry_class_resources == []:
             return []
-        cur = self.class_resources.pop()
+        cur = self.entry_class_resources.pop()
         obs = self.graph.query(
             """
                 select ?obs
@@ -84,6 +85,19 @@ class ObservationRegister:
 
     def __init__(self):
         self.default = COLUMNS["OBSERVATION_FACT"]
+        self.records = []
+
+    def is_empty(self):
+        return self.records == []
+
+    def get_processed_records(self):
+        return self.records
+
+    def add_record(self, end_node, basecode):
+        """
+        Process the information in an end of path.
+        """
+        self.records.append("")
 
     def merge_dics(self, local_info, weaker_info, stronger_info):
         base_dic = self.default.copy()
@@ -95,15 +109,19 @@ class ObservationRegister:
 
 class InformationTree:
     """
-    This class is in charge of the graph exploration given a set of entrypoints. It will trigger the collection of observation informations.
-    The tool classes ObservationRegister and FeatureExtractor are called from there.
+    This class is in charge of the graph exploration given a collection of top-level instance.
+    It will trigger the collection of observation informations.
+    When the tip of a branch is found, is is proessed and stored in the ObservationRegister.
     """
 
     def __init__(self, resources_list):
         self.observations = resources_list
+        self.register = ObservationRegister()
 
     def get_info_dics(self):
-        return self.explore_subtree()
+        if self.register.is_empty():
+            self.explore_subtree()
+        return self.register.get_processed_records()
 
     def is_pathend(self, obj):
         """
@@ -154,5 +172,15 @@ class InformationTree:
         hdler = I2B2BasecodeHandler()
         self.basecode = hdler.reduce_basecode(resource, prefix.basecode)
 
+class RegisterFactory:
+    def __init__(self):
+        self.mappings = {}
+        for key, presence_dic in COLUMNS_MAPPING.items():
+            if "table" in presence_dic.keys():
+                self.mappings.update({table:column} for table,column in presence_dic["table"])
 
-# TODO: fill the dicts. fill the other dimensions. write unit tests.
+
+
+
+
+# TODO: fill the dicts. fill the other dimensions. write unit tests. avoid discovering the same objects repeatedly (e.g patient, provider info?)

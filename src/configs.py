@@ -26,8 +26,10 @@ import sys
     TYPE_PREDICATE_URI,
     DATATYPE_PROP_URI,
     OBJECT_PROP_URI,
+    ENTRY_DATA_CONCEPTS,
     COMMENT_URI,
 ) = [
+    None,
     None,
     None,
     None,
