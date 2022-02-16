@@ -5,10 +5,9 @@ from i2b2wrappers import I2B2BasecodeHandler
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
 with open(cur_path + "files/data_loader_config.json") as ff:
     config = json.load(ff)
-for key, val in config["TO_IGNORE"].items():
-    globals()[key] = (
-        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
-    )
+for val in config["TO_IGNORE"]:
+    nxt =[rdflib.URIRef(val)] if type(val) == str else [rdflib.URIRef(k) for k in val]
+    globals()["TO_IGNORE"].extend(nxt)
 
 
 class DataLoader:

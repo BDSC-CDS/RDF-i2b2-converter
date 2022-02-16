@@ -72,6 +72,7 @@ DATA_LEAVES = {}
 TERMINOLOGIES_GRAPHS = {}
 TERMINOLOGIES_FILES = {}
 UNDROP_LEAVES = {}
+TO_IGNORE = []
 EQUIVALENCES = {}
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
 with open(cur_path + "files/graph_config.json") as ff:
