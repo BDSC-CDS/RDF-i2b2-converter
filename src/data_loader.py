@@ -1,3 +1,4 @@
+from multiprocessing.dummy import current_process
 from configs import *
 from utils import *
 from i2b2wrappers import I2B2BasecodeHandler
@@ -59,13 +60,15 @@ class DataLoader:
         database_batch = information_tree.get_info_dics()
         return database_batch
 
-    def get_next_class_instances(self):
+    def get_next_class_instances(self, selclass=None):
         """
         Extract the next observations batch from the RDF graph.
         """
         if self.entry_class_resources == []:
             return []
-        cur = self.entry_class_resources.pop()
+        if selclass is None:
+            cur = self.entry_class_resources.pop()
+            selclass=cur.identifier
         obs = self.graph.query(
             """
                 select ?obs
@@ -73,7 +76,7 @@ class DataLoader:
                     ?obs rdf:type ?class
                 }
             """,
-            initBindings={"class": cur.identifier},
+            initBindings={"class": selclass},
         )
 
 
@@ -94,7 +97,8 @@ class ObservationRegister:
 
     def add_record(self, end_node, basecode):
         """
-        Process the information in an end of path.
+        Process the information in an end of path. Add every detail in the correct column of the default observation table.
+        TODO: maybe get as parameter also the highest-level element so we can get date and other details from it
         """
         self.records.append("")
 
@@ -110,17 +114,31 @@ class InformationTree:
     """
     This class is in charge of the graph exploration given a collection of top-level instance.
     It will trigger the collection of observation informations.
-    When the tip of a branch is found, is is proessed and stored in the ObservationRegister.
+    When the tip of a branch is found, is is processed and stored in the ObservationRegister.
+    The first level is used to extract patient, hospital and encounter data. 
     """
 
     def __init__(self, resources_list):
         self.observations = resources_list
-        self.register = ObservationRegister()
+        self.main_register = ObservationRegister()
+        self.context_register = ContextRegister()
 
     def get_info_dics(self):
         if self.register.is_empty():
             self.explore_subtree()
         return self.register.get_processed_records()
+
+    def explore_tree_master(self):
+        for obs in self.observations:
+            self.explore_obstree(obs)
+
+    def is_contextual_detail(self, obj):
+        """
+        Determines if a constructed resource should be stored in the default register or in a special one.
+        Makes use of the configurable table-colums mapping to special URIs.
+        """
+        # TODO: if obj is not something specified in the tables (ex. hasSubjectPseudoIdentifier -> HasIdentifier, or hasAdministrativeCase -> details),
+        return False
 
     def is_pathend(self, obj):
         """
@@ -132,8 +150,10 @@ class InformationTree:
                 - no type or a SPHN type NamedIndividual without any other predicate
         Else, the obj can be expanded into more predicates and then the search continues.
         """
-        # Workaround to check if the predicate is a DataProperty or an ObjectProperty
+        # Workaround to check if an item is a rdflib.resource.Resource or a rdflib.term.Literal
         if callable(obj.value):
+            # Criteria for having no forward link i.e probably is a valuesetindividual. TODO: check for corner cases
+            # Cannot check if it is an actual owl:NamedIndividual because this information lies in the ontology graph
             if all([k.identifier in (TYPE_PREDICATE_URI, LABEL_URI) for k in obj.predicates()]):
                 return True
             # We encounter an expandable object BUT it can still be a path end (if the item is a ValusetIndividual or an instance of a Terminology class)
@@ -142,41 +162,60 @@ class InformationTree:
         else:
             return True
 
-    def explore_obstree(self, resource, upper_info):
+    def explore_obstree(self, resource, upper_info=None, basecode_prefix=None):
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
         Special case for the information that is not conceptual but related to patient, site, encounter
+        TODO: use the upper_info if necessary
         """
-        gen = resource.predicate_objects()
-        if len(gen) == 0:
+        rdfclass = resource.value(TYPE_PREDICATE_URI)
+        if rdfclass in BLACKLIST:
             return
+        gen = resource.predicate_objects()
+
+        # Updating the basecode that led us to there
+        hdler = I2B2BasecodeHandler()
+        current_basecode = hdler.reduce_basecode(resource, basecode_prefix)
+
         for pred, obj in gen:
             if pred.identifier in BLACKLIST:
                 continue
+            # Updating the basecode with the forward link
+            basecode= hdler.reduce_basecode(pred, current_basecode)
+            
             cur_info = self.package_info()
             if self.is_pathend(obj):
-                return cur_info()
+                self.store_register(obj, pred, basecode, cur_info)
             else:
                 cur_info.update(self.explore_subtree(obj, cur_info))
-                return self.explore_obstree(obj, upper_info)
+                return self.explore_obstree(obj, upper_info, basecode_prefix=self.basecode)
 
-    def cur_info(self, parent_info):
+    def store_register(self, resource, origin, basecode_upto_origin, upper_info):
         """
-        Extract the information at this level, using the parent info for some a priori values.
+        The parameter basecode includes the origin node but not the actual resource.
+        Based on the resource type, the appropriate register will then create a new basecode or not.
         """
-        return {}
+        if self.is_contextual_detail(resource):
+            self.context_register.add(resource, origin, basecode_upto_origin)
+        else:
+            self.main_register.add_record(resource, origin, basecode_upto_origin)
 
-    def get_basecode(self, resource, prefix):
-        hdler = I2B2BasecodeHandler()
-        self.basecode = hdler.reduce_basecode(resource, prefix.basecode)
-
-class RegisterFactory:
+class ContextRegister:
+    """
+    Handles contextual information from an observation instance depending on the configured mappings.
+    """
     def __init__(self):
         self.mappings = {}
         for key, presence_dic in COLUMNS_MAPPING.items():
             if "table" in presence_dic.keys():
                 self.mappings.update({table:column} for table,column in presence_dic["table"])
+    
+    def add(self, obj, origin, basecode):
+        """
+        Add the detail in the appropriate table and column.
+        """
+        pass
 
 
 

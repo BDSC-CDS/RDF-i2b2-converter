@@ -261,7 +261,7 @@ class I2B2BasecodeHandler:
     If an other handler is specified as "ph" at construction, its code will be embedded in the computation. (this helps encapsulating hierarchy in codes)
     """
 
-    def __init__(self, i2b2element):
+    def __init__(self, i2b2element=None):
         self.basecode = None
         if i2b2element is not None:
             self.core = i2b2element.component.get_shortname()
