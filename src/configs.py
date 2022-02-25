@@ -21,7 +21,6 @@ import sys
     LABEL_URI,
     INDIVIDUAL_CLASS_URI,
     BLACKLIST,
-    TERMINOLOGY_MARKER_URI,
     VALUESET_MARKER_URI,
     TYPE_PREDICATE_URI,
     DATATYPE_PROP_URI,
@@ -29,7 +28,6 @@ import sys
     ENTRY_DATA_CONCEPTS,
     COMMENT_URI,
 ) = [
-    None,
     None,
     None,
     None,
@@ -63,9 +61,10 @@ import sys
     DEFAULT_DATE,
     ROOT_PATHS,
     UNITS,
-    METADATA_PATH,
+    METADATA_NAME,
     XML_PATTERN,
-) = [None, None, None, None, None, None, None, None, None, None, None]
+    TERMINOLOGY_MARKER_URIS
+) = [None, None, None, None, None, None, None, None, None, None, None, None]
 ONTOLOGY_DROP_DIC = {}
 COLUMNS = {}
 DATA_LEAVES = {}

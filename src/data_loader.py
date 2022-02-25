@@ -166,7 +166,6 @@ class InformationTree:
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
-        Special case for the information that is not conceptual but related to patient, site, encounter
         TODO: use the upper_info if necessary
         """
         rdfclass = resource.value(TYPE_PREDICATE_URI)
@@ -195,6 +194,8 @@ class InformationTree:
         """
         The parameter basecode includes the origin node but not the actual resource.
         Based on the resource type, the appropriate register will then create a new basecode or not.
+        TODO: maybe change it so instead of having contextual/noncontextual we have one case for resource endpoints for which
+        the endpoint needs to be hashed, and literal endpoint for which we use the "basecode_upto_origin", and we add values (endpoint) as a detail of it.
         """
         if self.is_contextual_detail(resource):
             self.context_register.add(resource, origin, basecode_upto_origin)

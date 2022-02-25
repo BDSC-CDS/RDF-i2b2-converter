@@ -12,6 +12,7 @@ from main import generate_ontology_table
 from i2b2wrappers import *
 
 global_db = []
+METADATA_PATH = OUTPUT_TABLES+METADATA_NAME
 
 
 def construct_property(uri):

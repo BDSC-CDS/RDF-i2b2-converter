@@ -15,7 +15,7 @@ class Component:
     """
 
     def __init__(self, resource, parent_class=None):
-        self.is_terminology_term = terminology_indicator(resource)
+        self.is_terminology_term = terminology_indicator(resource) if parent_class is None else parent_class.is_terminology_term
         self.resource = (
             self.switch_graph(resource) if self.is_terminology_term else resource
         )
@@ -129,7 +129,7 @@ class Concept(Component):
         """
         self.find_subconcepts(filter_mode="whitelist")
 
-    def get_children(self):
+    def get_children(self, verbose=True):
         """
         Trigger the recursion and return the first level children.
         Only does so if both subconcepts and properties are empty, else consider the search has already been done.
@@ -137,6 +137,8 @@ class Concept(Component):
         # TODO :  is it ok to skip properties search for items that already have only subconcepts?
         if self.properties == [] and self.subconcepts == []:
             self.explore_children()
+        if not self.is_terminology_term and verbose:
+            print("Done digging in graph for " +self.get_shortname())
         return self.properties + self.subconcepts
 
     def explore_children(self):
@@ -193,7 +195,7 @@ class Property(Component):
         self.ranges_res = valid_ranges
         self.ranges = []
 
-    def get_children(self):
+    def get_children(self, **kwargs):
         return self.ranges
 
     def digin_ranges(self):

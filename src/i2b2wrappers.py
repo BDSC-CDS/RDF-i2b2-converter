@@ -6,7 +6,7 @@ def drop(attribute):
     """
     If the attribute should be dropped because it points to a class referenced in the config file, skip it
     """
-    for rn in attribute.get_children():
+    for rn in attribute.get_children(verbose=False):
         cur_uri = rn.get_uri()
         if cur_uri in ONTOLOGY_DROP_DIC.values():
             return cur_uri
@@ -125,7 +125,7 @@ class I2B2OntologyElement:
         ont_values_cells.update({"C_METADATAXML": metadata})
         return ont_values_cells
 
-    def walk_mtree(self):
+    def walk_mtree(self, counter=0):
         res = []
         submods = self.get_filtered_children()
         for component in submods:
@@ -133,7 +133,10 @@ class I2B2OntologyElement:
                 cur = I2B2Modifier(
                     component, parent=self, applied_path=self.applied_path
                 )
-                next = cur.walk_mtree()
+                new_counter = counter+1
+                if new_counter<2:
+                    print("Casting i2b2 object from ",component)
+                next = cur.walk_mtree(counter=new_counter)
                 res.append(cur)
                 res.extend(next)
         return res
@@ -277,7 +280,7 @@ class I2B2BasecodeHandler:
         return self.reduce_basecode(rdf_uri=self.core, prefix = self.prefix)
 
     def reduce_basecode(
-        self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
+        self, rdf_uri, prefix, debug=True, cap=MAX_BASECODE_LENGTH
     ): 
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.

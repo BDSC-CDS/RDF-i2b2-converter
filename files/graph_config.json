@@ -12,7 +12,10 @@
             "https://biomedit.ch/rdf/sphn-resource/chop":"sphn_chop_2021-1",
             "https://www.whocc.no/atc_ddd_index/?code=":"sphn_atc_2021-3",
             "https://biomedit.ch/rdf/sphn-resource/atc/":"sphn_atc_2021-3",
-            "https://biomedit.ch/rdf/sphn-resource/loinc/":"sphn_loinc_2.71-1"
+            "https://biomedit.ch/rdf/sphn-resource/loinc/":"sphn_loinc_2.71-1",
+            "https://biomedit.ch/rdf/sphn-resource/emdn/EMDN":"sphn_emdn_1.1-1",
+            "https://biomedit.ch/rdf/sphn-resource/gmdn-bioref/GMDN-BIOREF":"sphn_gmdn-bioref_2021-12-07-1a",
+            "https://biomedit.ch/rdf/sphn-resource/gudid-bioref/GUDID-BIOREF":"sphn_gudid-bioref_20211101-1"
         }
     },
     "uris": {
@@ -23,7 +26,7 @@
         "DATATYPE_PROP_URI": "http://www.w3.org/2002/07/owl#DatatypeProperty",
         "OBJECT_PROP_URI" : "http://www.w3.org/2002/07/owl#ObjectProperty",
         "COMMENT_URI": "http://www.w3.org/2000/01/rdf-schema#comment",
-        "TERMINOLOGY_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",
+        "TERMINOLOGY_MARKER_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",":example:"],
         "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet",
         "ENTRY_CONCEPTS": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
@@ -38,6 +41,6 @@
         ],
         "INDIVIDUAL_CLASS_URI": "http://www.w3.org/2002/07/owl#NamedIndividual",
         "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
-        "BLACKLIST": []
+        "BLACKLIST": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultLabTestCode"]
     }
 }
