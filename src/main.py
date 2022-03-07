@@ -41,10 +41,6 @@ def generate_ontology_table():
 
     # Step 4
 
-    gen_concept_modifier_dim(
-        folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
-    )
-    gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"])
 
 
 def load_observations():
@@ -57,3 +53,11 @@ def load_observations():
 
 if __name__ == "__main__":
     generate_ontology_table()
+
+    from scripts.merge_valuefields import *
+    from scripts.fill_units import *
+
+    gen_concept_modifier_dim(
+        folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
+    )
+    gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"])

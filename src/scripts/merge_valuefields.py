@@ -57,10 +57,10 @@ def resolve_rows(df, destdic):
 
 df = pd.read_csv(METADATA_LOC)
 # get the shortened URI that trails the full path
-df=df.assign(key=df["C_FULLNAME"].str.extract(r'.*\\([^\\]+)\\'))
+dfk=df.assign(key=df["C_FULLNAME"].str.extract(r'.*\\([^\\]+)\\'))
 
 # get the positions of the lines to be deleted and digested into other lines
-to_digest = df.loc[df["C_METADATAXML"].notnull() & df["key"].isin(migrations.keys())]
+to_digest = dfk.loc[dfk["C_METADATAXML"].notnull() & dfk["key"].isin(migrations.keys())]
 
 values = pd.DataFrame(columns=["C_METADATAXML"])
 
@@ -79,12 +79,11 @@ for _,row in to_digest.iterrows():
         xml = row["C_METADATAXML"]
 
     # find out which rows should receive this xml 
-    destination_indexes= resolve_rows(df[["C_FULLNAME", "C_PATH", "M_APPLIED_PATH"]], destdic)
+    destination_indexes= resolve_rows(dfk[["C_FULLNAME", "C_PATH", "M_APPLIED_PATH"]], destdic)
     # For each found index, store it into the temporary table
     df.loc[destination_indexes, "C_METADATAXML"] = xml
 df=df.drop(to_digest.index)
 df.to_csv(METADATA_LOC)
-pdb.set_trace()
 
 
 
