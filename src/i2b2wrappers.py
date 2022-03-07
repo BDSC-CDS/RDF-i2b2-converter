@@ -280,7 +280,7 @@ class I2B2BasecodeHandler:
         return self.reduce_basecode(rdf_uri=self.core, prefix = self.prefix)
 
     def reduce_basecode(
-        self, rdf_uri, prefix, debug=True, cap=MAX_BASECODE_LENGTH
+        self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
     ): 
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
