@@ -83,7 +83,7 @@ for _,row in to_digest.iterrows():
     # For each found index, store it into the temporary table
     df.loc[destination_indexes, "C_METADATAXML"] = xml
 df=df.drop(to_digest.index)
-df.to_csv(METADATA_LOC)
+df.to_csv(METADATA_LOC, index=False)
 
 
 

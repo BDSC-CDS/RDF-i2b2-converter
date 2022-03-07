@@ -27,4 +27,4 @@ num_df = num_df.assign(units=num_df.apply(lambda row : lookup[row.unitkey] if ro
 metadataxml = num_df.apply(lambda row : row["C_METADATAXML"].replace(UNIT_XML_TAG, UNIT_XML_TAG+row.units), axis=1).to_frame("C_METADATAXML")
 # Profit
 df.update(metadataxml)
-df.to_csv(METADATA_LOC)
+df.to_csv(METADATA_LOC, index=False)
