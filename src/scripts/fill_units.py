@@ -25,6 +25,5 @@ num_df = num_df.assign(unitkey=num_df["C_FULLNAME"].str.extract(r'.*\\([^\\]+)\\
 num_df = num_df.assign(units=num_df.apply(lambda row : lookup[row.unitkey] if row.unitkey in lookup.keys() else "(unit not found)", axis=1))
 # Now merge the original XML content with the content of the newly created column
 metadataxml = num_df.apply(lambda row : row["C_METADATAXML"].replace(UNIT_XML_TAG, UNIT_XML_TAG+row.units), axis=1).to_frame("C_METADATAXML")
-# Profit
 df.update(metadataxml)
 df.to_csv(METADATA_LOC, index=False)

@@ -68,7 +68,6 @@ for _,row in to_digest.iterrows():
     destdic = migrations[row["key"]]
     # Check it's the good item related to the good parent
     if destdic["concept"] != extract_parent_id(row):
-        pdb.set_trace()
         raise Exception("Concept does not match at ", destdic["concept"])
 
     # change type if necessary in the xml frame

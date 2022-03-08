@@ -41,6 +41,8 @@
         ],
         "INDIVIDUAL_CLASS_URI": "http://www.w3.org/2002/07/owl#NamedIndividual",
         "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
-        "BLACKLIST": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultLabTestCode"]
+        "BLACKLIST": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultLabTestCode", 
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnstructuredLabResult"
+        ]
     }
 }

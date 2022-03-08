@@ -97,9 +97,18 @@ class Component:
         self.label = self.shortname if fmtd_label == "" else fmtd_label.toPython()
 
         if self.is_terminology_term:
-            code = self.shortname[self.shortname.rfind(":") + 1 :]
+            # TODO add terminology name here as prefix
+            sep = self.shortname.rfind(":")
+            code = self.shortname[sep + 1 :]
+            
             if code not in self.label:
+                if code.isnumeric() and len(code)<2:
+                    code = "0"+code
                 self.label = code + " - " + self.label
+            term_name = self.shortname[:sep+1].upper()
+            if term_name not in self.label:
+                self.label = term_name+self.label
+            
 
     def __repr__(self):
         return (
