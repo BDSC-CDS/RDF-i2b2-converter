@@ -190,13 +190,15 @@ class InformationTree:
                 cur_info.update(self.explore_subtree(obj, cur_info))
                 return self.explore_obstree(obj, upper_info, basecode_prefix=self.basecode)
 
-    def store_register(self, resource, origin, basecode_upto_origin, upper_info):
+    def store_register(self, resource, origin, basecode_upto_origin, upper_info={}):
         """
         The parameter basecode includes the origin node but not the actual resource.
         Based on the resource type, the appropriate register will then create a new basecode or not.
         TODO: maybe change it so instead of having contextual/noncontextual we have one case for resource endpoints for which
         the endpoint needs to be hashed, and literal endpoint for which we use the "basecode_upto_origin", and we add values (endpoint) as a detail of it.
         """
+        if upper_info=={}:
+            pass
         if self.is_contextual_detail(resource):
             self.context_register.add(resource, origin, basecode_upto_origin)
         else:
