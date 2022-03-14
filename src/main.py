@@ -3,7 +3,8 @@ from rdfwrappers import *
 from i2b2wrappers import *
 from starschema import *
 from data_loader import *
-
+from scripts.merge_valuefields import *
+from scripts.fill_units import *
 
 def check_macros():
     """
@@ -53,9 +54,8 @@ def load_observations():
 
 if __name__ == "__main__":
     generate_ontology_table()
-
-    from scripts.merge_valuefields import *
-    from scripts.fill_units import *
+    merge_metadatavaluefields()
+    insert_units()
 
     gen_concept_modifier_dim(
         folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"

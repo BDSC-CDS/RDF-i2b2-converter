@@ -1,11 +1,11 @@
-from importlib.metadata import entry_points
 import os
 import sys
 import pytest
 import random
+import string
 
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath)
+herePath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, herePath)
 
 from initsts import *
 from utils import from_csv
@@ -69,3 +69,9 @@ def test_ispathend_nonends():
     nonendtree = InformationTree(TEST_NONENDS_OBJECTS)
     assert all([not nonendtree.is_pathend(k) for k in nonendtree.observations])
 
+
+def test_migration_datafields():
+    logs_mig = herePath+"../files/migration_logs.json"
+    testdf = pd.DataFrame()
+    testdf.assign(C_BASECODE=[k for k in logs_mig.keys()] + [random.choice(ke) for ke in logs_mig.values()]+[''.join(random.choice(string.ascii_lowercase) for j in range(50)) for i in range(5)])
+    testdf.assign(INSTANCE_NUM=[random.randint(0,5) for k in range(len(logs_mig))+5])

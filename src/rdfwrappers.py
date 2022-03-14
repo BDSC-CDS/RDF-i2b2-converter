@@ -106,7 +106,7 @@ class Component:
                     code = "0"+code
                 self.label = code + " - " + self.label
             term_name = self.shortname[:sep+1].upper()
-            if term_name not in self.label:
+            if term_name not in self.label and self.label not in term_name:
                 self.label = term_name+self.label
             
 
