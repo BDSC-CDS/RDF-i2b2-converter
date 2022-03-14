@@ -1,4 +1,3 @@
-from multiprocessing.dummy import current_process
 from configs import *
 from utils import *
 from i2b2wrappers import I2B2BasecodeHandler
@@ -9,6 +8,11 @@ with open(cur_path + "files/data_loader_config.json") as ff:
 for val in config["TO_IGNORE"]:
     nxt =[rdflib.URIRef(val)] if type(val) == str else [rdflib.URIRef(k) for k in val]
     globals()["TO_IGNORE"].extend(nxt)
+OBS_FACT_LOOKUP={}
+for key, elem in COLUMNS.items():
+    if "col" in elem.keys():
+        OBS_FACT_LOOKUP.update({elem["col"]:key})
+
 
 
 class DataLoader:
@@ -78,6 +82,8 @@ class DataLoader:
             """,
             initBindings={"class": selclass},
         )
+        pdb.set_trace()
+        return obs # TODO return the list of observation resources
 
 
 class ObservationRegister:
@@ -95,11 +101,13 @@ class ObservationRegister:
     def get_processed_records(self):
         return self.records
 
-    def add_record(self, end_node, basecode):
+    def add_record(self, end_node, basecode, context):
         """
         Process the information in an end of path. Add every detail in the correct column of the default observation table.
         TODO: maybe get as parameter also the highest-level element so we can get date and other details from it
         """
+        if context == {}:
+            raise Exception("Cannot add a record with an empty context")
         self.records.append("")
 
     def merge_dics(self, local_info, weaker_info, stronger_info):
@@ -129,8 +137,9 @@ class InformationTree:
         return self.register.get_processed_records()
 
     def explore_tree_master(self):
-        for obs in self.observations:
-            self.explore_obstree(obs)
+        for i in range(len(self.observations)):
+            obs = self.observations[i]
+            self.explore_obstree(obs, instance_num=i)
 
     def is_contextual_detail(self, obj):
         """
@@ -162,7 +171,7 @@ class InformationTree:
         else:
             return True
 
-    def explore_obstree(self, resource, upper_info=None, basecode_prefix=None):
+    def explore_obstree(self, resource, instance_num, upper_info=None, basecode_prefix=None):
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
@@ -171,57 +180,55 @@ class InformationTree:
         rdfclass = resource.value(TYPE_PREDICATE_URI)
         if rdfclass in BLACKLIST:
             return
-        gen = resource.predicate_objects()
-
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
         current_basecode = hdler.reduce_basecode(resource, basecode_prefix)
 
-        for pred, obj in gen:
+        # Get the details
+        pred_objects = [k for k in resource.predicate_objects()]
+
+        
+        # Digest the context and get back the "clean" list of details
+        observation_elements = self.context_register.digest(pred_objects)
+
+        for pred, obj in observation_elements:
             if pred.identifier in BLACKLIST:
                 continue
             # Updating the basecode with the forward link
             basecode= hdler.reduce_basecode(pred, current_basecode)
             
-            cur_info = self.package_info()
             if self.is_pathend(obj):
-                self.store_register(obj, pred, basecode, cur_info)
+                self.store_register(obj, pred, basecode)
             else:
-                cur_info.update(self.explore_subtree(obj, cur_info))
                 return self.explore_obstree(obj, upper_info, basecode_prefix=self.basecode)
 
-    def store_register(self, resource, origin, basecode_upto_origin, upper_info={}):
+    def store_register(self, resource, origin, basecode_upto_origin):
         """
         The parameter basecode includes the origin node but not the actual resource.
         Based on the resource type, the appropriate register will then create a new basecode or not.
         TODO: maybe change it so instead of having contextual/noncontextual we have one case for resource endpoints for which
         the endpoint needs to be hashed, and literal endpoint for which we use the "basecode_upto_origin", and we add values (endpoint) as a detail of it.
         """
-        if upper_info=={}:
-            pass
-        if self.is_contextual_detail(resource):
-            self.context_register.add(resource, origin, basecode_upto_origin)
-        else:
-            self.main_register.add_record(resource, origin, basecode_upto_origin)
+        self.main_register.add_record(resource, origin, basecode_upto_origin, context=self.context_register.give_context())
 
 class ContextRegister:
     """
     Handles contextual information from an observation instance depending on the configured mappings.
     """
     def __init__(self):
-        self.mappings = {}
-        for key, presence_dic in COLUMNS_MAPPING.items():
-            if "table" in presence_dic.keys():
-                self.mappings.update({table:column} for table,column in presence_dic["table"])
-    
-    def add(self, obj, origin, basecode):
+        self.context = {}
+
+    def digest(self, pred_objects):
         """
-        Add the detail in the appropriate table and column.
+        Given a list of predicate_objects, filters out the ones linked to the observation context.
         """
-        pass
+        if self.context == {}:
+            # If the context holder is empty, extract ad save (else simply discard discard the context elements)
+            pass
+        clean = []
+        for el in pred_objects:
+            if el not in OBS_FACT_LOOKUP.keys():
+                clean.append(el)
+        return clean
 
 
-
-
-
-# TODO: fill the dicts. fill the other dimensions. write unit tests. avoid discovering the same objects repeatedly (e.g patient, provider info?)
