@@ -8,12 +8,10 @@ with open(cur_path + "files/data_loader_config.json") as ff:
 for val in config["TO_IGNORE"]:
     nxt =[rdflib.URIRef(val)] if type(val) == str else [rdflib.URIRef(k) for k in val]
     globals()["TO_IGNORE"].extend(nxt)
-OBS_FACT_LOOKUP={}
-for key, elem in COLUMNS.items():
-    if "col" in elem.keys():
-        OBS_FACT_LOOKUP.update({elem["col"]:key})
 
 
+def is_valid(pred,obj):
+    return pred.identifier.toPython() not in BLACKLIST and obj.value(TYPE_PREDICATE_URI).toPython() not in BLACKLIST
 
 class DataLoader:
     """
@@ -184,10 +182,9 @@ class InformationTree:
         hdler = I2B2BasecodeHandler()
         current_basecode = hdler.reduce_basecode(resource, basecode_prefix)
 
-        # Get the details
-        pred_objects = [k for k in resource.predicate_objects()]
+        # Get the properties
+        pred_objects = [k for k in resource.predicate_objects() if is_valid(k)]
 
-        
         # Digest the context and get back the "clean" list of details
         observation_elements = self.context_register.digest(pred_objects)
 
@@ -217,18 +214,24 @@ class ContextRegister:
     """
     def __init__(self):
         self.context = {}
+        self.fields = {el["col"]:key for key,el in COLUMNS_MAPPING["CONTEXT"].items()}
 
     def digest(self, pred_objects):
         """
         Given a list of predicate_objects, filters out the ones linked to the observation context.
         """
-        if self.context == {}:
-            # If the context holder is empty, extract ad save (else simply discard discard the context elements)
-            pass
         clean = []
-        for el in pred_objects:
-            if el not in OBS_FACT_LOOKUP.keys():
-                clean.append(el)
+        if self.context == {}:
+            # If the context holder is empty, extract and save (else simply discard discard the context elements)
+            for pred, obj in self.pred_objects():
+                obj_type = TYPE_PREDICATE_URI
+                if obj_type in self.fields.keys():
+                    self.add_record(self.fields[obj_type], obj)
+                else:
+                    clean.append((pred,obj))
         return clean
 
-
+    def add_record(self, key, obj):
+        val = obj.toto
+        self.context.update()
+        pass

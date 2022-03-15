@@ -69,6 +69,8 @@ def test_ispathend_nonends():
     nonendtree = InformationTree(TEST_NONENDS_OBJECTS)
     assert all([not nonendtree.is_pathend(k) for k in nonendtree.observations])
 
+def test_context_register():
+    pass
 
 def test_migration_datafields():
     logs_mig = herePath+"../files/migration_logs.json"
