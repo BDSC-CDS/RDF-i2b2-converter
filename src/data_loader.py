@@ -137,7 +137,7 @@ class InformationTree:
     def explore_tree_master(self):
         for i in range(len(self.observations)):
             obs = self.observations[i]
-            self.explore_obstree(obs, instance_num=i)
+            self.explore_obstree(obs, instance_num=i, force_store=True)
 
     def is_contextual_detail(self, obj):
         """
@@ -169,11 +169,10 @@ class InformationTree:
         else:
             return True
 
-    def explore_obstree(self, resource, instance_num, upper_info=None, basecode_prefix=None):
+    def explore_obstree(self, resource, instance_num, basecode_prefix="", parent_context={}, force_store=False):
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
-        TODO: use the upper_info if necessary
         """
         rdfclass = resource.value(TYPE_PREDICATE_URI)
         if rdfclass in BLACKLIST:
@@ -186,7 +185,8 @@ class InformationTree:
         pred_objects = [k for k in resource.predicate_objects() if is_valid(k)]
 
         # Digest the context and get back the "clean" list of details
-        observation_elements = self.context_register.digest(pred_objects)
+        context_register = ContextRegister(parent_context)
+        observation_elements = context_register.digest(pred_objects) # TODO do not add elements bottom-up!!
 
         for pred, obj in observation_elements:
             if pred.identifier in BLACKLIST:
@@ -194,10 +194,10 @@ class InformationTree:
             # Updating the basecode with the forward link
             basecode= hdler.reduce_basecode(pred, current_basecode)
             
-            if self.is_pathend(obj):
-                self.store_register(obj, pred, basecode)
+            if self.is_pathend(obj) or force_store is True:
+                self.store_register(obj, pred, basecode, context_register.get_context())
             else:
-                return self.explore_obstree(obj, upper_info, basecode_prefix=self.basecode)
+                return self.explore_obstree(obj, basecode_prefix=self.basecode, parent_context = context_register)
 
     def store_register(self, resource, origin, basecode_upto_origin):
         """
@@ -212,26 +212,35 @@ class ContextRegister:
     """
     Handles contextual information from an observation instance depending on the configured mappings.
     """
-    def __init__(self):
-        self.context = {}
-        self.fields = {el["col"]:key for key,el in COLUMNS_MAPPING["CONTEXT"].items()}
+    def __init__(self, parent_context={}):
+        self.context = parent_context.copy()
+        self.fields = COLUMNS_MAPPING["CONTEXT"].keys()
 
     def digest(self, pred_objects):
         """
         Given a list of predicate_objects, filters out the ones linked to the observation context.
+        Stores the context information that isn't already stored, or the one that bears the "overwrite" flag
         """
         clean = []
-        if self.context == {}:
-            # If the context holder is empty, extract and save (else simply discard discard the context elements)
-            for pred, obj in self.pred_objects():
-                obj_type = TYPE_PREDICATE_URI
-                if obj_type in self.fields.keys():
-                    self.add_record(self.fields[obj_type], obj)
-                else:
-                    clean.append((pred,obj))
+        # If the context holder is empty, extract and save (else simply discard discard the context elements)
+        for pred, obj in pred_objects:
+            obj_type = TYPE_PREDICATE_URI
+            if obj_type in self.fields :
+                if self.fields[obj_type]["overwrite"]=="True" or obj_type not in self.context.keys():
+                    self.add_record(obj_type, obj)
+            else:
+                clean.append((pred,obj))
         return clean
 
-    def add_record(self, key, obj):
-        val = obj.toto
-        self.context.update()
-        pass
+    def add_record(self, obj_type, obj):
+        """
+        Add a context element based on the instructions in the config file.
+        """
+        tmp = COLUMNS_MAPPING["CONTEXT"][obj_type]["pred_to_value"] if "pred_to_value" in COLUMNS_MAPPING["CONTEXT"][obj_type].keys() else []
+        val = val.value(tmp.pop(0)) if callable(val.value) else val.value
+        while tmp != []:
+            val = val.value(tmp.pop(0))
+        self.context.update({key:val})
+
+    def get_context(self):
+        return self.context

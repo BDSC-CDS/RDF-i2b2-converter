@@ -23,16 +23,30 @@ def gen_concept_modifier_dim(
     concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION.csv", index=False)
     modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION.csv", index=False)
 
-
-def gen_patient_mapping():
+def fill_obs_missing_values():
+    """
+    Replace the None values in "ENCOUNTER_NUM" by -1,
+    Replace the None values in "START_DATE" by the default date specified in the config file.
+    """
     pass
 
-
 def gen_patient_dim():
+    """
+    Query the RDF graph about patient information and store the details in a dedicated table.
+    """
+    pass
+
+def gen_patient_mapping():
+    """
+    Replace the non-integer (or too large) fields of "PATIENT_NUM" (both in observation and patient_dimension) by an integer. Store the index mapping in a dedicated table.
+    """
     pass
 
 
 def gen_encounter_dim():
+    """
+    Query the RDF graph about encounter information and store the details in a dedicated table.
+    """
     pass
 
 

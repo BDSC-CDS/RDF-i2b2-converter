@@ -44,6 +44,48 @@ class GraphParser:
         return [self.graph.resource(uri) for uri in list]
 
 
+
+class I2B2BasecodeHandler:
+    """
+    Compute and extract the basecode for a Class or a Property existing in the ontology.
+    Access the attributes of the embedded RDF resource.
+    If a value is specified, it will be included in the basecode computation.
+    If an other handler is specified as "ph" at construction, its code will be embedded in the computation. (this helps encapsulating hierarchy in codes)
+    """
+
+    def __init__(self, i2b2element=None):
+        self.basecode = None
+        if i2b2element is not None:
+            self.core = i2b2element.component.get_shortname()
+            self.prefix = (
+                i2b2element.logical_parent.basecode_handler.get_basecode()
+                if i2b2element.logical_parent is not None
+                else ""
+            )
+
+    def get_basecode(self):
+        if self.basecode is not None:
+            return self.basecode
+        return self.reduce_basecode(rdf_uri=self.core, prefix = self.prefix)
+
+    def reduce_basecode(
+        self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
+    ): 
+        """
+        Returns a basecode for self.component. A prefix and a value can be added in the hash.
+        The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
+        A basecode is invisible to the user, and its only constraints is to be unique regarding the concept it is describing,
+        and to be computable both from the ontology side and from the data loader side.
+        The resulting code is the joining key between data tables and ontology tables.
+        """
+        
+        if rdf_uri[-1] != "\\":
+            rdf_uri = rdf_uri + "\\"
+
+        to_hash = rdf_uri
+        to_hash = prefix + to_hash
+        return to_hash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
+        
 def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
