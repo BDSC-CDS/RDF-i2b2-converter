@@ -1,3 +1,4 @@
+from email.mime import base
 from configs import *
 from utils import *
 from i2b2wrappers import I2B2BasecodeHandler
@@ -90,7 +91,7 @@ class ObservationRegister:
     """
 
     def __init__(self):
-        self.default = COLUMNS["OBSERVATION_FACT"]
+        self.keys = COLUMNS["OBSERVATION_FACT"]
         self.records = []
 
     def is_empty(self):
@@ -99,21 +100,24 @@ class ObservationRegister:
     def get_processed_records(self):
         return self.records
 
-    def add_record(self, end_node, basecode, context):
+    def digest(resource, parent, basecode, context):
+        pass
+
+    def add_record(self, end_node, basecode, context={}):
         """
         Process the information in an end of path. Add every detail in the correct column of the default observation table.
-        TODO: maybe get as parameter also the highest-level element so we can get date and other details from it
+        Use the context details.
         """
         if context == {}:
             raise Exception("Cannot add a record with an empty context")
-        self.records.append("")
-
-    def merge_dics(self, local_info, weaker_info, stronger_info):
-        base_dic = self.default.copy()
-        agnostic_dic = base_dic.update(local_info)
-        fmerge = weaker_info.copy().update(agnostic_dic)
-        smerge = fmerge.update(stronger_info)
-        return smerge
+        
+        record = context.copy()
+        record.update({"MODIFIER_CD":basecode})
+        for key in self.keys:
+            if key not in record.keys():
+                record.update({
+                    key:basecode,
+                })
 
 
 class InformationTree:
@@ -126,26 +130,17 @@ class InformationTree:
 
     def __init__(self, resources_list):
         self.observations = resources_list
-        self.main_register = ObservationRegister()
-        self.context_register = ContextRegister()
+        self.obs_register = ObservationRegister()
 
     def get_info_dics(self):
-        if self.register.is_empty():
-            self.explore_subtree()
-        return self.register.get_processed_records()
+        if self.obs_register.is_empty():
+            self.explore_tree_master()
+        return self.obs_register.get_processed_records()
 
     def explore_tree_master(self):
         for i in range(len(self.observations)):
             obs = self.observations[i]
-            self.explore_obstree(obs, instance_num=i, force_store=True)
-
-    def is_contextual_detail(self, obj):
-        """
-        Determines if a constructed resource should be stored in the default register or in a special one.
-        Makes use of the configurable table-colums mapping to special URIs.
-        """
-        # TODO: if obj is not something specified in the tables (ex. hasSubjectPseudoIdentifier -> HasIdentifier, or hasAdministrativeCase -> details),
-        return False
+            self.explore_obstree(obs, instance_num=i, concept=True)
 
     def is_pathend(self, obj):
         """
@@ -169,7 +164,7 @@ class InformationTree:
         else:
             return True
 
-    def explore_obstree(self, resource, instance_num, basecode_prefix="", parent_context={}, force_store=False):
+    def explore_obstree(self, resource, instance_num, basecode_prefix="", parent_context={}, concept=False):
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
@@ -185,8 +180,12 @@ class InformationTree:
         pred_objects = [k for k in resource.predicate_objects() if is_valid(k)]
 
         # Digest the context and get back the "clean" list of details
-        context_register = ContextRegister(parent_context)
-        observation_elements = context_register.digest(pred_objects) # TODO do not add elements bottom-up!!
+        context_register = ContextFactory(parent_context)
+        observation_elements = context_register.digest(pred_objects)
+        if concept:
+            context_register.add_concept_code(current_basecode, instance_num=instance_num)
+            current_basecode = ""
+            self.store_register(resource)
 
         for pred, obj in observation_elements:
             if pred.identifier in BLACKLIST:
@@ -194,21 +193,12 @@ class InformationTree:
             # Updating the basecode with the forward link
             basecode= hdler.reduce_basecode(pred, current_basecode)
             
-            if self.is_pathend(obj) or force_store is True:
-                self.store_register(obj, pred, basecode, context_register.get_context())
+            if self.is_pathend(obj):
+                self.obs_register.digest(obj, pred, basecode, context_register.get_context())
             else:
                 return self.explore_obstree(obj, basecode_prefix=self.basecode, parent_context = context_register)
 
-    def store_register(self, resource, origin, basecode_upto_origin):
-        """
-        The parameter basecode includes the origin node but not the actual resource.
-        Based on the resource type, the appropriate register will then create a new basecode or not.
-        TODO: maybe change it so instead of having contextual/noncontextual we have one case for resource endpoints for which
-        the endpoint needs to be hashed, and literal endpoint for which we use the "basecode_upto_origin", and we add values (endpoint) as a detail of it.
-        """
-        self.main_register.add_record(resource, origin, basecode_upto_origin, context=self.context_register.give_context())
-
-class ContextRegister:
+class ContextFactory:
     """
     Handles contextual information from an observation instance depending on the configured mappings.
     """
@@ -231,6 +221,15 @@ class ContextRegister:
             else:
                 clean.append((pred,obj))
         return clean
+
+    def add_concept_code(self, basecode, instance_num):
+        """
+        Add the concept code as a context element (will stand for all modifiers and the concept)
+        """
+        self.context.update({
+            COLUMNS_MAPPING["instance_num"]:instance_num,
+            COLUMNS_MAPPING["basecode"]:basecode
+        })
 
     def add_record(self, obj_type, obj):
         """

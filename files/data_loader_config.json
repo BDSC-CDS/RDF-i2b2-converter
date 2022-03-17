@@ -17,8 +17,9 @@
     ],
     "COLUMNS_MAPPING": {
         "VALUE":{
-        "http://www.w3.org/2001/XMLSchema#double" : {"col": "NVAL_NUM"},
-        "http://www.w3.org/2001/XMLSchema#string" : {"col": "TVAL_CHAR"},
+        "http://www.w3.org/2001/XMLSchema#integer" : {"col": "NVAL_NUM", "misc":{"VALTYPE_CD":"N"}},
+        "http://www.w3.org/2001/XMLSchema#double" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N"}},
+        "http://www.w3.org/2001/XMLSchema#string" : {"col": "TVAL_CHAR","misc":{"VALTYPE_CD":"T"}},
         "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"  : {
             "col": "UNITS_CD", 
             "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnitCode", "https://biomedit.ch/rdf/sphn-ontology/sphn:hasUnitCode", "http://www.w3.org/2000/01/rdf-schema#label"]}},

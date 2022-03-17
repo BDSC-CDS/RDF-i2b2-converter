@@ -4,7 +4,7 @@ from i2b2wrappers import *
 from starschema import *
 from data_loader import *
 from scripts.merge_valuefields import *
-from scripts.fill_units import *
+from scripts.fill_metadata_units import *
 
 def check_macros():
     """
