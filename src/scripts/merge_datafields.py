@@ -15,7 +15,7 @@ with open('migration_logs.json') as json_file:
 
 # TODO also keep log of T vs N.... since some elements written in the ontology as strings are in fact floats
 
-def transfer_values():
+def transfer_obs_numerical_values():
     df = pd.read_csv(DATA_LOC)
     to_move = df.loc[df["C_BASECODE"].isin(migrations.keys())]
 

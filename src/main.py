@@ -43,15 +43,6 @@ def generate_ontology_table():
     # Step 4
 
 
-
-def load_observations():
-    parser = GraphParser(paths=[DATA_GRAPHS_LOCATION])
-    parser.define_namespaces()
-    entry_classes = parser.get_entrypoints(ENTRY_DATA_CONCEPTS)
-    dl = DataLoader(parser, entry_classes, filename=OUTPUT_TABLES+"OBSERVATION_FACT", reset_file=True)
-    dl.extract_all()
-
-
 if __name__ == "__main__":
     generate_ontology_table()
     merge_metadatavaluefields()

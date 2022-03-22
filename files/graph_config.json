@@ -5,6 +5,7 @@
         "OUTPUT_TABLES": "files/output_tables/",
         "RDF_FORMAT": "turtle",
         "PREF_LANGUAGE": "fr",
+        "ALWAYS_DEEP": "False",
         "TERMINOLOGIES_GRAPHS": {
             "http://snomed.info/id/":"snomed-ct-20210731",
             "https://loinc.org/rdf/":"sphn_loinc_2.71-1", 
@@ -22,11 +23,12 @@
         "ROOT_URIS": ["https://biomedit.ch/rdf/sphn-ontology/swissbioref#SwissbiorefConcept", "https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept"],
         "PROJECT_RDF_NAMESPACE": "https://biomedit.ch/rdf/sphn-ontology/sphn#",
         "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+        "RANGE_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#range",
         "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
         "DATATYPE_PROP_URI": "http://www.w3.org/2002/07/owl#DatatypeProperty",
         "OBJECT_PROP_URI" : "http://www.w3.org/2002/07/owl#ObjectProperty",
         "COMMENT_URI": "http://www.w3.org/2000/01/rdf-schema#comment",
-        "TERMINOLOGY_MARKER_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology",":example:"],
+        "TERMINOLOGY_MARKER_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology"],
         "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet",
         "ENTRY_CONCEPTS": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",

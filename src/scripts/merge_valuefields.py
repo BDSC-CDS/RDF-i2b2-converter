@@ -81,7 +81,6 @@ def merge_metadatavaluefields():
 
         # find out which rows should receive this xml 
         destination_indexes= resolve_rows(dfk[["C_FULLNAME", "C_PATH", "M_APPLIED_PATH"]], destdic)
-        pdb.set_trace()
         logs.update({row["C_BASECODE"]:df.loc[destination_indexes, "C_BASECODE"].tolist()})
         # For each found index, store it into the temporary table
         df.loc[destination_indexes, "C_METADATAXML"] = xml

@@ -233,7 +233,7 @@ class Property(Component):
 
         """
         final_ranges = {"muted": [], "regular": []}
-        if ALWAYS_DEEP:
+        if ALWAYS_DEEP=="True":
             final_ranges["regular"] = self.range_res
             return 0
 
@@ -289,16 +289,16 @@ class RangeFilter:
         SELECT DISTINCT ?class 
         where {
             {
-            ?self rdfs:range ?class }
+            ?self ?range ?class }
             union
             {
-                ?self rdfs:range [ a owl:Class ;
+                ?self ?range [ a owl:Class ;
                                     owl:unionOf [ rdf:rest*/rdf:first ?class ]
                 ]
                     }
         }
         """,
-            initBindings={"self": self.resource.identifier},
+            initBindings={"self": self.resource.identifier, "range":RANGE_PRED_URI},
         )
         listed_res = [self.resource.graph.resource(row[0]) for row in response]
         # If there are several ranges, remove the first element which is in fact the name of the blank node
@@ -362,7 +362,6 @@ class PropertyFilter:
         if self.resources != []:
             return
         self_res = self.concept.resource
-        # TODO enhance this
         response = self_res.graph.query(
             """
             SELECT ?p 

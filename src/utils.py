@@ -1,13 +1,37 @@
 import pandas as pd
 import pdb
 import glob
+import hashlib
+import rdflib
 import json, os, datetime
-from configs import *
 
 """"
 This file figures file and format utility functions.
 It initializes global variables by reading the "ontology_config" file.
 """
+
+cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
+with open(cur_path + "files/graph_config.json") as ff:
+    config = json.load(ff)
+for key, val in config["parameters"].items():
+    globals()[key] = val
+for key, val in config["uris"].items():
+    globals()[key] = (
+        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
+    )
+
+cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
+with open(cur_path + "files/data_loader_config.json") as ff:
+    config = json.load(ff)
+globals()["TO_IGNORE"] = []
+for val in config["TO_IGNORE"]:
+    nxt =[rdflib.URIRef(val)] if type(val) == str else [rdflib.URIRef(k) for k in val]
+    globals()["TO_IGNORE"].extend(nxt) 
+
+with open(cur_path + "files/i2b2_rdf_mapping.json") as ff:
+    config = json.load(ff)
+for key, val in config.items():
+    globals()[key] = val
 
 SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
 TERMINOLOGIES_FILES = {}
@@ -85,7 +109,7 @@ class I2B2BasecodeHandler:
         to_hash = rdf_uri
         to_hash = prefix + to_hash
         return to_hash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
-        
+
 def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
@@ -114,7 +138,7 @@ def sanitize(db, col_name):
     return db
 
 
-def format_date(rdfdate, generalize=USE_DUMMY_DATES):
+def format_date(rdfdate, generalize=True):
     """
     Format an RDF xsd:date resource onto a "timestamp without time zone" string, readable in postgres.
     If the kyarg "generalize" is set, replace the date by Jan 1st
@@ -156,6 +180,8 @@ def wipe_directory(dir_path, names=[]):
         os.remove(dir_path + k)
         print("Removed file: ", dir_path + k)
 
+def check_basecodes(metadata=OUTPUT_TABLES+METADATA_NAME, obs=OUTPUT_TABLES):
+    pass
 
 def db_to_csv(db, filename, init=False, columns=[]):
     """

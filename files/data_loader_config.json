@@ -1,4 +1,4 @@
-{
+{   "DATA_GRAPHS_LOCATION": "../Documents/bioref/chuv_real_5pp",
     "TO_IGNORE":[
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeCodingSystemAndVersion",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName",
@@ -19,10 +19,8 @@
         "VALUE":{
         "http://www.w3.org/2001/XMLSchema#integer" : {"col": "NVAL_NUM", "misc":{"VALTYPE_CD":"N"}},
         "http://www.w3.org/2001/XMLSchema#double" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N"}},
-        "http://www.w3.org/2001/XMLSchema#string" : {"col": "TVAL_CHAR","misc":{"VALTYPE_CD":"T"}},
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"  : {
-            "col": "UNITS_CD", 
-            "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnitCode", "https://biomedit.ch/rdf/sphn-ontology/sphn:hasUnitCode", "http://www.w3.org/2000/01/rdf-schema#label"]}},
+        "http://www.w3.org/2001/XMLSchema#string" : {"col": "TVAL_CHAR","misc":{"VALTYPE_CD":"T"}}
+        },
         "CONTEXT":{
         "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier"  : {
             "col": "PATIENT_NUM",  
@@ -44,9 +42,11 @@
         },
         "http://www.w3.org/2001/XMLSchema#date"   : {
             "col": "START_DATE",
-            "overwrite": "False"}}
-    },
-    "USE_DUMMY_DATES": 0
-
-
+            "overwrite": "False"},
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"  : {
+            "col": "UNITS_CD", 
+            "overwrite": "True",
+            "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn:hasUnitCode", "http://www.w3.org/2000/01/rdf-schema#label"]}
+    }
+}
 }
