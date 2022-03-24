@@ -23,10 +23,12 @@ for key, val in config["uris"].items():
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
 with open(cur_path + "files/data_loader_config.json") as ff:
     config = json.load(ff)
-globals()["TO_IGNORE"] = []
-for val in config["TO_IGNORE"]:
-    nxt =[rdflib.URIRef(val)] if type(val) == str else [rdflib.URIRef(k) for k in val]
-    globals()["TO_IGNORE"].extend(nxt) 
+for key, val in config.items():
+    globals()[key] = val
+for key, val in config["data_global_uris"].items():
+    globals()[key] = (
+        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
+    )
 
 with open(cur_path + "files/i2b2_rdf_mapping.json") as ff:
     config = json.load(ff)

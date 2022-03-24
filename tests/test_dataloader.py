@@ -68,16 +68,17 @@ class test_dataloaderclass:
     def test_obsregister(self):
         pass
 
-def test_ispathend_ends():
-    endtree = InformationTree(TEST_TERMINOLOGY_END+TEST_XSD_ENDS)
-    assert all([endtree.is_pathend(k) for k in endtree.observations])
+    def test_ispathend_ends():
+        endtree = InformationTree(TEST_TERMINOLOGY_END+TEST_XSD_ENDS)
+        assert all([endtree.is_pathend(k) for k in endtree.observations])
 
-def test_ispathend_individuals():
-    indtree = InformationTree(TEST_INDIVIDUALS)
-    assert all([indtree.is_pathend(k) for k in indtree.observations])
+    def test_ispathend_individuals():
+        indtree = InformationTree(TEST_INDIVIDUALS)
+        assert all([indtree.is_pathend(k) for k in indtree.observations])
 
-def test_ispathend_nonends():
-    nonendtree = InformationTree(TEST_NONENDS_OBJECTS)
-    assert all([not nonendtree.is_pathend(k) for k in nonendtree.observations])
+    def test_ispathend_nonends():
+        nonendtree = InformationTree(TEST_NONENDS_OBJECTS)
+        assert all([not nonendtree.is_pathend(k) for k in nonendtree.observations])
 
-
+    def test_valuereplacement():
+        pass

@@ -1,4 +1,5 @@
 {   "DATA_GRAPHS_LOCATION": "../Documents/bioref/chuv_real_5pp",
+    "data_global_uris":{
     "TO_IGNORE":[
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeCodingSystemAndVersion",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName",
@@ -48,5 +49,6 @@
             "overwrite": "True",
             "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn:hasUnitCode", "http://www.w3.org/2000/01/rdf-schema#label"]}
     }
-}
+    }
+    }
 }
