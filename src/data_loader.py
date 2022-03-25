@@ -2,7 +2,10 @@ from utils import *
 
 
 def is_valid(pred,obj):
-    return pred.identifier.toPython() not in BLACKLIST and obj.value(TYPE_PREDICATE_URI).toPython() not in BLACKLIST
+    if pred.identifier.toPython() in TO_IGNORE+BLACKLIST:
+        return False
+    val = obj.value(TYPE_PREDICATE_URI)
+    return (val is None or val not in TO_IGNORE+BLACKLIST)
 
 class DataLoader:
     """
@@ -36,7 +39,7 @@ class DataLoader:
         """
         db = self.convert_data()
         mode = "w" if self.init else "a"
-        res = db_to_csv(db, self.filename, columns=COLUMNS["OBSERVATION_FACT"],mode=mode)
+        res = db_to_csv(db, self.filename, init=self.init, columns=COLUMNS["OBSERVATION_FACT"])
         self.init = False
         return res is not None
 
@@ -48,29 +51,32 @@ class DataLoader:
         """
         database_batch = []
         observations = self.get_next_class_instances()
+        pdb.set_trace()
         information_tree = InformationTree(observations)
         database_batch = information_tree.get_info_dics()
         return database_batch
 
     def get_next_class_instances(self, selclass=None):
         """
-        Extract the next observations batch from the RDF graph.
+        Extract the next observations batch from the RDF graph. Discard the non-instanced classes.
         """
         if self.entry_class_resources == []:
             return []
-        if selclass is None:
+        res = []
+        while res==[]:
             cur = self.entry_class_resources.pop()
             selclass=cur.identifier
-        obs = self.graph.query(
-            """
-                select ?obs
-                where {
-                    ?obs rdf:type ?class
-                }
-            """,
-            initBindings={"class": selclass},
-        )
-        return obs 
+            obs = self.graph.query(
+                """
+                    select ?obs
+                    where {
+                        ?obs rdf:type ?class
+                    }
+                """,
+                initBindings={"class": selclass},
+            )
+            res = [self.graph.resource(k[0]) for k in obs]
+        return res
 
 
 class ObservationRegister:
@@ -170,15 +176,15 @@ class InformationTree:
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
         """
         rdfclass = resource.value(TYPE_PREDICATE_URI)
-        if rdfclass in BLACKLIST:
+        if rdfclass.identifier in BLACKLIST+TO_IGNORE:
             return
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
-        current_basecode = hdler.reduce_basecode(resource, basecode_prefix)
+        current_basecode = hdler.reduce_basecode(resource.identifier.toPython(), basecode_prefix)
 
         # Get the properties
-        pred_objects = [k for k in resource.predicate_objects() if is_valid(k)]
-
+        pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
+        pdb.set_trace()
         # Digest the context and get back the "clean" list of details
         context_register = ContextFactory(parent_context)
         observation_elements = context_register.digest(pred_objects)
@@ -188,10 +194,8 @@ class InformationTree:
             self.store_register(resource)
 
         for pred, obj in observation_elements:
-            if pred.identifier in BLACKLIST:
-                continue
             # Updating the basecode with the forward link
-            basecode= hdler.reduce_basecode(pred, current_basecode)
+            basecode= hdler.reduce_basecode(pred.identifier.toPython(), current_basecode)
             
             if self.is_pathend(obj):
                 self.obs_register.digest(obj, pred, basecode, context_register.get_context())
@@ -204,7 +208,7 @@ class ContextFactory:
     """
     def __init__(self, parent_context={}):
         self.context = parent_context.copy()
-        self.fields = COLUMNS_MAPPING["CONTEXT"].keys()
+        self.fields_dic = COLUMNS_MAPPING["CONTEXT"]
 
     def digest(self, pred_objects):
         """
@@ -214,9 +218,13 @@ class ContextFactory:
         clean = []
         # If the context holder is empty, extract and save (else simply discard discard the context elements)
         for pred, obj in pred_objects:
-            obj_type = TYPE_PREDICATE_URI
-            if obj_type in self.fields :
-                if self.fields[obj_type]["overwrite"]=="True" or obj_type not in self.context.keys():
+            pdb.set_trace()
+            if not callable(obj.value):
+                pdb.set_trace()
+                todo=1 #todo : check obj.value is not a URIref and can match in self.fields
+            obj_type = obj.value(TYPE_PREDICATE_URI).identifier.toPython() if callable(obj.value) else obj.value
+            if obj_type is not None and obj_type in self.fields_dic.keys() :
+                if self.fields_dic[obj_type]["overwrite"]=="True" or obj_type not in self.context.keys():
                     self.add_context_element(obj_type, obj)
             else:
                 clean.append((pred,obj))
@@ -226,20 +234,19 @@ class ContextFactory:
         """
         Add the concept code as a context element (will stand for all modifiers and the concept)
         """
-        self.context.update({
-            COLUMNS_MAPPING["instance_num"]:instance_num,
-            COLUMNS_MAPPING["basecode"]:basecode
+        self.context.update({"INSTANCE_NUM":instance_num,
+            "CONCEPT_CD":basecode
         })
 
     def add_context_element(self, obj_type, obj):
         """
         Add a context element based on the instructions in the config file.
         """
-        tmp = COLUMNS_MAPPING["CONTEXT"][obj_type]["pred_to_value"] if "pred_to_value" in COLUMNS_MAPPING["CONTEXT"][obj_type].keys() else []
-        val = val.value(tmp.pop(0)) if callable(val.value) else val.value
+        tmp = self.fields_dic[obj_type]["pred_to_value"] if "pred_to_value" in self.fields_dic[obj_type].keys() else []
+        val = obj.value(rdflib.URIRef(tmp.pop(0))) if callable(obj.value) else obj.value
         while tmp != []:
-            val = val.value(tmp.pop(0))
-        self.context.update({key:val})
+            val = val.value(rdflib.URIRef(tmp.pop(0)))
+        self.context.update({self.fields_dic[obj_type]["col"]:val.toPython()})
 
     def get_context(self):
         return self.context

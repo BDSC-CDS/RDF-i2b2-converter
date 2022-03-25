@@ -3,7 +3,8 @@
     "TO_IGNORE":[
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeCodingSystemAndVersion",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier",
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
     ],
     "ENTRY_DATA_CONCEPTS": [
         "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
@@ -38,7 +39,7 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute"    : {
             "col": "PROVIDER_ID",  
             "overwrite": "False",
-            "pred_to_value":["https://biomedit.ch/rdf/sphn-ontology/sphn#hasCode", "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"],
+            "pred_to_value":["https://biomedit.ch/rdf/sphn-ontology/sphn#hasDataProviderInstituteCode", "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"],
             "table" : [["PROVIDER_DIMENSION", "PROVIDER_ID"]]
         },
         "http://www.w3.org/2001/XMLSchema#date"   : {

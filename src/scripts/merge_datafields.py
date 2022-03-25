@@ -14,7 +14,7 @@ DATA_LOC = myPath+"/../../files/output_tables/OBSERVATION_FACT.csv"
 
 
 def transfer_obs_numerical_values():
-    with open('migration_logs.json') as json_file:
+    with open(myPath+'../../files/migration_logs.json') as json_file:
         migrations = json.load(json_file)
     df = pd.read_csv(DATA_LOC)
     df.columns = map(str.upper, df.columns)
