@@ -92,6 +92,7 @@ class I2B2BasecodeHandler:
             return self.basecode
         return self.reduce_basecode(rdf_uri=self.core, prefix = self.prefix)
 
+
     def reduce_basecode(
         self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
     ): 
@@ -128,7 +129,6 @@ def which_graph(uri):
             return res if res!='' and res is not None else False
     return False
 
-
 def sanitize(db, col_name):
     for el in db:
         for col in col_name:
@@ -137,6 +137,24 @@ def sanitize(db, col_name):
             el[col] = el[col].replace(" ", "_")
     return db
 
+def shortname(resource):
+    """
+    Reduce the resource URI. 
+    In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
+    The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
+    """
+    shortname = resource.graph.namespace_manager.normalizeUri(
+        resource.identifier
+    )
+    uri = resource.identifier
+    if uri in shortname:
+        ns = resource.graph.namespace_manager.namespaces()
+        best_guess_len = 0
+        for key, value in ns:
+            if value in uri and len(value) > best_guess_len:
+                best_guess_len = len(value)
+                shortname = key + ":" + uri[len(value) :]
+    return shortname
 
 def format_date(rdfdate, generalize=True):
     """

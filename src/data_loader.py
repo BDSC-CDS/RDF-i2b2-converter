@@ -4,7 +4,10 @@ from utils import *
 def is_valid(pred,obj):
     if pred.identifier.toPython() in TO_IGNORE+BLACKLIST:
         return False
-    val = obj.value(TYPE_PREDICATE_URI)
+    try:
+        val = obj.value(TYPE_PREDICATE_URI) if callable(obj.value) else obj.datatype.toPython()
+    except:
+        pdb.set_trace()
     return (val is None or val not in TO_IGNORE+BLACKLIST)
 
 class DataLoader:
@@ -38,10 +41,12 @@ class DataLoader:
         Trigger data conversion and write the db lines in the csv file for the current batch.
         """
         db = self.convert_data()
+        if db == []:
+            return False
         mode = "w" if self.init else "a"
-        res = db_to_csv(db, self.filename, init=self.init, columns=COLUMNS["OBSERVATION_FACT"])
+        db_to_csv(db, self.filename, init=self.init, columns=COLUMNS["OBSERVATION_FACT"])
         self.init = False
-        return res is not None
+        return True
 
     def convert_data(self):
         """
@@ -51,9 +56,9 @@ class DataLoader:
         """
         database_batch = []
         observations = self.get_next_class_instances()
-        pdb.set_trace()
         information_tree = InformationTree(observations)
         database_batch = information_tree.get_info_dics()
+        pdb.set_trace()
         return database_batch
 
     def get_next_class_instances(self, selclass=None):
@@ -101,12 +106,9 @@ class ObservationRegister:
         If specified in the config file, class instances should be digged through using the "pred_to_value" list of predicates.
         """
         details = context.copy()
-        vtype = None
         if not callable(resource.value):
-            value=resource.value.toPython()
-            vtype = value.datatype
-        
-        if vtype is not None:
+            vtype = resource.datatype.toPython()
+            value = resource.value
             if not vtype in self.value_items.keys():
                 raise Exception("Type not defined in config file: ", vtype)
             details.update({self.value_items[vtype]["col"]:value})
@@ -146,7 +148,7 @@ class InformationTree:
     def explore_tree_master(self):
         for i in range(len(self.observations)):
             obs = self.observations[i]
-            self.explore_obstree(obs, instance_num=i, concept=True)
+            self.explore_obstree(obs, instance_num=i+1, concept=True)
 
     def is_pathend(self, obj):
         """
@@ -176,27 +178,26 @@ class InformationTree:
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
         """
         rdfclass = resource.value(TYPE_PREDICATE_URI)
-        if rdfclass.identifier in BLACKLIST+TO_IGNORE:
+        if rdfclass.identifier in BLACKLIST+TO_IGNORE or rdfclass is None:
             return
+        shortclass = shortname(rdfclass)
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
-        current_basecode = hdler.reduce_basecode(resource.identifier.toPython(), basecode_prefix)
+        current_basecode = hdler.reduce_basecode(shortclass, basecode_prefix)
 
         # Get the properties
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
-        pdb.set_trace()
         # Digest the context and get back the "clean" list of details
         context_register = ContextFactory(parent_context)
         observation_elements = context_register.digest(pred_objects)
         if concept:
             context_register.add_concept_code(current_basecode, instance_num=instance_num)
             current_basecode = ""
-            self.store_register(resource)
+            self.obs_register.digest(resource, parent=None, basecode="@", context=context_register.get_context())
 
         for pred, obj in observation_elements:
             # Updating the basecode with the forward link
-            basecode= hdler.reduce_basecode(pred.identifier.toPython(), current_basecode)
-            
+            basecode= hdler.reduce_basecode(shortname(pred), current_basecode)
             if self.is_pathend(obj):
                 self.obs_register.digest(obj, pred, basecode, context_register.get_context())
             else:
@@ -218,14 +219,17 @@ class ContextFactory:
         clean = []
         # If the context holder is empty, extract and save (else simply discard discard the context elements)
         for pred, obj in pred_objects:
-            pdb.set_trace()
-            if not callable(obj.value):
-                pdb.set_trace()
-                todo=1 #todo : check obj.value is not a URIref and can match in self.fields
-            obj_type = obj.value(TYPE_PREDICATE_URI).identifier.toPython() if callable(obj.value) else obj.value
-            if obj_type is not None and obj_type in self.fields_dic.keys() :
-                if self.fields_dic[obj_type]["overwrite"]=="True" or obj_type not in self.context.keys():
-                    self.add_context_element(obj_type, obj)
+
+            # Get the object type as python string. Can be None (e.g for NamedIndividuals)
+            if callable(obj.value):
+                obj_rdftype = obj.value(TYPE_PREDICATE_URI) 
+                obj_type = obj_rdftype.identifier.toPython() if obj_rdftype is not None else None
+            else :
+                obj_rdftype = None
+                obj_type = obj.datatype.toPython()
+            
+            if obj_type is not None and obj_type in self.fields_dic.keys() and (self.fields_dic[obj_type]["overwrite"]=="True" or obj_type not in self.context.keys()):
+                self.add_context_element(obj_type, obj)
             else:
                 clean.append((pred,obj))
         return clean
@@ -242,11 +246,12 @@ class ContextFactory:
         """
         Add a context element based on the instructions in the config file.
         """
-        tmp = self.fields_dic[obj_type]["pred_to_value"] if "pred_to_value" in self.fields_dic[obj_type].keys() else []
+        tmp = self.fields_dic[obj_type]["pred_to_value"].copy() if "pred_to_value" in self.fields_dic[obj_type].keys() else []
         val = obj.value(rdflib.URIRef(tmp.pop(0))) if callable(obj.value) else obj.value
         while tmp != []:
             val = val.value(rdflib.URIRef(tmp.pop(0)))
-        self.context.update({self.fields_dic[obj_type]["col"]:val.toPython()})
+        pyval = "{:%Y-%m-%d %H:%M:%S}".format(val) if isinstance(val, datetime.datetime) else val.toPython()
+        self.context.update({self.fields_dic[obj_type]["col"]:pyval})
 
     def get_context(self):
         return self.context

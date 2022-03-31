@@ -65,23 +65,7 @@ class Component:
         return self.comment
 
     def set_shortname(self):
-        """
-        Reduce the resource URI. 
-        In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
-        The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
-        """
-        shortname = self.resource.graph.namespace_manager.normalizeUri(
-            self.resource.identifier
-        )
-        uri = self.resource.identifier
-        if uri in shortname:
-            ns = self.resource.graph.namespace_manager.namespaces()
-            best_guess_len = 0
-            for key, value in ns:
-                if value in uri and len(value) > best_guess_len:
-                    best_guess_len = len(value)
-                    shortname = key + ":" + uri[len(value) :]
-        self.shortname = shortname
+        self.shortname = shortname(self.resource)
 
     def set_label(self):
         """

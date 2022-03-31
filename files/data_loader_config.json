@@ -27,13 +27,13 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier"  : {
             "col": "PATIENT_NUM",  
             "overwrite": "False",
-            "pred_to_value": "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier",
+            "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"],
             "table" : [["PATIENT_DIMENSION", "PATIENT_NUM"]]
         },
         "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase"  : {
             "col": "ENCOUNTER_NUM", 
             "overwrite": "True",
-            "pred_to_value": "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier",
+            "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"],
             "table" : [["VISIT_DIMENSION", "ENCOUNTER_NUM"], ["VISIT_DIMENSION", "PATIENT_NUM"]]
         },
         "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute"    : {
@@ -42,7 +42,7 @@
             "pred_to_value":["https://biomedit.ch/rdf/sphn-ontology/sphn#hasDataProviderInstituteCode", "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"],
             "table" : [["PROVIDER_DIMENSION", "PROVIDER_ID"]]
         },
-        "http://www.w3.org/2001/XMLSchema#date"   : {
+        "http://www.w3.org/2001/XMLSchema#dateTime"   : {
             "col": "START_DATE",
             "overwrite": "False"},
         "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"  : {

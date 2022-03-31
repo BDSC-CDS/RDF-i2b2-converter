@@ -23,13 +23,6 @@ def gen_concept_modifier_dim(
     concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION.csv", index=False)
     modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION.csv", index=False)
 
-def fill_obs_missing_values():
-    """
-    Replace the None values in "ENCOUNTER_NUM" by -1,
-    Replace the None values in "START_DATE" by the default date specified in the config file.
-    """
-    pass
-
 def gen_patient_dim():
     """
     Query the RDF graph about patient information and store the details in a dedicated table.
@@ -57,6 +50,13 @@ def gen_encounter_mapping():
 def gen_provider_dim():
     pass
 
+def fill_star_schema(mappings):
+    """
+    Generate the observation-based star schema tables. 
+    If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
+    
+    """
+    pass
 
 def gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"]):
     dfs=[pd.read_csv(folder_path + fname) for fname in metadata_filenames]

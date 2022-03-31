@@ -33,12 +33,10 @@
         "ENTRY_CONCEPTS": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#CivilStatus",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#Consent",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus",
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth",
             "https://biomedit.ch/rdf/sphn-ontology/swissbioref#Age"
         ],
         "INDIVIDUAL_CLASS_URI": "http://www.w3.org/2002/07/owl#NamedIndividual",
