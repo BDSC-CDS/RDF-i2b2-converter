@@ -172,7 +172,7 @@ class InformationTree:
         else:
             return True
 
-    def explore_obstree(self, resource, instance_num, basecode_prefix="", parent_context={}, concept=False):
+    def explore_obstree(self, resource, instance_num="", basecode_prefix="", parent_context={}, concept=False):
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
@@ -184,7 +184,8 @@ class InformationTree:
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
         current_basecode = hdler.reduce_basecode(shortclass, basecode_prefix)
-
+        if "hasLabResultValue" in resource.identifier:
+            pdb.set_trace()
         # Get the properties
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
         # Digest the context and get back the "clean" list of details
@@ -201,7 +202,7 @@ class InformationTree:
             if self.is_pathend(obj):
                 self.obs_register.digest(obj, pred, basecode, context_register.get_context())
             else:
-                return self.explore_obstree(obj, basecode_prefix=self.basecode, parent_context = context_register)
+                return self.explore_obstree(obj, basecode_prefix=basecode, parent_context = context_register.get_context())
 
 class ContextFactory:
     """
@@ -249,7 +250,13 @@ class ContextFactory:
         tmp = self.fields_dic[obj_type]["pred_to_value"].copy() if "pred_to_value" in self.fields_dic[obj_type].keys() else []
         val = obj.value(rdflib.URIRef(tmp.pop(0))) if callable(obj.value) else obj.value
         while tmp != []:
-            val = val.value(rdflib.URIRef(tmp.pop(0)))
+            last_pred = rdflib.URIRef(tmp.pop(0))
+            tval = val.value(last_pred)
+            if tval is None:
+                if [k for k in val.predicates()] == []:
+                    print("Dead end at ", val)
+                tval=rdflib.URIRef("")
+            val = tval
         pyval = "{:%Y-%m-%d %H:%M:%S}".format(val) if isinstance(val, datetime.datetime) else val.toPython()
         self.context.update({self.fields_dic[obj_type]["col"]:pyval})
 

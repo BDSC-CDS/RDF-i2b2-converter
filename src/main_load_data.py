@@ -4,7 +4,7 @@ from scripts.obs_tools import *
 from starschema import fill_star_schema
 
 def load_observations():
-    parser = GraphParser(paths=[DATA_GRAPHS_LOCATION])
+    parser = GraphParser(paths=[DATA_GRAPHS_LOCATION, CONTEXT_GRAPHS_LOCATION])
     parser.define_namespaces()
     entry_classes = parser.get_entrypoints(ENTRY_DATA_CONCEPTS)
     dl = DataLoader(parser, entry_classes, filename=OUTPUT_TABLES+"OBSERVATION_FACT.csv", reset_file=True)

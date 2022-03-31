@@ -1,4 +1,5 @@
-{   "DATA_GRAPHS_LOCATION": "../Documents/bioref/chuv_real_5pp",
+{   "DATA_GRAPHS_LOCATION": "../Documents/bioref/insel_synthetic",
+    "CONTEXT_GRAPHS_LOCATION" : "../common-data/ontologies/RDF_SPHN_2021/units",
     "data_global_uris":{
     "TO_IGNORE":[
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeCodingSystemAndVersion",
@@ -21,6 +22,7 @@
         "VALUE":{
         "http://www.w3.org/2001/XMLSchema#integer" : {"col": "NVAL_NUM", "misc":{"VALTYPE_CD":"N"}},
         "http://www.w3.org/2001/XMLSchema#double" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N"}},
+        "http://www.w3.org/2001/XMLSchema#float" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N"}},
         "http://www.w3.org/2001/XMLSchema#string" : {"col": "TVAL_CHAR","misc":{"VALTYPE_CD":"T"}}
         },
         "CONTEXT":{
@@ -48,7 +50,7 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"  : {
             "col": "UNITS_CD", 
             "overwrite": "True",
-            "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn:hasUnitCode", "http://www.w3.org/2000/01/rdf-schema#label"]}
+            "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnitCode", "http://www.w3.org/2000/01/rdf-schema#label"]}
     }
     }
     }
