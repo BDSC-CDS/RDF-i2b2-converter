@@ -1,6 +1,5 @@
 from i2b2wrappers import *
 
-
 def gen_concept_modifier_dim(
     folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
 ):
@@ -50,13 +49,18 @@ def gen_encounter_mapping():
 def gen_provider_dim():
     pass
 
-def fill_star_schema(mappings):
+def fill_star_schema(mappings=None):
     """
     Generate the observation-based star schema tables. 
     If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
-    
     """
-    pass
+    gen_encounter_dim()
+    gen_patient_dim()
+    gen_provider_dim()    
+
+    if mappings is not None:
+        gen_encounter_mapping(mappings)
+        gen_patient_mapping(mappings)
 
 def gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"]):
     dfs=[pd.read_csv(folder_path + fname) for fname in metadata_filenames]

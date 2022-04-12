@@ -34,7 +34,7 @@ class DataLoader:
         while nonempty:
             nonempty = self.write_batch()
             counter = counter + 1
-        print("Batches written: " + str(counter))
+        print("Distinct concepts written: " + str(counter))
 
     def write_batch(self):
         """
@@ -56,9 +56,16 @@ class DataLoader:
         """
         database_batch = []
         observations = self.get_next_class_instances()
-        information_tree = InformationTree(observations)
-        database_batch = information_tree.get_info_dics()
-        pdb.set_trace()
+        nb_obs = len(observations)
+        nb_b = int(nb_obs/MAX_BATCH_SIZE)
+        nb_subbatches = nb_b if nb_b*MAX_BATCH_SIZE==nb_obs else nb_b+1
+        sub_batches = [observations[i*MAX_BATCH_SIZE:min(MAX_BATCH_SIZE*(i+1), nb_obs)] for i in range(nb_subbatches)]
+        counter=0
+        for sub in sub_batches:
+            print(counter)
+            information_tree = InformationTree(sub)
+            database_batch.extend(information_tree.get_info_dics())
+            counter=counter+1
         return database_batch
 
     def get_next_class_instances(self, selclass=None):
@@ -106,6 +113,7 @@ class ObservationRegister:
         If specified in the config file, class instances should be digged through using the "pred_to_value" list of predicates.
         """
         details = context.copy()
+        new_bc = basecode
         if not callable(resource.value):
             vtype = resource.datatype.toPython()
             value = resource.value
@@ -113,8 +121,16 @@ class ObservationRegister:
                 raise Exception("Type not defined in config file: ", vtype)
             details.update({self.value_items[vtype]["col"]:value})
             details.update(self.value_items[vtype]["misc"])
+        elif basecode != "@":
+            hdler = I2B2BasecodeHandler()
+            obj_rdftype = resource.value(TYPE_PREDICATE_URI) 
+            if obj_rdftype is not None :
+                el = shortname(obj_rdftype)
+            else:
+                el=shortname(resource)
+            new_bc = hdler.reduce_basecode(el, prefix = basecode)
         # In any case this digest thing should only add a value field if there is a value, then proceeds with adding the basecode entry in any case
-        self.add_record(basecode, context=details) 
+        self.add_record(new_bc, context=details) 
 
     def add_record(self, basecode, context={}):
         """
@@ -127,6 +143,9 @@ class ObservationRegister:
         record = context.copy()
         record.update({"MODIFIER_CD":basecode})
         self.records.append(record)
+
+    def merge(self, other_register):
+        self.records.extend(other_register.get_processed_records())
 
 class InformationTree:
     """
@@ -171,6 +190,7 @@ class InformationTree:
                 return True
         else:
             return True
+        return False
 
     def explore_obstree(self, resource, instance_num="", basecode_prefix="", parent_context={}, concept=False):
         """
@@ -183,9 +203,7 @@ class InformationTree:
         shortclass = shortname(rdfclass)
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
-        current_basecode = hdler.reduce_basecode(shortclass, basecode_prefix)
-        if "hasLabResultValue" in resource.identifier:
-            pdb.set_trace()
+        current_basecode = hdler.reduce_basecode(shortclass, prefix=basecode_prefix)
         # Get the properties
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
         # Digest the context and get back the "clean" list of details
@@ -198,11 +216,12 @@ class InformationTree:
 
         for pred, obj in observation_elements:
             # Updating the basecode with the forward link
-            basecode= hdler.reduce_basecode(shortname(pred), current_basecode)
+            basecode= hdler.reduce_basecode(shortname(pred), prefix=current_basecode)
             if self.is_pathend(obj):
                 self.obs_register.digest(obj, pred, basecode, context_register.get_context())
             else:
-                return self.explore_obstree(obj, basecode_prefix=basecode, parent_context = context_register.get_context())
+                self.explore_obstree(obj, basecode_prefix=basecode, parent_context = context_register.get_context())
+        return self.obs_register
 
 class ContextFactory:
     """

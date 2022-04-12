@@ -17,8 +17,8 @@ if __name__=="__main__":
     transfer_obs_numerical_values()
 
     # i2b2-formatting routines
-    fill_nulls()
     lookup_table = reindex()
+    fill_nulls()
 
     # i2b2 star schema tables creation
     fill_star_schema(mappings = lookup_table)

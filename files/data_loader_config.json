@@ -1,5 +1,9 @@
 {   "DATA_GRAPHS_LOCATION": "../Documents/bioref/insel_synthetic",
     "CONTEXT_GRAPHS_LOCATION" : "../common-data/ontologies/RDF_SPHN_2021/units",
+    "OBS_TABLE": "files/output_tables/OBSERVATION_FACT.csv",
+    "MAX_BATCH_SIZE" : 1000,
+    "START_SEARCH_INDEX": 95000,
+    "DEFAULT_DATE": "2022-04-12 00:00:00",
     "data_global_uris":{
     "TO_IGNORE":[
         "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeCodingSystemAndVersion",
@@ -34,7 +38,7 @@
         },
         "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase"  : {
             "col": "ENCOUNTER_NUM", 
-            "overwrite": "True",
+            "overwrite": "False",
             "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"],
             "table" : [["VISIT_DIMENSION", "ENCOUNTER_NUM"], ["VISIT_DIMENSION", "PATIENT_NUM"]]
         },

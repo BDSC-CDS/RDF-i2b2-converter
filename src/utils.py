@@ -4,6 +4,7 @@ import glob
 import hashlib
 import rdflib
 import json, os, datetime
+import warnings
 
 """"
 This file figures file and format utility functions.
@@ -28,6 +29,7 @@ for key, val in config.items():
 with open(cur_path + "files/data_loader_config.json") as ff:
     config = json.load(ff)
 for key, val in config.items():
+    val = int(val) if type(val)==str and val.isnumeric() else val
     globals()[key] = val
 for key, val in config["data_global_uris"].items():
     globals()[key] = val
@@ -104,7 +106,7 @@ class I2B2BasecodeHandler:
         The resulting code is the joining key between data tables and ontology tables.
         """
         
-        if rdf_uri[-1] != "\\":
+        if rdf_uri!="" and rdf_uri[-1] != "\\":
             rdf_uri = rdf_uri + "\\"
 
         to_hash = rdf_uri
@@ -143,9 +145,12 @@ def shortname(resource):
     In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
     The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
     """
-    shortname = resource.graph.namespace_manager.normalizeUri(
-        resource.identifier
-    )
+    try:
+        shortname = resource.graph.namespace_manager.normalizeUri(
+            resource.identifier
+        )
+    except:
+        pdb.set_trace()
     uri = resource.identifier
     if uri in shortname:
         ns = resource.graph.namespace_manager.namespaces()
@@ -197,9 +202,6 @@ def wipe_directory(dir_path, names=[]):
     for k in names:
         os.remove(dir_path + k)
         print("Removed file: ", dir_path + k)
-
-def check_basecodes(metadata=OUTPUT_TABLES+METADATA_NAME, obs=OUTPUT_TABLES):
-    pass
 
 def db_to_csv(db, filename, init=False, columns=[]):
     """
