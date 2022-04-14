@@ -9,7 +9,6 @@ def load_observations():
     entry_classes = parser.get_entrypoints(ENTRY_DATA_CONCEPTS)
     dl = DataLoader(parser, entry_classes, filename=OUTPUT_TABLES+"OBSERVATION_FACT.csv", reset_file=True)
     dl.extract_all()
-    pdb.set_trace()
 
 if __name__=="__main__":
     load_observations()

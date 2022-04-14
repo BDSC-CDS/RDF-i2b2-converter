@@ -62,8 +62,8 @@ class DataLoader:
         sub_batches = [observations[i*MAX_BATCH_SIZE:min(MAX_BATCH_SIZE*(i+1), nb_obs)] for i in range(nb_subbatches)]
         counter=0
         for sub in sub_batches:
-            print(counter)
-            information_tree = InformationTree(sub)
+            # Give an offset so instance numbers are not reset for every sub batch but for every concept
+            information_tree = InformationTree(sub, start_instance=counter*MAX_BATCH_SIZE+1)
             database_batch.extend(information_tree.get_info_dics())
             counter=counter+1
         return database_batch
@@ -155,9 +155,10 @@ class InformationTree:
     The first level is used to extract patient, hospital and encounter data. 
     """
 
-    def __init__(self, resources_list):
+    def __init__(self, resources_list, start_instance=1):
         self.observations = resources_list
         self.obs_register = ObservationRegister()
+        self.offset = start_instance
 
     def get_info_dics(self):
         if self.obs_register.is_empty():
@@ -167,7 +168,7 @@ class InformationTree:
     def explore_tree_master(self):
         for i in range(len(self.observations)):
             obs = self.observations[i]
-            self.explore_obstree(obs, instance_num=i+1, concept=True)
+            self.explore_obstree(obs, instance_num=i+self.offset, concept=True)
 
     def is_pathend(self, obj):
         """

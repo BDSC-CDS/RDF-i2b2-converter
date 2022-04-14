@@ -8,7 +8,7 @@ sys.path.insert(0, myPath)
 
 from initsts import *
 from utils import from_csv
-from main import generate_ontology_table
+from main_ontology import generate_ontology_table
 from i2b2wrappers import *
 
 global_db = []

@@ -10,7 +10,7 @@ sys.path.insert(0, myPath)
 METADATA_LOC = myPath+"/../../files/output_tables/METADATA.csv"
 
 MIGRATIONS = {
-    "sphn:hasLabResultValue" : {
+    "swissbioref:hasLabResultValue" : {
         "concept":"sphn:LabResult", 
         "destination": ["swissbioref:hasLabResultLabTestCode/*"], 
         "xmlvaluetype":"Float"
