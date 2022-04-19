@@ -15,6 +15,7 @@ def transfer_obs_numerical_values():
         migrations = json.load(json_file)
     df = pd.read_csv(OBS_TABLE)
     df.columns = map(str.upper, df.columns)
+    final_tab=[]
     for el, destinations in migrations.items():
         # Get the migration code we are treating
         tbmigrated_rows = df.loc[df["MODIFIER_CD"]==el]
@@ -37,16 +38,20 @@ def transfer_obs_numerical_values():
             print("Nothing found for ", el)
             continue
         # df.apply returns an indexed Series so the index can still be used for replacement 
+        tmp = pd.DataFrame(columns=co_df.columns)
         for idx in dests.index:
             # get the index to migrate TO
             endidx = dests[idx]
             if len(endidx)>1:
                 raise Exception("Cannot relocate a numerical value to more than one destination")
             # Those indices we are looping over refer to the "tbmigrated_rows" dataslice
-            tmp = tbmigrated_rows.loc[idx][COLUMNS_TO_REPLACE].rename(endidx[0]).to_frame().T
-            # Merge the updated lines into the original dataframe... oof
-            co_df.update(tmp)
-    co_df.to_csv(OBS_TABLE, index=False)
+            tmp = pd.concat([tmp, tbmigrated_rows.loc[idx][COLUMNS_TO_REPLACE].rename(endidx[0]).to_frame().T,], axis=0)
+            
+        # Merge the updated lines into the original dataframe... oof
+        co_df.update(tmp)
+        final_tab.append(co_df.copy())
+    final = pd.concat(final_tab, axis=0)
+    final.to_csv(OBS_TABLE, index=False)
 
 
     

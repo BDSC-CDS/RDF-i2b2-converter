@@ -212,7 +212,6 @@ class InformationTree:
         observation_elements = context_register.digest(pred_objects)
         if concept:
             context_register.add_concept_code(current_basecode, instance_num=instance_num)
-            current_basecode = ""
             self.obs_register.digest(resource, parent=None, basecode="@", context=context_register.get_context())
 
         for pred, obj in observation_elements:

@@ -1,5 +1,9 @@
 from utils import *
 
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath)
+OBS_TABLE = myPath+"/../../files/output_tables/OBSERVATION_FACT.csv"
+
 def fill_nulls():
     """
     Fill the mandatory keys in the observation table with default values.
@@ -22,7 +26,6 @@ def reindex():
         tmp = lookup[lookup[col] == row[col]].index.values[0]
         return tmp if tmp>0 else -1
 
-
     df = pd.read_csv(OBS_TABLE)
     encs = pd.Series(df["ENCOUNTER_NUM"].dropna().unique())
     pats = pd.Series(df["PATIENT_NUM"].dropna().unique())
@@ -32,9 +35,7 @@ def reindex():
     lookup = padding.append(lookup, ignore_index=True)
 
     # todo: swap using the lookup
-    pdb.set_trace()
     df["ENCOUNTER_NUM"]=df.apply(lambda row: new_id(row, "ENCOUNTER_NUM"), axis=1)
     df["PATIENT_NUM"]=df.apply(lambda row: new_id(row, "PATIENT_NUM"), axis=1)
-    pdb.set_trace()
     df.to_csv(OBS_TABLE, index=False)
     return lookup

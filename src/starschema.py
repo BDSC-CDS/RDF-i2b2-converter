@@ -1,5 +1,8 @@
-from distutils.util import subst_vars
 from i2b2wrappers import *
+
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath)
+OBS_TABLE = myPath+"/../files/output_tables/OBSERVATION_FACT.csv"
 
 def gen_concept_modifier_dim(
     folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
@@ -61,24 +64,36 @@ def gen_visit_dim():
 def gen_encounter_mapping(lookup):
     em = lookup.dropna(subset="ENCOUNTER_NUM")
     emdf = pd.DataFrame(columns=COLUMNS["ENCOUNTER_MAPPING"])
-    pdb.set_trace()
     emdf["ENCOUNTER_NUM"] = em["ENCOUNTER_NUM"].index.values
     emdf["ENCOUNTER_IDE"] = em["ENCOUNTER_NUM"]
     emdf["ENCOUNTER_IDE_SOURCE"] = em["ENCOUNTER_NUM"]
     emdf.to_csv(OUTPUT_TABLES+"ENCOUNTER_MAPPING.csv", index=False)   
 
 
-def gen_provider_dim():
-    pass
+def gen_provider_dim(graph_parser):
+    provider_class = rdflib.URIRef(ONTOLOGY_DROP_DIC["PROVIDER_INFO"])
+    graph = graph_parser.graph
+    res = graph.query("""
+        SELECT ?c ?n
+        where {
+            ?k rdf:type ?dpiclass .
+            ?k ?_ ?s .
+            ?s ?codepred ?c .
+            ?s ?codeid ?n
+        }
+        """, initBindings={"dpiclass":provider_class, 
+            "codepred":rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName"), 
+            "codeid":rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier")})
+    pdb.set_trace()
 
-def fill_star_schema(mappings=None):
+def fill_star_schema(mappings=None, graph_parser=None):
     """
     Generate the observation-based star schema tables. 
     If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
     """
     gen_visit_dim()
     gen_patient_dim()
-    gen_provider_dim()    
+    gen_provider_dim(graph_parser)    
 
     if mappings is not None:
         gen_encounter_mapping(mappings)

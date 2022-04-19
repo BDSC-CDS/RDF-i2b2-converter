@@ -22,7 +22,7 @@ def generate_ontology_table():
     # Now prepare the directory and writing
     wipe_directory(OUTPUT_TABLES)
     init = True
-    # Actual loop over the entrypoints
+    # Actual loop over the root links
     for concept_res in root_entries:
         concept = Concept(concept_res)
         # Initialize the converter using the list of objects

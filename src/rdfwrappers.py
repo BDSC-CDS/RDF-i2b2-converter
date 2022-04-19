@@ -45,10 +45,12 @@ class Component:
         """
         pass
 
-    def get_logic_indicator(self):
+    def is_entry(self):
+        return self.resource.identifier in ENTRY_CONCEPTS
+
+    def is_logical_desc(self):
         """
-        State if the current object is a subclass or a property of the object which instantiated it.
-        By construction, we set parent_class to None by default and to the superclass when applicable so these criteria are equivalent.
+        Checks if the current element was created as subclass of an other (return False) or as property of an other (return True).
         """
         return self.parent_class is None
 

@@ -9,9 +9,10 @@ def load_observations():
     entry_classes = parser.get_entrypoints(ENTRY_DATA_CONCEPTS)
     dl = DataLoader(parser, entry_classes, filename=OUTPUT_TABLES+"OBSERVATION_FACT.csv", reset_file=True)
     dl.extract_all()
+    return parser
 
 if __name__=="__main__":
-    load_observations()
+    graphparser = load_observations()
     # Run scripts to modify the table according to project-specific purposes
     transfer_obs_numerical_values()
 
@@ -20,7 +21,7 @@ if __name__=="__main__":
     fill_nulls()
 
     # i2b2 star schema tables creation
-    fill_star_schema(mappings = lookup_table)
+    fill_star_schema(mappings = lookup_table, graph_parser=graphparser)
 
     # Final sanity check
     assert check_basecodes()

@@ -1,10 +1,9 @@
 import pandas as pd
 import pdb
-import glob
 import hashlib
+import glob
 import rdflib
-import json, os, datetime
-import warnings
+import json, os, sys, datetime
 
 """"
 This file figures file and format utility functions.
@@ -96,7 +95,7 @@ class I2B2BasecodeHandler:
 
 
     def reduce_basecode(
-        self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
+        self, rdf_uri, prefix, debug=True, cap=MAX_BASECODE_LENGTH
     ): 
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.

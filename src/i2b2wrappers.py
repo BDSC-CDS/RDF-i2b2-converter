@@ -72,11 +72,15 @@ class I2B2Converter:
 
 
 class I2B2OntologyElement:
-    def __init__(self, graph_component, parent=None):
+    def __init__(self, graph_component, parent=None, explicit_logical_parent=None):
         self.parent = parent
-        self.logical_parent = (
-            parent if graph_component.get_logic_indicator() else parent.logical_parent
-        )
+        if explicit_logical_parent is not None:
+            self.logical_parent = explicit_logical_parent
+        else:
+            self.logical_parent = (
+                parent if (parent is None or parent.component.is_entry() or graph_component.is_logical_desc())
+                    else parent.logical_parent
+            )
         self.component = graph_component
         self.basecode_handler = I2B2BasecodeHandler(self)
         self.path_handler = I2B2PathResolver(self)
@@ -262,12 +266,14 @@ class I2B2Modifier(I2B2OntologyElement):
         # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
         if parent.path == applied_path:
             self.applied_concept = parent
-            parent = None
+            log_parent = parent
+            path_parent = None
         else:
             self.applied_concept = parent.applied_concept
-
-        super().__init__(component2, parent)
+            path_parent = parent
+            log_parent = None
         self.applied_path = applied_path
+        super().__init__(component2, path_parent, explicit_logical_parent=log_parent)
 
     def set_level(self):
         """
