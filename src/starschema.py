@@ -33,7 +33,7 @@ def gen_patient_dim():
 
     The patient numbers are the ones AFTER reindexing.
     """
-    df = pd.read_csv(OBS_TABLE)
+    df = pd.read_csv(OBS_TABLE).drop_duplicates(subset="PATIENT_NUM", keep="first")
     patdf = pd.DataFrame(columns=COLUMNS["PATIENT_DIMENSION"])
     patdf["PATIENT_NUM"] = df["PATIENT_NUM"]
     patdf.to_csv(OUTPUT_TABLES+"PATIENT_DIMENSION.csv", index=False)    
@@ -42,11 +42,12 @@ def gen_patient_mapping(lookup):
     """
     Replace the non-integer (or too large) fields of "PATIENT_NUM" (both in observation and patient_dimension) by an integer. Store the index mapping in a dedicated table.
     """
-    pm = lookup.dropna(subset="PATIENT_NUM")
+    pm = lookup.dropna(subset=["PATIENT_NUM"])
     pmdf = pd.DataFrame(columns=COLUMNS["PATIENT_MAPPING"])
     pmdf["PATIENT_NUM"] = pm["PATIENT_NUM"].index.values
     pmdf["PATIENT_IDE"] = pm["PATIENT_NUM"]
     pmdf["PATIENT_IDE_SOURCE"] = pm["ENCOUNTER_NUM"]
+    pmdf["PROJECT_ID"] = PROJECT_NAME
     pmdf.to_csv(OUTPUT_TABLES+"PATIENT_MAPPING.csv", index=False) 
 
 def gen_visit_dim():
@@ -62,7 +63,7 @@ def gen_visit_dim():
 
 
 def gen_encounter_mapping(lookup):
-    em = lookup.dropna(subset="ENCOUNTER_NUM")
+    em = lookup.dropna(subset=["ENCOUNTER_NUM"])
     emdf = pd.DataFrame(columns=COLUMNS["ENCOUNTER_MAPPING"])
     emdf["ENCOUNTER_NUM"] = em["ENCOUNTER_NUM"].index.values
     emdf["ENCOUNTER_IDE"] = em["ENCOUNTER_NUM"]
@@ -84,7 +85,15 @@ def gen_provider_dim(graph_parser):
         """, initBindings={"dpiclass":provider_class, 
             "codepred":rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName"), 
             "codeid":rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier")})
-    pdb.set_trace()
+    prov_df = pd.DataFrame(columns=COLUMNS["PROVIDER_DIMENSION"])
+    kdic = {"PROVIDER_ID":[], "PROVIDER_PATH":[]}
+    for el in res:
+        kdic["PROVIDER_ID"].append(el[1].toPython())
+        kdic["PROVIDER_PATH"].append(el[0].toPython())
+    pdf = pd.DataFrame.from_dict(kdic)
+    prov_df = pd.concat([prov_df, pdf], axis=0)
+    prov_df.to_csv(OUTPUT_TABLES+"PROVIDER_DIMENSION.csv", index=False)
+
 
 def fill_star_schema(mappings=None, graph_parser=None):
     """

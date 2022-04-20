@@ -95,7 +95,7 @@ class I2B2BasecodeHandler:
 
 
     def reduce_basecode(
-        self, rdf_uri, prefix, debug=True, cap=MAX_BASECODE_LENGTH
+        self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
     ): 
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
@@ -129,14 +129,6 @@ def which_graph(uri):
             res = TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
             return res if res!='' and res is not None else False
     return False
-
-def sanitize(db, col_name):
-    for el in db:
-        for col in col_name:
-            el[col] = el[col].replace("'", "")
-            el[col] = el[col].replace('"', "")
-            el[col] = el[col].replace(" ", "_")
-    return db
 
 def shortname(resource):
     """
@@ -172,24 +164,6 @@ def format_date(rdfdate, generalize=True):
         mydate = mydate.date()
     cpy = mydate.__str__()
     return cpy + " 00:00:00"
-
-
-def add_spaces(oname):
-    """
-    Inserts spaces between words delimited by capital letters
-    """
-    fname = ""
-    for i in range(len(oname) - 1):
-        if (
-            i > 0
-            and oname[i].isupper()
-            and oname[i - 1] != " "
-            and (oname[i + 1].islower() or oname[i - 1].islower())
-        ):
-            fname = fname + " " + oname[i]
-        else:
-            fname = fname + oname[i]
-    return fname + oname[-1]
 
 
 def wipe_directory(dir_path, names=[]):

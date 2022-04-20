@@ -39,3 +39,12 @@ def reindex():
     df["PATIENT_NUM"]=df.apply(lambda row: new_id(row, "PATIENT_NUM"), axis=1)
     df.to_csv(OBS_TABLE, index=False)
     return lookup
+
+def check_basecodes():
+    df = pd.read_csv(OBS_TABLE)
+    conc = pd.Series(df["CONCEPT_CD"].unique())
+    mod = pd.Series(df["MODIFIER_CD"].unique())
+    pdb.set_trace()
+    mod_dim = pd.read_csv(OUTPUT_TABLES+"MODIFIER_DIMENSION.csv")["MODIFIER_CD"]
+    conc_dim = pd.read_csv(OUTPUT_TABLES+"CONCEPT_DIMENSION.csv")["CONCEPT_CD"]
+    assert all(conc.isin(conc_dim)) and all (mod.isin(mod_dim))
