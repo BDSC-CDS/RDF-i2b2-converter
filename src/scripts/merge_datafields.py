@@ -19,6 +19,7 @@ def transfer_obs_numerical_values():
     for el, destinations in migrations.items():
         # Get the migration code we are treating
         tbmigrated_rows = df.loc[df["MODIFIER_CD"]==el]
+        print("migrating value fields for", el, ",", tbmigrated_rows.shape, "lines affected")
         # Not interested in migrating to a row that should be migrated in any case, so take the diff
         co_df = df.loc[df.index.difference(tbmigrated_rows.index)]
         

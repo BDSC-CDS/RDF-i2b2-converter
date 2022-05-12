@@ -48,7 +48,8 @@ def gen_patient_mapping(lookup):
     pmdf["PATIENT_IDE"] = pm["PATIENT_NUM"]
     pmdf["PATIENT_IDE_SOURCE"] = pm["ENCOUNTER_NUM"]
     pmdf["PROJECT_ID"] = PROJECT_NAME
-    pmdf.to_csv(OUTPUT_TABLES+"PATIENT_MAPPING.csv", index=False) 
+    #check why first line is empty
+    pmdf.loc[1:].to_csv(OUTPUT_TABLES+"PATIENT_MAPPING.csv", index=False) 
 
 def gen_visit_dim():
     """
@@ -68,7 +69,10 @@ def gen_encounter_mapping(lookup):
     emdf["ENCOUNTER_NUM"] = em["ENCOUNTER_NUM"].index.values
     emdf["ENCOUNTER_IDE"] = em["ENCOUNTER_NUM"]
     emdf["ENCOUNTER_IDE_SOURCE"] = em["ENCOUNTER_NUM"]
-    emdf.to_csv(OUTPUT_TABLES+"ENCOUNTER_MAPPING.csv", index=False)   
+    emdf["PATIENT_IDE"] = "-1"
+    emdf["PATIENT_IDE_SOURCE"] = "-1"
+    emdf["PROJECT_ID"] = PROJECT_NAME
+    emdf.loc[1:].to_csv(OUTPUT_TABLES+"ENCOUNTER_MAPPING.csv", index=False)
 
 
 def gen_provider_dim(graph_parser):
@@ -114,6 +118,9 @@ def gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.cs
     table_access = pd.DataFrame(columns=COLUMNS["TABLE_ACCESS"])
     inter = table_access.columns.intersection(df.columns)
     table_access[inter] = df.loc[(df["C_HLEVEL"]==0) & (df["C_FACTTABLECOLUMN"]=="CONCEPT_CD"), inter]
-    table_access["C_TABLE_CD"]=table_access["C_NAME"]
+    table_access["C_TABLE_CD"]="sphn"
     table_access["C_TABLE_NAME"]="sphn"
+    table_access["C_DIMTABLENAME"]="CONCEPT_DIMENSION"
+    table_access["C_PROTECTED_ACCESS"]="N"
+
     table_access.fillna("").to_csv(folder_path+"TABLE_ACCESS.csv", index=False)

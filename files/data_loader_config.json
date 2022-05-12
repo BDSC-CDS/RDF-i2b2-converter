@@ -24,9 +24,9 @@
     ],
     "COLUMNS_MAPPING": {
         "VALUE":{
-        "http://www.w3.org/2001/XMLSchema#integer" : {"col": "NVAL_NUM", "misc":{"VALTYPE_CD":"N"}},
-        "http://www.w3.org/2001/XMLSchema#double" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N"}},
-        "http://www.w3.org/2001/XMLSchema#float" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N"}},
+        "http://www.w3.org/2001/XMLSchema#integer" : {"col": "NVAL_NUM", "misc":{"VALTYPE_CD":"N", "TVAL_CHAR":"E"}},
+        "http://www.w3.org/2001/XMLSchema#double" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N", "TVAL_CHAR":"E"}},
+        "http://www.w3.org/2001/XMLSchema#float" : {"col": "NVAL_NUM","misc":{"VALTYPE_CD":"N", "TVAL_CHAR":"E"}},
         "http://www.w3.org/2001/XMLSchema#string" : {"col": "TVAL_CHAR","misc":{"VALTYPE_CD":"T"}}
         },
         "CONTEXT":{

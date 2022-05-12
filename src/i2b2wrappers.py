@@ -44,6 +44,7 @@ class I2B2Converter:
             self.left_tosearch.append(cur)
             return
         # Else, register it to be written out - but not expanded, and renew the operation on its subconcepts
+        cur.visual = "CA"
         self.i2b2voidconcepts.append(cur)
         for sub in concept.subconcepts:
             next = I2B2Converter(sub, cur)
@@ -184,8 +185,8 @@ class I2B2OntologyElement:
             "SOURCESYSTEM_CD": "",
             "VALUETYPE_CD": "",
             "M_EXCLUSION_CD": "",
-            "C_PATH": parpath,
-            "C_SYMBOL": symbol,
+            "C_PATH": "",
+            "C_SYMBOL": "",
             "C_METADATAXML": "",
         }
         res.update(spec_dir)
