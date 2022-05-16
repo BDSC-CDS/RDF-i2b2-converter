@@ -1,5 +1,5 @@
 {   "DATA_GRAPHS_LOCATION": "../Documents/bioref/insel_synthetic",
-    "CONTEXT_GRAPHS_LOCATION" : "../common-data/ontologies/RDF_SPHN_2021/units",
+    "CONTEXT_GRAPHS_LOCATION" : "../common-data/RDF_SPHN_2021/units",
     "OBS_TABLE": "../files/output_tables/OBSERVATION_FACT.csv",
     "MAX_BATCH_SIZE" : 1000,
     "START_SEARCH_INDEX": 95000,

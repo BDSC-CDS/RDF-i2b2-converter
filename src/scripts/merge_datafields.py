@@ -11,48 +11,49 @@ sys.path.insert(0, myPath)
 OBS_TABLE = myPath+"/../../files/output_tables/OBSERVATION_FACT.csv"
 
 def transfer_obs_numerical_values():
+    def transfer(row):
+        vv = row["INSTANCE_NUM"]
+        if vv%50 ==0:
+            print("transfering patient", vv)
+        # Get the group of interest for this particular observation
+        curgrp = gps.get_group(tuple(row.loc[["PATIENT_NUM", "CONCEPT_CD", "INSTANCE_NUM"]]))
+        dests = get_dests(row, curgrp)
+        filling = get_shot(curgrp, dests, row)
+        return filling
+
+    def get_dests(row, curgrp):
+        dest = curgrp.loc[curgrp["MODIFIER_CD"].isin(destinations)
+            |((curgrp["CONCEPT_CD"].isin(destinations))
+                &(curgrp["MODIFIER_CD"]=="@"))
+            ]
+        if dest.empty:
+            print("Nothing found for ", el)
+        return dest.index
+    
+    def get_shot(grp, dest_idx, row):
+        tmp = pd.DataFrame(columns=COLUMNS_TO_REPLACE)
+        for idx in dest_idx:
+            # Those indices we are looping over refer to the "tbmigrated_rows" dataslice
+            tmp = pd.concat([tmp, row.loc[COLUMNS_TO_REPLACE].rename(idx).to_frame().T], axis=0)
+        return tmp
+
+
     with open(myPath+'/../../files/migrations_logs.json') as json_file:
         migrations = json.load(json_file)
     df = pd.read_csv(OBS_TABLE)
     df.columns = map(str.upper, df.columns)
     final_tab=[]
+    gps=df.groupby(["PATIENT_NUM", "CONCEPT_CD", "INSTANCE_NUM"])
     for el, destinations in migrations.items():
         # Get the migration code we are treating
         tbmigrated_rows = df.loc[df["MODIFIER_CD"]==el]
         print("migrating value fields for", el, ",", tbmigrated_rows.shape, "lines affected")
-        # Not interested in migrating to a row that should be migrated in any case, so take the diff
-        co_df = df.loc[df.index.difference(tbmigrated_rows.index)]
-        
-        # Find the destination rows
-        dests = tbmigrated_rows.apply(lambda row: co_df.loc[
-            (
-                (co_df["MODIFIER_CD"].isin(destinations))
-                |((co_df["CONCEPT_CD"].isin(destinations))
-                    &(co_df["MODIFIER_CD"]=="@"))
-                
-            )
-            & (
-                co_df["INSTANCE_NUM"]==row["INSTANCE_NUM"]
-            )
-            ].index, axis=1)
-        if dests.empty:
-            print("Nothing found for ", el)
-            continue
-        # df.apply returns an indexed Series so the index can still be used for replacement 
-        tmp = pd.DataFrame(columns=co_df.columns)
-        for idx in dests.index:
-            # get the index to migrate TO
-            endidx = dests[idx]
-            if len(endidx)>1:
-                raise Exception("Cannot relocate a numerical value to more than one destination")
-            # Those indices we are looping over refer to the "tbmigrated_rows" dataslice
-            tmp = pd.concat([tmp, tbmigrated_rows.loc[idx][COLUMNS_TO_REPLACE].rename(endidx[0]).to_frame().T,], axis=0)
-            
+        coll = pd.concat(tbmigrated_rows.apply(lambda row: transfer(row), axis=1).values)
+        # Inject the corrected subrow where it belongs in the matrix 
         # Merge the updated lines into the original dataframe... oof
-        co_df.update(tmp)
-        final_tab.append(co_df.copy())
-    final = pd.concat(final_tab, axis=0)
-    final.to_csv(OBS_TABLE, index=False)
+        df = df.loc[df.index.difference(tbmigrated_rows.index)]
+        df.update(coll) 
+    df.to_csv(OBS_TABLE, index=False)
 
 
     

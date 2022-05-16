@@ -54,6 +54,10 @@ class Component:
         """
         return self.parent_class is None
 
+    def is_valueset(self):
+        tmp = self.resource.value(SUBCLASS_PRED_URI)
+        return tmp is not None and tmp.identifier == VALUESET_MARKER_URI
+
     def get_label(self):
         return self.label
 
@@ -145,7 +149,7 @@ class Concept(Component):
 
         if self.is_terminology_term:
             return
-        self.subconcepts.extend(self.resolver.explore_valueset())
+
         # Properties are expanded only when no subconcept was found (leaf concept or generic concept)
         # Note generic concepts are dealt with in the Property.sort_silent_range method which flags them as child-free concepts
         self.properties.extend(self.resolver.explore_properties())
@@ -197,12 +201,16 @@ class Property(Component):
         prop_type = self.resource.value(TYPE_PREDICATE_URI)
         if prop_type is None or prop_type.identifier == OBJECT_PROP_URI:
             processed_range_res = self.sort_silent_ranges()
-            self.ranges = [Concept(reg) for reg in processed_range_res["regular"]] + [
+            raw_ranges = [Concept(reg) for reg in processed_range_res["regular"]] + [
                 ChildfreeConcept(gen) for gen in processed_range_res["muted"]
             ]
-            for obj in self.ranges:
+            for obj in raw_ranges:
                 # The explore method will trigger subclasses and properties discovery
-                obj.explore_children()
+                if obj.is_valueset():
+                    self.ranges.extend(obj.resolver.explore_valueset())
+                else:
+                    obj.explore_children()
+                    self.ranges.append(obj)
         elif prop_type.identifier == DATATYPE_PROP_URI:
             # The ranges are tree leaf objects without properties and without subclasses
             self.ranges = [LeafConcept(reg) for reg in self.ranges_res]
@@ -424,12 +432,6 @@ class OntologyDepthExplorer:
         If the concept is a child of "Valueset", then all possible instances should be specified as children of this concept.
         At data loading, these instances should be treated differently as other instances (for which only the class is important)
         """
-        mother = self.concept.resource.value(SUBCLASS_PRED_URI)
-        if (
-            mother is None or mother.identifier
-            != VALUESET_MARKER_URI
-        ):
-            return []
         graph = self.concept.resource.graph
         res2 = graph.query(
             """

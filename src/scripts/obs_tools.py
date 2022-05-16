@@ -38,7 +38,11 @@ def reindex():
     for col in ["ENCOUNTER_NUM", "PATIENT_NUM"]:
         print("Reindexing ", col)
         gpd = df.groupby(col)
+        counter=0
         for key, subdf in gpd.groups.items():
+            counter = counter+1
+            if counter%100==0:
+                print("    Reindexed", counter, "groups out of ", len(gpd.groups.keys()))
             df.loc[subdf, col] = new_id(key, col)
 
     #df["ENCOUNTER_NUM"]=df.apply(lambda row: new_id(row, "ENCOUNTER_NUM"), axis=1)
@@ -56,4 +60,4 @@ def check_basecodes():
     pdb.set_trace()
     mod_dim = pd.read_csv(OUTPUT_TABLES+"MODIFIER_DIMENSION.csv")["MODIFIER_CD"]
     conc_dim = pd.read_csv(OUTPUT_TABLES+"CONCEPT_DIMENSION.csv")["CONCEPT_CD"]
-    assert all(conc.isin(conc_dim)) and all (mod.isin(mod_dim))
+    return all(conc.isin(conc_dim)) and all (mod.isin(mod_dim))
