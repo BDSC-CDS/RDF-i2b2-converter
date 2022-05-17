@@ -1,14 +1,19 @@
 from utils import *
 
 
-def is_valid(pred,obj):
-    if pred.identifier.toPython() in TO_IGNORE+BLACKLIST:
+def is_valid(pred, obj):
+    if pred.identifier.toPython() in TO_IGNORE + BLACKLIST:
         return False
     try:
-        val = obj.value(TYPE_PREDICATE_URI) if callable(obj.value) else obj.datatype.toPython()
+        val = (
+            obj.value(TYPE_PREDICATE_URI)
+            if callable(obj.value)
+            else obj.datatype.toPython()
+        )
     except:
         pdb.set_trace()
-    return (val is None or val not in TO_IGNORE+BLACKLIST)
+    return val is None or val not in TO_IGNORE + BLACKLIST
+
 
 class DataLoader:
     """
@@ -16,7 +21,9 @@ class DataLoader:
     Observations register is performed by batches defined by the type (class) of observations.
     """
 
-    def __init__(self, parser, entrypoints, filename="OBSERVATION_FACT.csv", reset_file=True):
+    def __init__(
+        self, parser, entrypoints, filename="OBSERVATION_FACT.csv", reset_file=True
+    ):
         """
         Take a list of class resources.
         """
@@ -44,7 +51,9 @@ class DataLoader:
         if db == []:
             return False
         mode = "w" if self.init else "a"
-        db_to_csv(db, self.filename, init=self.init, columns=COLUMNS["OBSERVATION_FACT"])
+        db_to_csv(
+            db, self.filename, init=self.init, columns=COLUMNS["OBSERVATION_FACT"]
+        )
         self.init = False
         return True
 
@@ -57,15 +66,20 @@ class DataLoader:
         database_batch = []
         observations = self.get_next_class_instances()
         nb_obs = len(observations)
-        nb_b = int(nb_obs/MAX_BATCH_SIZE)
-        nb_subbatches = nb_b if nb_b*MAX_BATCH_SIZE==nb_obs else nb_b+1
-        sub_batches = [observations[i*MAX_BATCH_SIZE:min(MAX_BATCH_SIZE*(i+1), nb_obs)] for i in range(nb_subbatches)]
-        counter=0
+        nb_b = int(nb_obs / MAX_BATCH_SIZE)
+        nb_subbatches = nb_b if nb_b * MAX_BATCH_SIZE == nb_obs else nb_b + 1
+        sub_batches = [
+            observations[i * MAX_BATCH_SIZE : min(MAX_BATCH_SIZE * (i + 1), nb_obs)]
+            for i in range(nb_subbatches)
+        ]
+        counter = 0
         for sub in sub_batches:
             # Give an offset so instance numbers are not reset for every sub batch but for every concept
-            information_tree = InformationTree(sub, start_instance=counter*MAX_BATCH_SIZE+1)
+            information_tree = InformationTree(
+                sub, start_instance=counter * MAX_BATCH_SIZE + 1
+            )
             database_batch.extend(information_tree.get_info_dics())
-            counter=counter+1
+            counter = counter + 1
         return database_batch
 
     def get_next_class_instances(self, selclass=None):
@@ -75,9 +89,9 @@ class DataLoader:
         if self.entry_class_resources == []:
             return []
         res = []
-        while res==[]:
+        while res == []:
             cur = self.entry_class_resources.pop()
-            selclass=cur.identifier
+            selclass = cur.identifier
             obs = self.graph.query(
                 """
                     select ?obs
@@ -119,18 +133,18 @@ class ObservationRegister:
             value = resource.value
             if not vtype in self.value_items.keys():
                 raise Exception("Type not defined in config file: ", vtype)
-            details.update({self.value_items[vtype]["col"]:value})
+            details.update({self.value_items[vtype]["col"]: value})
             details.update(self.value_items[vtype]["misc"])
         elif basecode != "@":
             hdler = I2B2BasecodeHandler()
-            obj_rdftype = resource.value(TYPE_PREDICATE_URI) 
-            if obj_rdftype is not None :
+            obj_rdftype = resource.value(TYPE_PREDICATE_URI)
+            if obj_rdftype is not None:
                 el = shortname(obj_rdftype)
             else:
-                el=shortname(resource)
-            new_bc = hdler.reduce_basecode(el, prefix = basecode)
+                el = shortname(resource)
+            new_bc = hdler.reduce_basecode(el, prefix=basecode)
         # In any case this digest thing should only add a value field if there is a value, then proceeds with adding the basecode entry in any case
-        self.add_record(new_bc, context=details) 
+        self.add_record(new_bc, context=details)
 
     def add_record(self, basecode, context={}):
         """
@@ -139,13 +153,14 @@ class ObservationRegister:
         """
         if context == {}:
             raise Exception("Cannot add a record with an empty context")
-        
+
         record = context.copy()
-        record.update({"MODIFIER_CD":basecode})
+        record.update({"MODIFIER_CD": basecode})
         self.records.append(record)
 
     def merge(self, other_register):
         self.records.extend(other_register.get_processed_records())
+
 
 class InformationTree:
     """
@@ -168,7 +183,7 @@ class InformationTree:
     def explore_tree_master(self):
         for i in range(len(self.observations)):
             obs = self.observations[i]
-            self.explore_obstree(obs, instance_num=i+self.offset, concept=True)
+            self.explore_obstree(obs, instance_num=i + self.offset, concept=True)
 
     def is_pathend(self, obj):
         """
@@ -182,9 +197,14 @@ class InformationTree:
         """
         # Workaround to check if an item is a rdflib.resource.Resource or a rdflib.term.Literal
         if callable(obj.value):
-            # Criteria for having no forward link i.e probably is a valuesetindividual. 
+            # Criteria for having no forward link i.e probably is a valuesetindividual.
             # If the item has no predicate at all, the following test will be evaluated to True
-            if all([k.identifier in (TYPE_PREDICATE_URI, LABEL_URI) for k in obj.predicates()]):
+            if all(
+                [
+                    k.identifier in (TYPE_PREDICATE_URI, LABEL_URI)
+                    for k in obj.predicates()
+                ]
+            ):
                 return True
             # We encounter an expandable object BUT it can still be a path end (if the item is a ValusetIndividual or an instance of a Terminology class)
             if terminology_indicator(obj.value(TYPE_PREDICATE_URI)):
@@ -193,13 +213,20 @@ class InformationTree:
             return True
         return False
 
-    def explore_obstree(self, resource, instance_num="", basecode_prefix="", parent_context={}, concept=False):
+    def explore_obstree(
+        self,
+        resource,
+        instance_num="",
+        basecode_prefix="",
+        parent_context={},
+        concept=False,
+    ):
         """
         Recursive function, stop when the current resource has no predicates (leaf).
         Return the last resource along with the logical path that lead to it as/with the basecode, and information to be used above and in siblings (unit, date, etc.)
         """
         rdfclass = resource.value(TYPE_PREDICATE_URI)
-        if rdfclass.identifier in BLACKLIST+TO_IGNORE or rdfclass is None:
+        if rdfclass.identifier in BLACKLIST + TO_IGNORE or rdfclass is None:
             return
         shortclass = shortname(rdfclass)
         # Updating the basecode that led us to there
@@ -211,22 +238,37 @@ class InformationTree:
         context_register = ContextFactory(parent_context)
         observation_elements = context_register.digest(pred_objects)
         if concept:
-            context_register.add_concept_code(current_basecode, instance_num=instance_num)
-            self.obs_register.digest(resource, parent=None, basecode="@", context=context_register.get_context())
+            context_register.add_concept_code(
+                current_basecode, instance_num=instance_num
+            )
+            self.obs_register.digest(
+                resource,
+                parent=None,
+                basecode="@",
+                context=context_register.get_context(),
+            )
 
         for pred, obj in observation_elements:
             # Updating the basecode with the forward link
-            basecode= hdler.reduce_basecode(shortname(pred), prefix=current_basecode)
+            basecode = hdler.reduce_basecode(shortname(pred), prefix=current_basecode)
             if self.is_pathend(obj):
-                self.obs_register.digest(obj, pred, basecode, context_register.get_context())
+                self.obs_register.digest(
+                    obj, pred, basecode, context_register.get_context()
+                )
             else:
-                self.explore_obstree(obj, basecode_prefix=basecode, parent_context = context_register.get_context())
+                self.explore_obstree(
+                    obj,
+                    basecode_prefix=basecode,
+                    parent_context=context_register.get_context(),
+                )
         return self.obs_register
+
 
 class ContextFactory:
     """
     Handles contextual information from an observation instance depending on the configured mappings.
     """
+
     def __init__(self, parent_context={}):
         self.context = parent_context.copy()
         self.fields_dic = COLUMNS_MAPPING["CONTEXT"]
@@ -242,31 +284,44 @@ class ContextFactory:
 
             # Get the object type as python string. Can be None (e.g for NamedIndividuals)
             if callable(obj.value):
-                obj_rdftype = obj.value(TYPE_PREDICATE_URI) 
-                obj_type = obj_rdftype.identifier.toPython() if obj_rdftype is not None else None
-            else :
+                obj_rdftype = obj.value(TYPE_PREDICATE_URI)
+                obj_type = (
+                    obj_rdftype.identifier.toPython()
+                    if obj_rdftype is not None
+                    else None
+                )
+            else:
                 obj_rdftype = None
                 obj_type = obj.datatype.toPython()
-            
-            if obj_type is not None and obj_type in self.fields_dic.keys() and (self.fields_dic[obj_type]["overwrite"]=="True" or obj_type not in self.context.keys()):
+
+            if (
+                obj_type is not None
+                and obj_type in self.fields_dic.keys()
+                and (
+                    self.fields_dic[obj_type]["overwrite"] == "True"
+                    or obj_type not in self.context.keys()
+                )
+            ):
                 self.add_context_element(obj_type, obj)
             else:
-                clean.append((pred,obj))
+                clean.append((pred, obj))
         return clean
 
     def add_concept_code(self, basecode, instance_num):
         """
         Add the concept code as a context element (will stand for all modifiers and the concept)
         """
-        self.context.update({"INSTANCE_NUM":instance_num,
-            "CONCEPT_CD":basecode
-        })
+        self.context.update({"INSTANCE_NUM": instance_num, "CONCEPT_CD": basecode})
 
     def add_context_element(self, obj_type, obj):
         """
         Add a context element based on the instructions in the config file.
         """
-        tmp = self.fields_dic[obj_type]["pred_to_value"].copy() if "pred_to_value" in self.fields_dic[obj_type].keys() else []
+        tmp = (
+            self.fields_dic[obj_type]["pred_to_value"].copy()
+            if "pred_to_value" in self.fields_dic[obj_type].keys()
+            else []
+        )
         val = obj.value(rdflib.URIRef(tmp.pop(0))) if callable(obj.value) else obj.value
         while tmp != []:
             last_pred = rdflib.URIRef(tmp.pop(0))
@@ -274,10 +329,14 @@ class ContextFactory:
             if tval is None:
                 if [k for k in val.predicates()] == []:
                     print("Dead end at ", val)
-                tval=rdflib.URIRef("")
+                tval = rdflib.URIRef("")
             val = tval
-        pyval = "{:%Y-%m-%d %H:%M:%S}".format(val) if isinstance(val, datetime.datetime) else val.toPython()
-        self.context.update({self.fields_dic[obj_type]["col"]:pyval})
+        pyval = (
+            "{:%Y-%m-%d %H:%M:%S}".format(val)
+            if isinstance(val, datetime.datetime)
+            else val.toPython()
+        )
+        self.context.update({self.fields_dic[obj_type]["col"]: pyval})
 
     def get_context(self):
         return self.context

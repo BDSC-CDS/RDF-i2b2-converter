@@ -15,7 +15,11 @@ class Component:
     """
 
     def __init__(self, resource, parent_class=None):
-        self.is_terminology_term = terminology_indicator(resource) if parent_class is None else parent_class.is_terminology_term
+        self.is_terminology_term = (
+            terminology_indicator(resource)
+            if parent_class is None
+            else parent_class.is_terminology_term
+        )
         self.resource = (
             self.switch_graph(resource) if self.is_terminology_term else resource
         )
@@ -90,15 +94,14 @@ class Component:
             # TODO add terminology name here as prefix
             sep = self.shortname.rfind(":")
             code = self.shortname[sep + 1 :]
-            
+
             if code not in self.label:
-                if code.isnumeric() and len(code)<2:
-                    code = "0"+code
+                if code.isnumeric() and len(code) < 2:
+                    code = "0" + code
                 self.label = code + " - " + self.label
-            term_name = self.shortname[:sep+1].upper()
+            term_name = self.shortname[: sep + 1].upper()
             if term_name not in self.label and self.label not in term_name:
-                self.label = term_name+self.label
-            
+                self.label = term_name + self.label
 
     def __repr__(self):
         return (
@@ -137,7 +140,7 @@ class Concept(Component):
         if self.properties == [] and self.subconcepts == []:
             self.explore_children()
         if not self.is_terminology_term and verbose:
-            print("Done digging in graph for " +self.get_shortname())
+            print("Done digging in graph for " + self.get_shortname())
         return self.properties + self.subconcepts
 
     def explore_children(self):
@@ -227,7 +230,7 @@ class Property(Component):
 
         """
         final_ranges = {"muted": [], "regular": []}
-        if ALWAYS_DEEP=="True":
+        if ALWAYS_DEEP == "True":
             final_ranges["regular"] = self.range_res
             return 0
 
@@ -292,7 +295,7 @@ class RangeFilter:
                     }
         }
         """,
-            initBindings={"self": self.resource.identifier, "range":RANGE_PRED_URI},
+            initBindings={"self": self.resource.identifier, "range": RANGE_PRED_URI},
         )
         listed_res = [self.resource.graph.resource(row[0]) for row in response]
         # If there are several ranges, remove the first element which is in fact the name of the blank node

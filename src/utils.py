@@ -28,7 +28,7 @@ for key, val in config.items():
 with open(cur_path + "files/data_loader_config.json") as ff:
     config = json.load(ff)
 for key, val in config.items():
-    val = int(val) if type(val)==str and val.isnumeric() else val
+    val = int(val) if type(val) == str and val.isnumeric() else val
     globals()[key] = val
 for key, val in config["data_global_uris"].items():
     globals()[key] = val
@@ -69,7 +69,6 @@ class GraphParser:
         return [self.graph.resource(uri) for uri in list]
 
 
-
 class I2B2BasecodeHandler:
     """
     Compute and extract the basecode for a Class or a Property existing in the ontology.
@@ -91,12 +90,9 @@ class I2B2BasecodeHandler:
     def get_basecode(self):
         if self.basecode is not None:
             return self.basecode
-        return self.reduce_basecode(rdf_uri=self.core, prefix = self.prefix)
+        return self.reduce_basecode(rdf_uri=self.core, prefix=self.prefix)
 
-
-    def reduce_basecode(
-        self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH
-    ): 
+    def reduce_basecode(self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH):
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
         The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
@@ -104,17 +100,19 @@ class I2B2BasecodeHandler:
         and to be computable both from the ontology side and from the data loader side.
         The resulting code is the joining key between data tables and ontology tables.
         """
-        
-        if rdf_uri!="" and rdf_uri[-1] != "\\":
+
+        if rdf_uri != "" and rdf_uri[-1] != "\\":
             rdf_uri = rdf_uri + "\\"
 
         to_hash = rdf_uri
         to_hash = prefix + to_hash
         return to_hash if debug else hashlib.sha256(to_hash.encode()).hexdigest()[:cap]
 
+
 def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
+
 
 def terminology_indicator(resource):
     """
@@ -123,12 +121,14 @@ def terminology_indicator(resource):
     """
     return any([k in resource.identifier for k in TERMINOLOGIES_GRAPHS.keys()])
 
+
 def which_graph(uri):
     for key in TERMINOLOGIES_GRAPHS.keys():
         if key in uri and TERMINOLOGIES_GRAPHS[key] in TERMINOLOGIES_FILES.keys():
             res = TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
-            return res if res!='' and res is not None else False
+            return res if res != "" and res is not None else False
     return False
+
 
 def shortname(resource):
     """
@@ -137,9 +137,7 @@ def shortname(resource):
     The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
     """
     try:
-        shortname = resource.graph.namespace_manager.normalizeUri(
-            resource.identifier
-        )
+        shortname = resource.graph.namespace_manager.normalizeUri(resource.identifier)
     except:
         pdb.set_trace()
     uri = resource.identifier
@@ -151,6 +149,7 @@ def shortname(resource):
                 best_guess_len = len(value)
                 shortname = key + ":" + uri[len(value) :]
     return shortname
+
 
 def format_date(rdfdate, generalize=True):
     """
@@ -175,6 +174,7 @@ def wipe_directory(dir_path, names=[]):
     for k in names:
         os.remove(dir_path + k)
         print("Removed file: ", dir_path + k)
+
 
 def db_to_csv(db, filename, init=False, columns=[]):
     """
@@ -224,7 +224,9 @@ def generate_xml(metadata_dict):
         res = res.replace(
             "<EnumValues></EnumValues>", "<EnumValues>" + enumstr + "</EnumValues>"
         )
-    res = res.replace("<NormalUnits></NormalUnits>", "<NormalUnits>" + units + "</NormalUnits>")
+    res = res.replace(
+        "<NormalUnits></NormalUnits>", "<NormalUnits>" + units + "</NormalUnits>"
+    )
     return res
 
 

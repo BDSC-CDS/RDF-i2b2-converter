@@ -78,12 +78,17 @@ def test_unique_properties_specific():
     )
     test_concept = Concept(res1)
     test_concept.explore_children()
-    count = (
-        2
-        if all([rdflib.URIRef(k) in BLACKLIST for k in ONTOLOGY_DROP_DIC.values()])
-        else 7
+    props_uris = [k.resource.identifier for k in test_concept.properties]
+    doubles = []
+    subprop = res1.graph.resource(
+        rdflib.URIRef("http://www.w3.org/2000/01/rdf-schema#subPropertyOf")
     )
-    assert len(test_concept.properties) == count
+    for p in test_concept.properties:
+        if subprop in p.resource.predicates():
+            res = p.resource.value(subprop.identifier).identifier
+            if res in props_uris:
+                doubles.append((p, res))
+    assert doubles == []
 
 
 def test_explore_children():
@@ -150,7 +155,7 @@ def test_nomute_diffterminologies():
     prop1 = nonblrng_props([res1])[0]
     prop1.digin_ranges()
     assert (
-        sum([int(len(rnn.subconcepts) > 0) for rnn in prop1.ranges]) == 2
+        sum([int(len(rnn.subconcepts) > 0) for rnn in prop1.ranges]) == 1
     )  # TODO change to True False True when including snomed
 
 
@@ -223,7 +228,9 @@ def test_explorevalueset():
     candids = [e for e in vst.subjects(RDFS.subClassOf)]
     cur = random.choice(candids)
     conc = Concept(cur)
-    conc.explore_children()
+    upp = [k for k in conc.resource.subjects(RDFS.range)]
+    prop = Property(upp[0], [conc.resource])
+    prop.digin_ranges()
 
     res = ONTOLOGY_GRAPH.query(
         """
@@ -238,7 +245,7 @@ def test_explorevalueset():
     )
     elems = [LeafConcept(ONTOLOGY_GRAPH.resource(e[0])) for e in res]
     assert set([e.resource.identifier.toPython() for e in elems]) == set(
-        [k.resource.identifier.toPython() for k in conc.subconcepts]
+        [k.resource.identifier.toPython() for k in prop.ranges]
     )
 
 
@@ -285,14 +292,7 @@ def test_valueset():
     for pp in properties:
         pp.digin_ranges()
         rngs.extend(pp.ranges)
-    assert len(rngs) > 0 and all(
-        [
-            rn.subconcepts != []
-            and all([type(ind) == LeafConcept for ind in rn.subconcepts])
-            and rn.properties == []
-            for rn in rngs
-        ]
-    )
+    assert len(rngs) > 0 and all([type(rn) == LeafConcept for rn in rngs])
 
 
 def test_sparql():

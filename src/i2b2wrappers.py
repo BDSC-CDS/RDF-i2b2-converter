@@ -64,7 +64,7 @@ class I2B2Converter:
         self.towrite.extend([k.get_db_line() for k in [cur] + cur.modifiers])
         return True
 
-    def write(self, filepath=OUTPUT_TABLES+"METADATA.csv", init_table=False):
+    def write(self, filepath=OUTPUT_TABLES + "METADATA.csv", init_table=False):
         """
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.
@@ -79,8 +79,13 @@ class I2B2OntologyElement:
             self.logical_parent = explicit_logical_parent
         else:
             self.logical_parent = (
-                parent if (parent is None or parent.component.is_entry() or graph_component.is_logical_desc())
-                    else parent.logical_parent
+                parent
+                if (
+                    parent is None
+                    or parent.component.is_entry()
+                    or graph_component.is_logical_desc()
+                )
+                else parent.logical_parent
             )
         self.component = graph_component
         self.basecode_handler = I2B2BasecodeHandler(self)
@@ -101,7 +106,7 @@ class I2B2OntologyElement:
             else:
                 self.root = self.parent.root
         else:
-            self.root="\\"
+            self.root = "\\"
 
     def set_path(self):
         self.path = self.path_handler.get_path()
@@ -138,9 +143,9 @@ class I2B2OntologyElement:
                 cur = I2B2Modifier(
                     component, parent=self, applied_path=self.applied_path
                 )
-                new_counter = counter+1
-                if new_counter<2:
-                    print("Casting i2b2 object from ",component)
+                new_counter = counter + 1
+                if new_counter < 2:
+                    print("Casting i2b2 object from ", component)
                 next = cur.walk_mtree(counter=new_counter)
                 res.append(cur)
                 res.extend(next)
@@ -152,6 +157,7 @@ class I2B2OntologyElement:
         if cur_uri in DATA_LEAVES.keys():
             # Merge the information in the xml panel of the current element, do not display the child
             self.line_updates = self.mutate_valueinfo(DATA_LEAVES[cur_uri])
+            self.set_visual("leaf")
             return True
         self.set_visual("folder")
         return False
@@ -168,8 +174,8 @@ class I2B2OntologyElement:
         else:
             parpath = ""
         # Commented because i2b2 sets a limit on "symbol" len to 50
-        # symbol = self.path[len(self.parent.path) :] 
-        symbol=""
+        # symbol = self.path[len(self.parent.path) :]
+        symbol = ""
         res = {
             "C_HLEVEL": str(self.level),
             "C_NAME": self.displayname,
@@ -261,7 +267,6 @@ class I2B2PathResolver:
         return self.path
 
 
-
 class I2B2Modifier(I2B2OntologyElement):
     def __init__(self, component2, parent, applied_path):
         # Handle the case where a concept created self and registered as parent: discard (keep only modifier hierarchy)
@@ -281,7 +286,7 @@ class I2B2Modifier(I2B2OntologyElement):
         Modifier levels start at 1, not 0.
         """
         super().set_level()
-        self.level = self.level+1 if self.level==0 else self.level
+        self.level = self.level + 1 if self.level == 0 else self.level
 
     def set_visual(self, typev):
         """
@@ -295,7 +300,7 @@ class I2B2Modifier(I2B2OntologyElement):
             self.visual = "RA"
 
     def get_root(self):
-        return "\\" 
+        return "\\"
 
     def get_class_info(self):
         if self.visual is None:

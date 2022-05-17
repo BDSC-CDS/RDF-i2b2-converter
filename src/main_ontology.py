@@ -6,6 +6,7 @@ from data_loader import *
 from scripts.merge_metavaluefields import *
 from scripts.fill_metadata_units import *
 
+
 def check_macros():
     """
     Check the config files are properly formatted and the concepts to use as entrypoints are consistent, without duplicates.
@@ -30,7 +31,7 @@ def generate_ontology_table():
         # Get the i2b2 db lines related to this concept
         buffer = converter.get_batch()
         while buffer:
-            converter.write(OUTPUT_TABLES+"METADATA.csv", init_table=init)
+            converter.write(OUTPUT_TABLES + "METADATA.csv", init_table=init)
             buffer = converter.get_batch()
             init = False
 

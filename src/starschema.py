@@ -2,7 +2,8 @@ from i2b2wrappers import *
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
-OBS_TABLE = myPath+"/../files/output_tables/OBSERVATION_FACT.csv"
+OBS_TABLE = myPath + "/../files/output_tables/OBSERVATION_FACT.csv"
+
 
 def gen_concept_modifier_dim(
     folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
@@ -26,6 +27,7 @@ def gen_concept_modifier_dim(
     concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION.csv", index=False)
     modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION.csv", index=False)
 
+
 def gen_patient_dim():
     """
     Gather the minimal information for the patient dimension table and write it.
@@ -36,7 +38,8 @@ def gen_patient_dim():
     df = pd.read_csv(OBS_TABLE).drop_duplicates(subset="PATIENT_NUM", keep="first")
     patdf = pd.DataFrame(columns=COLUMNS["PATIENT_DIMENSION"])
     patdf["PATIENT_NUM"] = df["PATIENT_NUM"]
-    patdf.to_csv(OUTPUT_TABLES+"PATIENT_DIMENSION.csv", index=False)    
+    patdf.to_csv(OUTPUT_TABLES + "PATIENT_DIMENSION.csv", index=False)
+
 
 def gen_patient_mapping(lookup):
     """
@@ -48,8 +51,9 @@ def gen_patient_mapping(lookup):
     pmdf["PATIENT_IDE"] = pm["PATIENT_NUM"]
     pmdf["PATIENT_IDE_SOURCE"] = pm["ENCOUNTER_NUM"]
     pmdf["PROJECT_ID"] = PROJECT_NAME
-    #check why first line is empty
-    pmdf.loc[1:].to_csv(OUTPUT_TABLES+"PATIENT_MAPPING.csv", index=False) 
+    # check why first line is empty
+    pmdf.loc[1:].to_csv(OUTPUT_TABLES + "PATIENT_MAPPING.csv", index=False)
+
 
 def gen_visit_dim():
     """
@@ -60,7 +64,7 @@ def gen_visit_dim():
     encdf = pd.DataFrame(columns=COLUMNS["VISIT_DIMENSION"])
     encdf["PATIENT_NUM"] = df["PATIENT_NUM"]
     encdf["ENCOUNTER_NUM"] = df["ENCOUNTER_NUM"]
-    encdf.to_csv(OUTPUT_TABLES+"VISIT_DIMENSION.csv", index=False)    
+    encdf.to_csv(OUTPUT_TABLES + "VISIT_DIMENSION.csv", index=False)
 
 
 def gen_encounter_mapping(lookup):
@@ -72,13 +76,14 @@ def gen_encounter_mapping(lookup):
     emdf["PATIENT_IDE"] = "-1"
     emdf["PATIENT_IDE_SOURCE"] = "-1"
     emdf["PROJECT_ID"] = PROJECT_NAME
-    emdf.loc[1:].to_csv(OUTPUT_TABLES+"ENCOUNTER_MAPPING.csv", index=False)
+    emdf.loc[1:].to_csv(OUTPUT_TABLES + "ENCOUNTER_MAPPING.csv", index=False)
 
 
 def gen_provider_dim(graph_parser):
     provider_class = rdflib.URIRef(ONTOLOGY_DROP_DIC["PROVIDER_INFO"])
     graph = graph_parser.graph
-    res = graph.query("""
+    res = graph.query(
+        """
         SELECT ?c ?n
         where {
             ?k rdf:type ?dpiclass .
@@ -86,17 +91,25 @@ def gen_provider_dim(graph_parser):
             ?s ?codepred ?c .
             ?s ?codeid ?n
         }
-        """, initBindings={"dpiclass":provider_class, 
-            "codepred":rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName"), 
-            "codeid":rdflib.URIRef("https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier")})
+        """,
+        initBindings={
+            "dpiclass": provider_class,
+            "codepred": rdflib.URIRef(
+                "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName"
+            ),
+            "codeid": rdflib.URIRef(
+                "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
+            ),
+        },
+    )
     prov_df = pd.DataFrame(columns=COLUMNS["PROVIDER_DIMENSION"])
-    kdic = {"PROVIDER_ID":[], "PROVIDER_PATH":[]}
+    kdic = {"PROVIDER_ID": [], "PROVIDER_PATH": []}
     for el in res:
         kdic["PROVIDER_ID"].append(el[1].toPython())
         kdic["PROVIDER_PATH"].append(el[0].toPython())
     pdf = pd.DataFrame.from_dict(kdic)
     prov_df = pd.concat([prov_df, pdf], axis=0)
-    prov_df.to_csv(OUTPUT_TABLES+"PROVIDER_DIMENSION.csv", index=False)
+    prov_df.to_csv(OUTPUT_TABLES + "PROVIDER_DIMENSION.csv", index=False)
 
 
 def fill_star_schema(mappings=None, graph_parser=None):
@@ -106,21 +119,24 @@ def fill_star_schema(mappings=None, graph_parser=None):
     """
     gen_visit_dim()
     gen_patient_dim()
-    gen_provider_dim(graph_parser)    
+    gen_provider_dim(graph_parser)
 
     if mappings is not None:
         gen_encounter_mapping(mappings)
         gen_patient_mapping(mappings)
 
+
 def gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"]):
-    dfs=[pd.read_csv(folder_path + fname) for fname in metadata_filenames]
-    df = pd.concat(dfs) if len(dfs)>1 else dfs[0]
+    dfs = [pd.read_csv(folder_path + fname) for fname in metadata_filenames]
+    df = pd.concat(dfs) if len(dfs) > 1 else dfs[0]
     table_access = pd.DataFrame(columns=COLUMNS["TABLE_ACCESS"])
     inter = table_access.columns.intersection(df.columns)
-    table_access[inter] = df.loc[(df["C_HLEVEL"]==0) & (df["C_FACTTABLECOLUMN"]=="CONCEPT_CD"), inter]
-    table_access["C_TABLE_CD"]="sphn"
-    table_access["C_TABLE_NAME"]="sphn"
-    table_access["C_DIMTABLENAME"]="CONCEPT_DIMENSION"
-    table_access["C_PROTECTED_ACCESS"]="N"
+    table_access[inter] = df.loc[
+        (df["C_HLEVEL"] == 0) & (df["C_FACTTABLECOLUMN"] == "CONCEPT_CD"), inter
+    ]
+    table_access["C_TABLE_CD"] = "sphn"
+    table_access["C_TABLE_NAME"] = "sphn"
+    table_access["C_DIMTABLENAME"] = "CONCEPT_DIMENSION"
+    table_access["C_PROTECTED_ACCESS"] = "N"
 
-    table_access.fillna("").to_csv(folder_path+"TABLE_ACCESS.csv", index=False)
+    table_access.fillna("").to_csv(folder_path + "TABLE_ACCESS.csv", index=False)

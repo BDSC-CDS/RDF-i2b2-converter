@@ -34,13 +34,18 @@
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus"
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#Biosample",
+            "https://biomedit.ch/rdf/sphn-ontology/swissbioref#Age"
         ],
         "INDIVIDUAL_CLASS_URI": "http://www.w3.org/2002/07/owl#NamedIndividual",
         "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
         "BLACKLIST": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultLabTestCode", 
             "https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnstructuredLabResult",
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultNormalRange"
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultNormalRange",
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosample",
+            "https://biomedit.ch/rdf/sphn-ontology/swissbioref#hasAgeType",
+            "https://biomedit.ch/rdf/sphn-ontology/swissbioref#hasSubjectAge"
+
         ]
     }
 }
