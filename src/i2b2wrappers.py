@@ -1,5 +1,4 @@
 from rdfwrappers import *
-import hashlib
 
 
 def drop(attribute):

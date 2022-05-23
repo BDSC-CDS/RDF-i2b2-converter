@@ -7,10 +7,12 @@
         "PATIENT_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",
         "PROVIDER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute",
         "DATE_DESCRIPTOR": "http://www.w3.org/2001/XMLSchema#dateTime",
-        "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit"
+        "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit",
+        "hasAgeduplicate": "https://biomedit.ch/rdf/sphn-ontology/swissbioref#Age"
     },
     "UNDROP_LEAVES":{
-        "http://www.w3.org/2001/XMLSchema#dateTime": ["https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate"]
+        "http://www.w3.org/2001/XMLSchema#dateTime": ["https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate"],
+        "https://biomedit.ch/rdf/sphn-ontology/swissbioref#Age": ["https://biomedit.ch/rdf/sphn-ontology/sphn#Biosample"]
     },
     "DATA_LEAVES": {
         "http://www.w3.org/2001/XMLSchema#string" :"STRING_DESCRIPTOR",
