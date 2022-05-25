@@ -19,9 +19,9 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth",
-        "https://biomedit.ch/rdf/sphn-ontology/swissbioref/Age"
-    ],
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth"
+    ]
+},
     "COLUMNS_MAPPING": {
         "VALUE":{
         "http://www.w3.org/2001/XMLSchema#integer" : {"col": "NVAL_NUM", "misc":{"VALTYPE_CD":"N", "TVAL_CHAR":"E"}},
@@ -45,6 +45,7 @@
         "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute"    : {
             "col": "PROVIDER_ID",  
             "overwrite": "False",
+            "verbose_value":["https://biomedit.ch/rdf/sphn-ontology/sphn#hasDataProviderInstituteCode", "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName"],
             "pred_to_value":["https://biomedit.ch/rdf/sphn-ontology/sphn#hasDataProviderInstituteCode", "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"],
             "table" : [["PROVIDER_DIMENSION", "PROVIDER_ID"]]
         },
@@ -57,5 +58,5 @@
             "pred_to_value": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnitCode", "http://www.w3.org/2000/01/rdf-schema#label"]}
     }
     }
-    }
+    
 }

@@ -25,7 +25,7 @@ MIGRATIONS = {
         "destination":["."], 
         "xmlvaluetype":"PosFloat"
         },
-    "swissbioref:hasAgeValue":{
+    "swissbioref:hasAgeValueFAIL":{
         "concept":"sphn:Biosample",
         "destination":["swissbioref:hasSubjectAge\swissbioref:Age"],
         "xmlvaluetype":"PosFloat"
@@ -45,7 +45,6 @@ def resolve_rows(df, destdic):
     The '*' character is a shortcut for "all children from this point".
     """
     destination = destdic["destination"]
-    pdb.set_trace()
     conc = destdic["concept"]
     conc_row = df.loc[df["C_FULLNAME"].str.contains(conc)]
     if len(conc_row.index)>1:

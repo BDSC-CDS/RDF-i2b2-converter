@@ -21,7 +21,6 @@
     },
     "uris": {
         "ROOT_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept"],
-        "PROJECT_RDF_NAMESPACE": "https://biomedit.ch/rdf/sphn-ontology/sphn#",
         "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
         "RANGE_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#range",
         "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -34,17 +33,22 @@
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
-            "https://biomedit.ch/rdf/sphn-ontology/sphn#Biosample",
-            "https://biomedit.ch/rdf/sphn-ontology/swissbioref#Age"
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#Biosample"
         ],
-        "INDIVIDUAL_CLASS_URI": "http://www.w3.org/2002/07/owl#NamedIndividual",
         "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
         "BLACKLIST": ["https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultLabTestCode", 
             "https://biomedit.ch/rdf/sphn-ontology/sphn#hasUnstructuredLabResult",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#hasLabResultNormalRange",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosample",
             "https://biomedit.ch/rdf/sphn-ontology/swissbioref#hasAgeType",
-            "https://biomedit.ch/rdf/sphn-ontology/swissbioref#hasSubjectAge"
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosampleDateTime",
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosampleStorageContainer",
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosamplePrimaryContainerType", 
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosampleMaterialTypeTissue", 
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosampleMaterialTypeLiquid",
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosampleFixationType",
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#hasBiosampleBodySite"
+            
 
         ]
     }

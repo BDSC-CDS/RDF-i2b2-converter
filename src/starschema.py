@@ -1,4 +1,5 @@
 from i2b2wrappers import *
+from data_loader import *
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
@@ -49,7 +50,7 @@ def gen_patient_mapping(lookup):
     pmdf = pd.DataFrame(columns=COLUMNS["PATIENT_MAPPING"])
     pmdf["PATIENT_NUM"] = pm["PATIENT_NUM"].index.values
     pmdf["PATIENT_IDE"] = pm["PATIENT_NUM"]
-    pmdf["PATIENT_IDE_SOURCE"] = pm["ENCOUNTER_NUM"]
+    pmdf["PATIENT_IDE_SOURCE"] = pm["PATIENT_NUM"]
     pmdf["PROJECT_ID"] = PROJECT_NAME
     # check why first line is empty
     pmdf.loc[1:].to_csv(OUTPUT_TABLES + "PATIENT_MAPPING.csv", index=False)
@@ -94,12 +95,8 @@ def gen_provider_dim(graph_parser):
         """,
         initBindings={
             "dpiclass": provider_class,
-            "codepred": rdflib.URIRef(
-                "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName"
-            ),
-            "codeid": rdflib.URIRef(
-                "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
-            ),
+            "codepred": rdflib.URIRef(COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["verbose_value"][-1]),
+            "codeid": rdflib.URIRef(COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["pred_to_value"][-1]),
         },
     )
     prov_df = pd.DataFrame(columns=COLUMNS["PROVIDER_DIMENSION"])

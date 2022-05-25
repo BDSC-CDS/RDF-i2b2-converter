@@ -31,4 +31,5 @@ if __name__ == "__main__":
     fill_star_schema(mappings=lookup_table, graph_parser=graphparser)
 
     # Final sanity check
-    assert check_basecodes()
+    if not check_basecodes():
+        pdb.set_trace()

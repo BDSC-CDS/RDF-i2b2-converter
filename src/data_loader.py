@@ -2,16 +2,13 @@ from utils import *
 
 
 def is_valid(pred, obj):
-    if pred.identifier.toPython() in TO_IGNORE + BLACKLIST:
+    if pred.identifier in TO_IGNORE + BLACKLIST:
         return False
-    try:
-        val = (
-            obj.value(TYPE_PREDICATE_URI)
-            if callable(obj.value)
-            else obj.datatype.toPython()
-        )
-    except:
-        pdb.set_trace()
+    val = (
+        obj.value(TYPE_PREDICATE_URI)
+        if callable(obj.value)
+        else obj.datatype.toPython()
+    )
     return val is None or val not in TO_IGNORE + BLACKLIST
 
 

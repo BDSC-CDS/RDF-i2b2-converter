@@ -47,7 +47,7 @@ def generate_ontology_table():
 if __name__ == "__main__":
     generate_ontology_table()
     merge_metadatavaluefields()
-    insert_units()
+    #insert_units()
 
     gen_concept_modifier_dim(
         folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"

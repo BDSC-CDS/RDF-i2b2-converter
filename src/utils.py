@@ -25,13 +25,14 @@ with open(cur_path + "files/i2b2_rdf_mapping.json") as ff:
 for key, val in config.items():
     globals()[key] = val
 
-with open(cur_path + "files/data_loader_config.json") as ff:
+with open(cur_path + "files/data_config.json") as ff:
     config = json.load(ff)
 for key, val in config.items():
     val = int(val) if type(val) == str and val.isnumeric() else val
     globals()[key] = val
 for key, val in config["data_global_uris"].items():
-    globals()[key] = val
+    globals()[key] = (
+        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val])
 
 
 SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
@@ -100,7 +101,6 @@ class I2B2BasecodeHandler:
         and to be computable both from the ontology side and from the data loader side.
         The resulting code is the joining key between data tables and ontology tables.
         """
-
         if rdf_uri != "" and rdf_uri[-1] != "\\":
             rdf_uri = rdf_uri + "\\"
 

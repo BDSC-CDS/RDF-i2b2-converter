@@ -48,7 +48,8 @@ def transfer_obs_numerical_values():
         # Get the migration code we are treating
         tbmigrated_rows = df.loc[df["MODIFIER_CD"]==el]
         print("migrating value fields for", el, ",", tbmigrated_rows.shape, "lines affected")
-        coll = pd.concat(tbmigrated_rows.apply(lambda row: transfer(row), axis=1).values)
+        res =tbmigrated_rows.apply(lambda row: transfer(row), axis=1)
+        coll = pd.concat(res.values) if not res.empty else res
         # Inject the corrected subrow where it belongs in the matrix 
         # Merge the updated lines into the original dataframe... oof
         df = df.loc[df.index.difference(tbmigrated_rows.index)]
