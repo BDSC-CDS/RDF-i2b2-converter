@@ -1,0 +1,36 @@
+{   "DATA_GRAPHS_LOCATION": "../demo_project/data/",
+    "CONTEXT_GRAPHS_LOCATION" : "",
+    "OBS_TABLE": "../files/output_tables/OBSERVATION_FACT.csv",
+    "MAX_BATCH_SIZE" : 1000,
+    "START_SEARCH_INDEX": 95000,
+    "DEFAULT_DATE": "2022-04-12 00:00:00",
+    "data_global_uris":{
+    "TO_IGNORE":[
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    ],
+    "ENTRY_DATA_CONCEPTS": [
+        "http://demo-project/OncologyDiagnosis"
+    ]
+},
+    "COLUMNS_MAPPING": {
+        "VALUE":{
+        "http://www.w3.org/2001/XMLSchema#integer" : {"col": "NVAL_NUM", "misc":{"VALTYPE_CD":"N", "TVAL_CHAR":"E"}}
+        },
+        "CONTEXT":{
+        "http://demo-project/Patient"  : {
+            "col": "PATIENT_NUM",  
+            "overwrite": "False",
+            "pred_to_value": ["http://demo-project/hasPatientNum"],
+            "table" : [["PATIENT_DIMENSION", "PATIENT_NUM"]]
+        },
+        "http://demo-project/Provider"    : {
+            "col": "PROVIDER_ID",  
+            "overwrite": "False",
+            "verbose_value": ["http://demo-project/hasProviderID"],
+            "pred_to_value":["http://demo-project/hasProviderID"],
+            "table" : [["PROVIDER_DIMENSION", "PROVIDER_ID"]]
+        }
+    }
+    }
+    
+}

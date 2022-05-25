@@ -1,0 +1,29 @@
+{
+    "parameters": {
+        "ONTOLOGY_GRAPH_LOCATION": "../demo_project/ontologies/",
+        "TERMINOLOGIES_LOCATION": "../demo_project/terminologies/",
+        "OUTPUT_TABLES": "files/output_tables/",
+        "RDF_FORMAT": "turtle",
+        "PREF_LANGUAGE": "fr",
+        "ALWAYS_DEEP": "False",
+        "TERMINOLOGIES_GRAPHS": {
+            "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/":"sphn_icd-10-gm_2021-1"
+        }
+    },
+    "uris": {
+        "ROOT_URIS": ["http://demo-project/DemoOntologyRoot"],
+        "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+        "RANGE_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#range",
+        "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+        "DATATYPE_PROP_URI": "http://www.w3.org/2002/07/owl#DatatypeProperty",
+        "OBJECT_PROP_URI" : "http://www.w3.org/2002/07/owl#ObjectProperty",
+        "COMMENT_URI": "http://www.w3.org/2000/01/rdf-schema#comment",
+        "TERMINOLOGY_MARKER_URIS": [],
+        "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet",
+        "ENTRY_CONCEPTS": [
+            "http://demo-project/OncologyDiagnosis"
+        ],
+        "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
+        "BLACKLIST": []
+    }
+}

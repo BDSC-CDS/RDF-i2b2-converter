@@ -9,9 +9,12 @@ import json, os, sys, datetime
 This file figures file and format utility functions.
 It initializes global variables by reading the "ontology_config" file.
 """
+GRAPH_CONFIG = "files/config/graph_config.json"
+I2B2_MAPPING = "files/config/i2b2_rdf_mapping.json"
+DATA_CONFIG = "files/config/data_config.json"
 
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
-with open(cur_path + "files/graph_config.json") as ff:
+with open(cur_path + GRAPH_CONFIG) as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():
     globals()[key] = val
@@ -20,12 +23,12 @@ for key, val in config["uris"].items():
         rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
     )
 
-with open(cur_path + "files/i2b2_rdf_mapping.json") as ff:
+with open(cur_path + I2B2_MAPPING) as ff:
     config = json.load(ff)
 for key, val in config.items():
     globals()[key] = val
 
-with open(cur_path + "files/data_config.json") as ff:
+with open(cur_path + DATA_CONFIG) as ff:
     config = json.load(ff)
 for key, val in config.items():
     val = int(val) if type(val) == str and val.isnumeric() else val
