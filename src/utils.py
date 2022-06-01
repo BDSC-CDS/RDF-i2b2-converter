@@ -9,9 +9,9 @@ import json, os, sys, datetime
 This file figures file and format utility functions.
 It initializes global variables by reading the "ontology_config" file.
 """
-GRAPH_CONFIG = "files/config/graph_config.json"
-I2B2_MAPPING = "files/config/i2b2_rdf_mapping.json"
-DATA_CONFIG = "files/config/data_config.json"
+GRAPH_CONFIG = "files/config/default/graph_config_default.json"
+I2B2_MAPPING = "files/config/default/i2b2_rdf_mapping_default.json"
+DATA_CONFIG = "files/config/default/data_config_default.json"
 
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
 with open(cur_path + GRAPH_CONFIG) as ff:
@@ -51,6 +51,7 @@ class GraphParser:
             if os.path.isfile(my_path + pathi):
                 result.append(my_path + pathi)
                 continue
+            result.extend(glob.glob(my_path + pathi + "/**/*.owl", recursive=True))
             result.extend(glob.glob(my_path + pathi + "/**/*.ttl", recursive=True))
         for filek in result:
             print("Loading file: " + filek)
@@ -62,7 +63,10 @@ class GraphParser:
                 cur.parse(filek, format="turtle")
                 TERMINOLOGIES_FILES.update({fname: cur})
             else:
-                self.graph.parse(filek, format="turtle")
+                if filek[-3:]=="ttl":
+                    self.graph.parse(filek, format="turtle")
+                elif filek[-3:]=="owl":
+                    self.graph.parse(filek, format="xml")
         print("Graph is fully loaded in memory.")
 
     def define_namespaces(self):

@@ -1,9 +1,9 @@
 {
     "parameters": {
-        "ONTOLOGY_GRAPH_LOCATION": "../demo_project/ontologies/",
-        "TERMINOLOGIES_LOCATION": "../demo_project/terminologies/",
+        "ONTOLOGY_GRAPH_LOCATION": "demo/ontologies/",
+        "TERMINOLOGIES_LOCATION": "demo/terminologies/",
         "OUTPUT_TABLES": "files/output_tables/",
-        "RDF_FORMAT": "turtle",
+        "RDF_FORMAT": "owl",
         "PREF_LANGUAGE": "fr",
         "ALWAYS_DEEP": "False",
         "TERMINOLOGIES_GRAPHS": {
@@ -11,7 +11,7 @@
         }
     },
     "uris": {
-        "ROOT_URIS": ["http://demo-project/DemoOntologyRoot"],
+        "ROOT_URIS": ["http://www.limics.fr/ontologies/ontoPOF#Individu"],
         "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
         "RANGE_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#range",
         "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -21,7 +21,8 @@
         "TERMINOLOGY_MARKER_URIS": [],
         "VALUESET_MARKER_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet",
         "ENTRY_CONCEPTS": [
-            "http://demo-project/OncologyDiagnosis"
+            "http://www.limics.fr/ontologies/ontoPOF#PurContinuant"
+            
         ],
         "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
         "BLACKLIST": []

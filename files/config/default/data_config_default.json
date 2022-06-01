@@ -1,4 +1,4 @@
-{   "DATA_GRAPHS_LOCATION": "../demo_project/data/",
+{   "DATA_GRAPHS_LOCATION": "demo/data/",
     "CONTEXT_GRAPHS_LOCATION" : "",
     "OBS_TABLE": "../files/output_tables/OBSERVATION_FACT.csv",
     "MAX_BATCH_SIZE" : 1000,
@@ -9,7 +9,9 @@
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
     ],
     "ENTRY_DATA_CONCEPTS": [
-        "http://demo-project/OncologyDiagnosis"
+        "http://demo-project/OncologyDiagnosis",
+        "http://demo-project/Male",
+        "http://demo-project/Female"
     ]
 },
     "COLUMNS_MAPPING": {
