@@ -12,14 +12,24 @@
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
     ],
     "ENTRY_DATA_CONCEPTS": [
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#CivilStatus",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#Consent",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#Consent",
         "https://biomedit.ch/rdf/sphn-ontology/sphn#DeathStatus",
-        "https://biomedit.ch/rdf/sphn-ontology/sphn#GestationalAgeAtBirth"
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#CivilStatus",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#DrugAdministrationEvent",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHDiagnosis",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#FOPHProcedure",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#LabResult",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#OncologyTreatmentAssessment",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#RadiotherapyProcedure",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#TNMClassification",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#TumorGrade",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#TumorStage",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeGender",
+        "https://biomedit.ch/rdf/sphn-ontology/spo#FollowUpEvent",
+        "https://biomedit.ch/rdf/sphn-ontology/spo#OncologyDiagnosis",
+        "https://biomedit.ch/rdf/sphn-ontology/spo#OncologySurgery",
+        "https://biomedit.ch/rdf/sphn-ontology/spo#SomaticVariantFound"
     ]
 },
     "COLUMNS_MAPPING": {
