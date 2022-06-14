@@ -35,7 +35,8 @@ for key, val in config.items():
     globals()[key] = val
 for key, val in config["data_global_uris"].items():
     globals()[key] = (
-        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val])
+        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
+    )
 
 
 SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
@@ -64,9 +65,9 @@ class GraphParser:
                 TERMINOLOGIES_FILES.update({fname: cur})
             else:
                 print("adding to the main graph: ", fname)
-                if filek[-3:]=="ttl":
+                if filek[-3:] == "ttl":
                     self.graph.parse(filek, format="turtle")
-                elif filek[-3:]=="owl":
+                elif filek[-3:] == "owl":
                     self.graph.parse(filek, format="xml")
         print("Graph is fully loaded in memory.")
 
@@ -139,10 +140,19 @@ def which_graph(uri):
             return res if res != "" and res is not None else False
     return False
 
+
 def check_domains(resource):
     dom = resource.value(rdflib.URIRef("http://www.w3.org/2000/01/rdf-schema#domain"))
-    if resource.graph.resource(rdflib.URIRef("http://www.w3.org/2002/07/owl#unionOf")) in dom.predicates():
-        print("Warning: ", resource, "is bound to a collection of domains and was not overwritten by a more specific item.")
+    if (
+        resource.graph.resource(rdflib.URIRef("http://www.w3.org/2002/07/owl#unionOf"))
+        in dom.predicates()
+    ):
+        print(
+            "Warning: ",
+            resource,
+            "is bound to a collection of domains and was not overwritten by a more specific item.",
+        )
+
 
 def shortname(resource):
     """

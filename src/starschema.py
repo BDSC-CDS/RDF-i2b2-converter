@@ -95,8 +95,16 @@ def gen_provider_dim(graph_parser):
         """,
         initBindings={
             "dpiclass": provider_class,
-            "codepred": rdflib.URIRef(COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["verbose_value"][-1]),
-            "codeid": rdflib.URIRef(COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["pred_to_value"][-1]),
+            "codepred": rdflib.URIRef(
+                COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["verbose_value"][
+                    -1
+                ]
+            ),
+            "codeid": rdflib.URIRef(
+                COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["pred_to_value"][
+                    -1
+                ]
+            ),
         },
     )
     prov_df = pd.DataFrame(columns=COLUMNS["PROVIDER_DIMENSION"])

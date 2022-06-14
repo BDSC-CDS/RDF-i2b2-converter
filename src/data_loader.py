@@ -1,17 +1,15 @@
 from utils import *
 
+
 def get_datatype(obj):
     dt = obj.datatype
-    return 'http://www.w3.org/2001/XMLSchema#string' if dt is None else dt.toPython()
+    return "http://www.w3.org/2001/XMLSchema#string" if dt is None else dt.toPython()
+
 
 def is_valid(pred, obj):
     if pred.identifier in TO_IGNORE + BLACKLIST:
         return False
-    val = (
-        obj.value(TYPE_PREDICATE_URI)
-        if callable(obj.value)
-        else get_datatype(obj)
-    )
+    val = obj.value(TYPE_PREDICATE_URI) if callable(obj.value) else get_datatype(obj)
     return val is None or val not in TO_IGNORE + BLACKLIST
 
 
@@ -230,7 +228,9 @@ class InformationTree:
             return
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
-        current_basecode = hdler.reduce_basecode(rdfclass.identifier, prefix=basecode_prefix)
+        current_basecode = hdler.reduce_basecode(
+            rdfclass.identifier, prefix=basecode_prefix
+        )
         # Get the properties
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
         # Digest the context and get back the "clean" list of details
@@ -292,13 +292,13 @@ class ContextFactory:
                 obj_rdftype = None
                 obj_type = get_datatype(obj)
 
-            if (
-                obj_type is not None
-                and obj_type in self.fields_dic.keys()
-                ):
+            if obj_type is not None and obj_type in self.fields_dic.keys():
                 # We found a context element, but should we use it?
-                if self.fields_dic[obj_type]["overwrite"] == "True" or obj_type not in self.context.keys():
-                    # Use it because it's either new or meaningful. Else (implicit) discard 
+                if (
+                    self.fields_dic[obj_type]["overwrite"] == "True"
+                    or obj_type not in self.context.keys()
+                ):
+                    # Use it because it's either new or meaningful. Else (implicit) discard
                     self.add_context_element(obj_type, obj)
             else:
                 # As a result, we keep only items which couldn't be used as context, either because they are not contextual information or

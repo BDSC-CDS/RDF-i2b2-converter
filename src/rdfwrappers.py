@@ -95,13 +95,15 @@ class Component:
             sep = self.shortname.rfind(":")
             code = self.shortname[sep + 1 :]
 
-            if code not in self.label and len(code)<20:
+            if code not in self.label and len(code) < 20:
                 if code.isnumeric() and len(code) < 2:
                     code = "0" + code
                 self.label = code + " - " + self.label
-            term_name = self.shortname[: sep].upper()
-            if (self.parent_class is None or term_name not in self.parent_class.label) and term_name not in self.label :
-                self.label = term_name +":" +self.label
+            term_name = self.shortname[:sep].upper()
+            if (
+                self.parent_class is None or term_name not in self.parent_class.label
+            ) and term_name not in self.label:
+                self.label = term_name + ":" + self.label
 
     def __repr__(self):
         return (
