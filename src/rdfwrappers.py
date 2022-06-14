@@ -60,7 +60,7 @@ class Component:
 
     def is_valueset(self):
         tmp = self.resource.value(SUBCLASS_PRED_URI)
-        return tmp is not None and tmp.identifier == VALUESET_MARKER_URI
+        return tmp is not None and tmp.identifier in VALUESET_MARKER_URIS
 
     def get_label(self):
         return self.label

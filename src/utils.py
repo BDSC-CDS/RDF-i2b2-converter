@@ -9,9 +9,9 @@ import json, os, sys, datetime
 This file figures file and format utility functions.
 It initializes global variables by reading the "ontology_config" file.
 """
-GRAPH_CONFIG = "files/config/graph_config_spo.json"
-I2B2_MAPPING = "files/config/i2b2_rdf_config_spo.json"
-DATA_CONFIG = "files/config/data_config_spo.json"
+GRAPH_CONFIG = "config/graph_config_spo.json"
+I2B2_MAPPING = "config/i2b2_rdf_config_spo.json"
+DATA_CONFIG = "config/data_config_spo.json"
 
 cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
 with open(cur_path + GRAPH_CONFIG) as ff:
@@ -89,7 +89,7 @@ class I2B2BasecodeHandler:
     def __init__(self, i2b2element=None):
         self.basecode = None
         if i2b2element is not None:
-            self.core = i2b2element.component.get_shortname()
+            self.core = i2b2element.component.get_uri()
             self.prefix = (
                 i2b2element.logical_parent.basecode_handler.get_basecode()
                 if i2b2element.logical_parent is not None
@@ -109,6 +109,8 @@ class I2B2BasecodeHandler:
         and to be computable both from the ontology side and from the data loader side.
         The resulting code is the joining key between data tables and ontology tables.
         """
+        if type(rdf_uri) == rdflib.URIRef:
+            rdf_uri = rdf_uri.toPython()
         if rdf_uri != "" and rdf_uri[-1] != "\\":
             rdf_uri = rdf_uri + "\\"
 

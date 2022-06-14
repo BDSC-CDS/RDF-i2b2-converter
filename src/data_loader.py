@@ -1,5 +1,8 @@
 from utils import *
 
+def get_datatype(obj):
+    dt = obj.datatype
+    return 'http://www.w3.org/2001/XMLSchema#string' if dt is None else dt.toPython()
 
 def is_valid(pred, obj):
     if pred.identifier in TO_IGNORE + BLACKLIST:
@@ -7,7 +10,7 @@ def is_valid(pred, obj):
     val = (
         obj.value(TYPE_PREDICATE_URI)
         if callable(obj.value)
-        else obj.datatype.toPython()
+        else get_datatype(obj)
     )
     return val is None or val not in TO_IGNORE + BLACKLIST
 
@@ -126,7 +129,7 @@ class ObservationRegister:
         details = context.copy()
         new_bc = basecode
         if not callable(resource.value):
-            vtype = resource.datatype.toPython()
+            vtype = get_datatype(resource)
             value = resource.value
             if not vtype in self.value_items.keys():
                 raise Exception("Type not defined in config file: ", vtype)
@@ -136,9 +139,9 @@ class ObservationRegister:
             hdler = I2B2BasecodeHandler()
             obj_rdftype = resource.value(TYPE_PREDICATE_URI)
             if obj_rdftype is not None:
-                el = shortname(obj_rdftype)
+                el = obj_rdftype.identifier
             else:
-                el = shortname(resource)
+                el = resource.identifier
             new_bc = hdler.reduce_basecode(el, prefix=basecode)
         # In any case this digest thing should only add a value field if there is a value, then proceeds with adding the basecode entry in any case
         self.add_record(new_bc, context=details)
@@ -225,10 +228,9 @@ class InformationTree:
         rdfclass = resource.value(TYPE_PREDICATE_URI)
         if rdfclass.identifier in BLACKLIST + TO_IGNORE or rdfclass is None:
             return
-        shortclass = shortname(rdfclass)
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
-        current_basecode = hdler.reduce_basecode(shortclass, prefix=basecode_prefix)
+        current_basecode = hdler.reduce_basecode(rdfclass.identifier, prefix=basecode_prefix)
         # Get the properties
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
         # Digest the context and get back the "clean" list of details
@@ -247,7 +249,7 @@ class InformationTree:
 
         for pred, obj in observation_elements:
             # Updating the basecode with the forward link
-            basecode = hdler.reduce_basecode(shortname(pred), prefix=current_basecode)
+            basecode = hdler.reduce_basecode(pred.identifier, prefix=current_basecode)
             if self.is_pathend(obj):
                 self.obs_register.digest(
                     obj, pred, basecode, context_register.get_context()
@@ -278,7 +280,6 @@ class ContextFactory:
         clean = []
         # If the context holder is empty, extract and save (else simply discard discard the context elements)
         for pred, obj in pred_objects:
-
             # Get the object type as python string. Can be None (e.g for NamedIndividuals)
             if callable(obj.value):
                 obj_rdftype = obj.value(TYPE_PREDICATE_URI)
@@ -289,18 +290,19 @@ class ContextFactory:
                 )
             else:
                 obj_rdftype = None
-                obj_type = obj.datatype.toPython()
+                obj_type = get_datatype(obj)
 
             if (
                 obj_type is not None
                 and obj_type in self.fields_dic.keys()
-                and (
-                    self.fields_dic[obj_type]["overwrite"] == "True"
-                    or obj_type not in self.context.keys()
-                )
-            ):
-                self.add_context_element(obj_type, obj)
+                ):
+                # We found a context element, but should we use it?
+                if self.fields_dic[obj_type]["overwrite"] == "True" or obj_type not in self.context.keys():
+                    # Use it because it's either new or meaningful. Else (implicit) discard 
+                    self.add_context_element(obj_type, obj)
             else:
+                # As a result, we keep only items which couldn't be used as context, either because they are not contextual information or
+                # because they are unrelevant contextual information.
                 clean.append((pred, obj))
         return clean
 
