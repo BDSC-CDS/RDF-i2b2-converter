@@ -2,8 +2,8 @@ from utils import *
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
-OBS_TABLE = myPath+"/../../files/output_tables/OBSERVATION_FACT.csv"
 
+OBS_TABLE = OUTPUT_TABLES_LOCATION +"OBSERVATION_FACT.csv"
 def fill_nulls():
     """
     Fill the mandatory keys in the observation table with default values.

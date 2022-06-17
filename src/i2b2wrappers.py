@@ -63,7 +63,7 @@ class I2B2Converter:
         self.towrite.extend([k.get_db_line() for k in [cur] + cur.modifiers])
         return True
 
-    def write(self, filepath=OUTPUT_TABLES + "METADATA.csv", init_table=False):
+    def write(self, filepath=OUTPUT_TABLES_LOCATION + "METADATA.csv", init_table=False):
         """
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.

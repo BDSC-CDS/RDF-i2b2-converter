@@ -11,7 +11,7 @@ def load_observations():
     dl = DataLoader(
         parser,
         entry_classes,
-        filename=OUTPUT_TABLES + "OBSERVATION_FACT.csv",
+        filename=OUTPUT_TABLES_LOCATION + "OBSERVATION_FACT.csv",
         reset_file=True,
     )
     dl.extract_all()
@@ -19,6 +19,8 @@ def load_observations():
 
 
 if __name__ == "__main__":
+
+    OBS_TABLE = OUTPUT_TABLES_LOCATION +"OBSERVATION_FACT.csv"
     graphparser = load_observations()
     # Run scripts to modify the table according to project-specific purposes
     transfer_obs_numerical_values()

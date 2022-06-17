@@ -5,8 +5,7 @@ import pandas as pd
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
 
-METADATA_LOC = myPath+"/../../files/output_tables/METADATA.csv"
-UNITS_LOOKUP = myPath+"/../../files/lookup_units.csv"
+UNITS_LOOKUP = myPath+"lookup_units.csv"
 
 def insert_units():
     df = pd.read_csv(METADATA_LOC)

@@ -21,7 +21,7 @@ def generate_ontology_table():
     root_entries = parser.get_entrypoints(ROOT_URIS)
 
     # Now prepare the directory and writing
-    wipe_directory(OUTPUT_TABLES)
+    wipe_directory(OUTPUT_TABLES_LOCATION)
     init = True
     # Actual loop over the root links
     for concept_res in root_entries:
@@ -31,7 +31,7 @@ def generate_ontology_table():
         # Get the i2b2 db lines related to this concept
         buffer = converter.get_batch()
         while buffer:
-            converter.write(OUTPUT_TABLES + "METADATA.csv", init_table=init)
+            converter.write(OUTPUT_TABLES_LOCATION + "METADATA.csv", init_table=init)
             buffer = converter.get_batch()
             init = False
 
@@ -45,11 +45,12 @@ def generate_ontology_table():
 
 
 if __name__ == "__main__":
+
     generate_ontology_table()
-    merge_metadatavaluefields()
+    merge_metadatavaluefields(OUTPUT_TABLES_LOCATION)
     # insert_units()
 
     gen_concept_modifier_dim(
-        folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
+        folder_path=OUTPUT_TABLES_LOCATION, metadata_filename="METADATA.csv"
     )
-    gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"])
+    gen_table_access(folder_path=OUTPUT_TABLES_LOCATION, metadata_filenames=["METADATA.csv"])

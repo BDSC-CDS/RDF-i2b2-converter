@@ -3,11 +3,11 @@ from data_loader import *
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
-OBS_TABLE = myPath + "/../files/output_tables/OBSERVATION_FACT.csv"
+OBS_TABLE = OUTPUT_TABLES_LOCATION+"OBSERVATION_FACT.csv"
 
 
 def gen_concept_modifier_dim(
-    folder_path=OUTPUT_TABLES, metadata_filename="METADATA.csv"
+    folder_path=OUTPUT_TABLES_LOCATION, metadata_filename="METADATA.csv"
 ):
     """
     Build two tables: i2b2's CONCEPT_DIMENSION and MODIFIER_DIMENSION that stores the concepts and modifiers codes as well as the full paths used in the ontology.
@@ -39,7 +39,7 @@ def gen_patient_dim():
     df = pd.read_csv(OBS_TABLE).drop_duplicates(subset="PATIENT_NUM", keep="first")
     patdf = pd.DataFrame(columns=COLUMNS["PATIENT_DIMENSION"])
     patdf["PATIENT_NUM"] = df["PATIENT_NUM"]
-    patdf.to_csv(OUTPUT_TABLES + "PATIENT_DIMENSION.csv", index=False)
+    patdf.to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_DIMENSION.csv", index=False)
 
 
 def gen_patient_mapping(lookup):
@@ -53,7 +53,7 @@ def gen_patient_mapping(lookup):
     pmdf["PATIENT_IDE_SOURCE"] = pm["PATIENT_NUM"]
     pmdf["PROJECT_ID"] = PROJECT_NAME
     # check why first line is empty
-    pmdf.loc[1:].to_csv(OUTPUT_TABLES + "PATIENT_MAPPING.csv", index=False)
+    pmdf.loc[1:].to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_MAPPING.csv", index=False)
 
 
 def gen_visit_dim():
@@ -65,7 +65,7 @@ def gen_visit_dim():
     encdf = pd.DataFrame(columns=COLUMNS["VISIT_DIMENSION"])
     encdf["PATIENT_NUM"] = df["PATIENT_NUM"]
     encdf["ENCOUNTER_NUM"] = df["ENCOUNTER_NUM"]
-    encdf.to_csv(OUTPUT_TABLES + "VISIT_DIMENSION.csv", index=False)
+    encdf.to_csv(OUTPUT_TABLES_LOCATION + "VISIT_DIMENSION.csv", index=False)
 
 
 def gen_encounter_mapping(lookup):
@@ -77,7 +77,7 @@ def gen_encounter_mapping(lookup):
     emdf["PATIENT_IDE"] = "-1"
     emdf["PATIENT_IDE_SOURCE"] = "-1"
     emdf["PROJECT_ID"] = PROJECT_NAME
-    emdf.loc[1:].to_csv(OUTPUT_TABLES + "ENCOUNTER_MAPPING.csv", index=False)
+    emdf.loc[1:].to_csv(OUTPUT_TABLES_LOCATION + "ENCOUNTER_MAPPING.csv", index=False)
 
 
 def gen_provider_dim(graph_parser):
@@ -114,7 +114,7 @@ def gen_provider_dim(graph_parser):
         kdic["PROVIDER_PATH"].append(el[0].toPython())
     pdf = pd.DataFrame.from_dict(kdic)
     prov_df = pd.concat([prov_df, pdf], axis=0)
-    prov_df.to_csv(OUTPUT_TABLES + "PROVIDER_DIMENSION.csv", index=False)
+    prov_df.to_csv(OUTPUT_TABLES_LOCATION + "PROVIDER_DIMENSION.csv", index=False)
 
 
 def fill_star_schema(mappings=None, graph_parser=None):
@@ -131,7 +131,7 @@ def fill_star_schema(mappings=None, graph_parser=None):
         gen_patient_mapping(mappings)
 
 
-def gen_table_access(folder_path=OUTPUT_TABLES, metadata_filenames=["METADATA.csv"]):
+def gen_table_access(folder_path=OUTPUT_TABLES_LOCATION, metadata_filenames=["METADATA.csv"]):
     dfs = [pd.read_csv(folder_path + fname) for fname in metadata_filenames]
     df = pd.concat(dfs) if len(dfs) > 1 else dfs[0]
     table_access = pd.DataFrame(columns=COLUMNS["TABLE_ACCESS"])

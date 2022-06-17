@@ -2,7 +2,6 @@
     "parameters": {
         "ONTOLOGY_GRAPH_LOCATION": "../common-data/RDF_SPHN_2021/main_ontologies/",
         "TERMINOLOGIES_LOCATION": "../common-data/RDF_SPHN_2021/external_terminologies/",
-        "OUTPUT_TABLES": "files/output_tables/",
         "RDF_FORMAT": "ttl",
         "PREF_LANGUAGE": "fr",
         "ALWAYS_DEEP": "False",

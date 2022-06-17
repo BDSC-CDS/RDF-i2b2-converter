@@ -1,7 +1,8 @@
 {
     "MAX_BASECODE_LENGTH": 50,
     "ROOT_PATHS": ["\\SPHNv2021\\", "\\SwissBioRef\\"],
-    "PROJECT_NAME":"SWISS_BIOREF",
+    "OUTPUT_TABLES_LOCATION": "files/output_tables/",
+    "PROJECT_NAME":"SPO",
     "ONTOLOGY_DROP_DIC": {
         "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
         "PATIENT_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",

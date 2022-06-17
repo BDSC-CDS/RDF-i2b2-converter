@@ -1,6 +1,6 @@
 {   "DATA_GRAPHS_LOCATION": "../Documents/spo/braf/",
     "CONTEXT_GRAPHS_LOCATION" : "../common-data/RDF_SPHN_2021/units",
-    "OBS_TABLE": "../files/output_tables/OBSERVATION_FACT.csv",
+    "OUTPUT_TABLES_LOCATION": "output_tables/",
     "MAX_BATCH_SIZE" : 1000,
     "START_SEARCH_INDEX": 95000,
     "DEFAULT_DATE": "2022-04-12 00:00:00",

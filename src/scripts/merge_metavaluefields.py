@@ -7,7 +7,6 @@ import json
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
 
-METADATA_LOC = myPath+"/../../files/output_tables/METADATA.csv"
 
 MIGRATIONS = {
     "swissbioref:hasLabResultValue" : {
@@ -64,7 +63,10 @@ def resolve_rows(df, destdic):
 
     return res_idx
 
-def merge_metadatavaluefields():
+def merge_metadatavaluefields(output_tables_loc):
+
+    globals()["OUTPUT_TABLES_LOCATION"] = output_tables_loc
+    globals()["METADATA_LOC"] = output_tables_loc + "METADATA.csv"
     logs = {}
     df = pd.read_csv(METADATA_LOC)
     # get the shortened URI that trails the full path
@@ -100,7 +102,7 @@ def merge_metadatavaluefields():
         moved = moved.union([ix])
     df=df.drop(moved)
     df.to_csv(METADATA_LOC, index=False)
-    with open(myPath+'/../../files/migrations_logs.json', 'w') as outfile:
+    with open(OUTPUT_TABLES_LOCATION+'migrations_logs.json', 'w') as outfile:
         json.dump(logs, outfile)
 
 

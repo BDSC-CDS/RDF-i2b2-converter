@@ -8,7 +8,6 @@ COLUMNS_TO_REPLACE = ["VALTYPE_CD", "TVAL_CHAR", "NVAL_NUM", "VALUEFLAG_CD", "QU
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
-OBS_TABLE = myPath+"/../../files/output_tables/OBSERVATION_FACT.csv"
 
 def transfer_obs_numerical_values():
     def transfer(row):
@@ -38,7 +37,7 @@ def transfer_obs_numerical_values():
         return tmp
 
 
-    with open(myPath+'/../../files/migrations_logs.json') as json_file:
+    with open(myPath+'migrations_logs.json') as json_file:
         migrations = json.load(json_file)
     df = pd.read_csv(OBS_TABLE)
     df.columns = map(str.upper, df.columns)
