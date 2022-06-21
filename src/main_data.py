@@ -20,10 +20,10 @@ def load_observations():
 
 if __name__ == "__main__":
 
-    OBS_TABLE = OUTPUT_TABLES_LOCATION +"OBSERVATION_FACT.csv"
+    create_dir(OUTPUT_TABLES_LOCATION)
     graphparser = load_observations()
     # Run scripts to modify the table according to project-specific purposes
-    transfer_obs_numerical_values()
+    transfer_obs_numerical_values(OUTPUT_TABLES_LOCATION)
 
     # i2b2-formatting routines
     lookup_table = reindex()

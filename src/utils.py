@@ -124,6 +124,9 @@ def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
 
+def create_dir(relative_path):
+    # Create the directory if it doesn't already exist.
+    return os.makedirs(relative_path) if not os.path.exists(relative_path) else 0
 
 def terminology_indicator(resource):
     """
@@ -160,10 +163,7 @@ def shortname(resource):
     In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
     The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
     """
-    try:
-        shortname = resource.graph.namespace_manager.normalizeUri(resource.identifier)
-    except:
-        pdb.set_trace()
+    shortname = resource.graph.namespace_manager.normalizeUri(resource.identifier)
     uri = resource.identifier
     if uri in shortname:
         ns = resource.graph.namespace_manager.namespaces()

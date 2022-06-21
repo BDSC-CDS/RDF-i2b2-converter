@@ -6,10 +6,13 @@ import json
 
 COLUMNS_TO_REPLACE = ["VALTYPE_CD", "TVAL_CHAR", "NVAL_NUM", "VALUEFLAG_CD", "QUANTITY_NUM", "UNITS_CD"]
 
-myPath = os.path.dirname(os.path.abspath(__file__))
+myPath = os.path.dirname(os.path.abspath(__file__))+"/"
 sys.path.insert(0, myPath)
 
-def transfer_obs_numerical_values():
+def transfer_obs_numerical_values(output_tables_loc):
+
+    globals()["OUTPUT_TABLES_LOCATION"] = output_tables_loc
+    globals()["OBS_TABLE"] = output_tables_loc + "OBSERVATION_FACT.csv"
     def transfer(row):
         vv = row["INSTANCE_NUM"]
         if vv%50 ==0:
