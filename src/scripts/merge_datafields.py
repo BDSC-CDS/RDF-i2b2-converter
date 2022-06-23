@@ -39,7 +39,8 @@ def transfer_obs_numerical_values(output_tables_loc):
             tmp = pd.concat([tmp, row.loc[COLUMNS_TO_REPLACE].rename(idx).to_frame().T], axis=0)
         return tmp
 
-
+    if not os.path.exists(myPath+'migrations_logs.json'):
+        return
     with open(myPath+'migrations_logs.json') as json_file:
         migrations = json.load(json_file)
     df = pd.read_csv(OBS_TABLE)

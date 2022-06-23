@@ -140,7 +140,7 @@ class ObservationRegister:
                 el = obj_rdftype.identifier
             else:
                 el = resource.identifier
-            new_bc = hdler.reduce_basecode(el, prefix=basecode)
+            new_bc = hdler.reduce_basecode(el, prefix=basecode, debug=DEBUG)
         # In any case this digest thing should only add a value field if there is a value, then proceeds with adding the basecode entry in any case
         self.add_record(new_bc, context=details)
 
@@ -229,7 +229,7 @@ class InformationTree:
         # Updating the basecode that led us to there
         hdler = I2B2BasecodeHandler()
         current_basecode = hdler.reduce_basecode(
-            rdfclass.identifier, prefix=basecode_prefix
+            rdfclass.identifier, prefix=basecode_prefix, debug=DEBUG
         )
         # Get the properties
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
@@ -249,7 +249,7 @@ class InformationTree:
 
         for pred, obj in observation_elements:
             # Updating the basecode with the forward link
-            basecode = hdler.reduce_basecode(pred.identifier, prefix=current_basecode)
+            basecode = hdler.reduce_basecode(pred.identifier, prefix=current_basecode, debug=DEBUG)
             if self.is_pathend(obj):
                 self.obs_register.digest(
                     obj, pred, basecode, context_register.get_context()

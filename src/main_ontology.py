@@ -45,7 +45,7 @@ def generate_ontology_table():
 
 
 if __name__ == "__main__":
-
+    
     create_dir(OUTPUT_TABLES_LOCATION)
     generate_ontology_table()
     merge_metadatavaluefields(OUTPUT_TABLES_LOCATION)

@@ -26,7 +26,7 @@ for key, val in config["uris"].items():
 with open(cur_path + I2B2_MAPPING) as ff:
     config = json.load(ff)
 for key, val in config.items():
-    globals()[key] = val
+    globals()[key] = val if val != "False" else False
 
 with open(cur_path + DATA_CONFIG) as ff:
     config = json.load(ff)
@@ -100,7 +100,7 @@ class I2B2BasecodeHandler:
     def get_basecode(self):
         if self.basecode is not None:
             return self.basecode
-        return self.reduce_basecode(rdf_uri=self.core, prefix=self.prefix)
+        return self.reduce_basecode(rdf_uri=self.core, prefix=self.prefix, debug=DEBUG)
 
     def reduce_basecode(self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH):
         """

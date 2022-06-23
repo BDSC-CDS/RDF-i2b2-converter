@@ -1,6 +1,7 @@
 {
+    "DEBUG":"True",
     "MAX_BASECODE_LENGTH": 50,
-    "ROOT_PATHS": ["\\SPHNv2021\\", "\\SwissBioRef\\"],
+    "ROOT_PATHS": ["\\SPHNv2021\\", "\\SPO\\"],
     "OUTPUT_TABLES_LOCATION": "files/output_tables/",
     "PROJECT_NAME":"SPO",
     "ONTOLOGY_DROP_DIC": {
