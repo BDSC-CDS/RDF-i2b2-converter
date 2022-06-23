@@ -43,11 +43,21 @@ def generate_ontology_table():
 
     # Step 4
 
+def merge_roots():
+    df = pd.read_csv(OUTPUT_TABLES_LOCATION+"METADATA.csv")
+    df = df.replace([":Concept"], ["sphn:SPHNConcept"], regex=True)
+    lvl = df.loc[df["C_HLEVEL"]==0]
+    if len(lvl)>1:
+        lvl = lvl.drop(lvl.iloc[[0]].index)
+        df = df.drop(lvl.index)
+    df.fillna("").to_csv(path_or_buf=OUTPUT_TABLES_LOCATION+"METADATA.csv", mode="w", header=True, index=False)
+
 
 if __name__ == "__main__":
     
-    create_dir(OUTPUT_TABLES_LOCATION)
-    generate_ontology_table()
+    #create_dir(OUTPUT_TABLES_LOCATION)
+    #generate_ontology_table()
+    merge_roots()
     merge_metadatavaluefields(OUTPUT_TABLES_LOCATION)
     # insert_units()
 

@@ -34,4 +34,4 @@ if __name__ == "__main__":
 
     # Final sanity check
     if not check_basecodes():
-        pdb.set_trace()
+        check_basecodes(stop=True)

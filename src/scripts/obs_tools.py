@@ -52,11 +52,19 @@ def reindex():
     df.to_csv(OBS_TABLE, index=False)
     return lookup
 
-def check_basecodes():
+def check_basecodes(stop=False):
     df = pd.read_csv(OBS_TABLE)
     conc = pd.Series(df["CONCEPT_CD"].unique())
     mod = pd.Series(df["MODIFIER_CD"].unique())
     mod = mod[~mod.isin(["@"])]
     mod_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"MODIFIER_DIMENSION.csv")["MODIFIER_CD"]
     conc_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"CONCEPT_DIMENSION.csv")["CONCEPT_CD"]
+    if stop:
+        print("Some concepts or modifiers are not in the ontology. \nTake a look at the \"missing_concepts\" and \"missing_modifiers\" variables. \\\
+                \nYou can access the tail of modifiers (typically showing the terminology codes) through the \"tail_modifiers\" variable")
+        missing_concepts = conc[~conc.isin(conc_dim)]
+        missing_modifiers = mod[~mod.isin(mod_dim)]
+        tail_modifiers = mod[mod.rfind("\\"):]
+        pd.set_option('display.max_colwidth', None)
+        pdb.set_trace()
     return all(conc.isin(conc_dim)) and all (mod.isin(mod_dim))
