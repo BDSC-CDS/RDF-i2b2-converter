@@ -55,11 +55,11 @@ def merge_roots():
 
 if __name__ == "__main__":
     
-    #create_dir(OUTPUT_TABLES_LOCATION)
-    #generate_ontology_table()
+    create_dir(OUTPUT_TABLES_LOCATION)
+    generate_ontology_table()
     merge_roots()
     merge_metadatavaluefields(OUTPUT_TABLES_LOCATION)
-    # insert_units()
+    insert_units()
 
     gen_concept_modifier_dim(
         folder_path=OUTPUT_TABLES_LOCATION, metadata_filename="METADATA.csv"
