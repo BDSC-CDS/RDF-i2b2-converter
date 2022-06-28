@@ -210,8 +210,6 @@ class Property(Component):
                 ChildfreeConcept(gen) for gen in processed_range_res["muted"]
             ]
             for obj in raw_ranges:
-                if "777-3" in obj.resource.identifier:
-                    pdb.set_trace()
                 # The explore method will trigger subclasses and properties discovery
                 if obj.is_valueset():
                     self.ranges.extend(obj.resolver.explore_valueset())

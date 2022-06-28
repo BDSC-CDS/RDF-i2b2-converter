@@ -24,7 +24,7 @@ MIGRATIONS = {
         "destination":["."], 
         "xmlvaluetype":"PosFloat"
         },
-    "swissbioref:hasAgeValueFAIL":{
+    "swissbioref:hasAgeValue":{
         "concept":"sphn:Biosample",
         "destination":["swissbioref:hasSubjectAge\swissbioref:Age"],
         "xmlvaluetype":"PosFloat"
@@ -58,7 +58,7 @@ def resolve_rows(df, destdic):
             npath= path[:path.find("/*")]
             idces = df.loc[df["C_FULLNAME"].str.contains(npath) & df["M_APPLIED_PATH"].str.contains(conc)]
         else:
-            idces = df.loc[df["C_FULLNAME"] == ("\\"+path+"\\") & df["M_APPLIED_PATH"].str.contains(conc)]
+            idces = df.loc[(df["C_FULLNAME"] == ("\\"+path+"\\")) & (df["M_APPLIED_PATH"].str.contains(conc))]
         res_idx = res_idx.union(idces.index)
 
     return res_idx
@@ -83,7 +83,6 @@ def merge_metadatavaluefields(output_tables_loc):
         if destdic["concept"] != extract_parent_id(row):
             print("Concept does not match at ", destdic["concept"], "could not migrate")
             continue
-
         # find out which rows should receive this xml 
         destination_indexes= resolve_rows(dfk[["C_FULLNAME", "C_PATH", "M_APPLIED_PATH", "C_TABLENAME"]], destdic)
         if len(destination_indexes)==0:

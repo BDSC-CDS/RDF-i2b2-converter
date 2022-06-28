@@ -7,7 +7,10 @@ sys.path.insert(0, myPath)
 
 UNITS_LOOKUP = myPath+"lookup_units.csv"
 
-def insert_units():
+def insert_units(output_tables_loc):
+
+    globals()["OUTPUT_TABLES_LOCATION"] = output_tables_loc
+    globals()["METADATA_LOC"] = output_tables_loc + "METADATA.csv"
     df = pd.read_csv(METADATA_LOC)
     DISCR_REGEX = "Integer|Float"
     UNIT_XML_TAG = "<NormalUnits>"

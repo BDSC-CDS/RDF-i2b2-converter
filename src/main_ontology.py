@@ -59,7 +59,7 @@ if __name__ == "__main__":
     generate_ontology_table()
     merge_roots()
     merge_metadatavaluefields(OUTPUT_TABLES_LOCATION)
-    insert_units()
+    insert_units(OUTPUT_TABLES_LOCATION)
 
     gen_concept_modifier_dim(
         folder_path=OUTPUT_TABLES_LOCATION, metadata_filename="METADATA.csv"

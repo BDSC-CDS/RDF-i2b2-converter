@@ -1,5 +1,5 @@
 {
-    "DEBUG":"True",
+    "DEBUG":"False",
     "MAX_BASECODE_LENGTH": 50,
     "ROOT_PATHS": ["\\SPHNv2021\\", "\\SPO\\"],
     "OUTPUT_TABLES_LOCATION": "output_tables/",
