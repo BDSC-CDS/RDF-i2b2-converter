@@ -2,7 +2,7 @@ import os
 import sys, pdb
 import pandas as pd
 
-myPath = os.path.dirname(os.path.abspath(__file__))
+myPath = os.path.dirname(os.path.abspath(__file__))+"/"
 sys.path.insert(0, myPath)
 
 UNITS_LOOKUP = myPath+"lookup_units.csv"
