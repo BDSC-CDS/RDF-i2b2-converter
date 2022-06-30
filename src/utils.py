@@ -11,9 +11,9 @@ It initializes global variables by reading the "ontology_config" file.
 """
 
 ###########
-GRAPH_CONFIG = "/config/graph_config_spo.json"
-I2B2_MAPPING = "/config/i2b2_rdf_config_spo.json"
-DATA_CONFIG = "/config/data_config_spo.json"
+GRAPH_CONFIG = "/config/graph_config.json"
+I2B2_MAPPING = "/config/i2b2_rdf_config.json"
+DATA_CONFIG = "/config/data_config.json"
 
 with open(GRAPH_CONFIG) as ff:
     config = json.load(ff)
