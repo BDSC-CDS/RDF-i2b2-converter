@@ -1,8 +1,5 @@
 from utils import *
 
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath)
-
 OBS_TABLE = OUTPUT_TABLES_LOCATION +"OBSERVATION_FACT.csv"
 def fill_nulls():
     """
