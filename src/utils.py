@@ -9,12 +9,13 @@ import json, os, sys, datetime
 This file figures file and format utility functions.
 It initializes global variables by reading the "ontology_config" file.
 """
-GRAPH_CONFIG = "config/graph_config_spo.json"
-I2B2_MAPPING = "config/i2b2_rdf_config_spo.json"
-DATA_CONFIG = "config/data_config_spo.json"
 
-cur_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
-with open(cur_path + GRAPH_CONFIG) as ff:
+###########
+GRAPH_CONFIG = "/config/graph_config_spo.json"
+I2B2_MAPPING = "/config/i2b2_rdf_config_spo.json"
+DATA_CONFIG = "/config/data_config_spo.json"
+
+with open(GRAPH_CONFIG) as ff:
     config = json.load(ff)
 for key, val in config["parameters"].items():
     globals()[key] = val
@@ -23,12 +24,12 @@ for key, val in config["uris"].items():
         rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
     )
 
-with open(cur_path + I2B2_MAPPING) as ff:
+with open(I2B2_MAPPING) as ff:
     config = json.load(ff)
 for key, val in config.items():
     globals()[key] = val if val != "False" else False
 
-with open(cur_path + DATA_CONFIG) as ff:
+with open(DATA_CONFIG) as ff:
     config = json.load(ff)
 for key, val in config.items():
     val = int(val) if type(val) == str and val.isnumeric() else val
@@ -46,13 +47,12 @@ TERMINOLOGIES_FILES = {}
 class GraphParser:
     def __init__(self, paths):
         self.graph = rdflib.Graph()
-        my_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
         result = []
         for pathi in paths:
-            if os.path.isfile(my_path + pathi):
-                result.append(my_path + pathi)
+            if os.path.isfile(pathi):
+                result.append(pathi)
                 continue
-            result.extend(glob.glob(my_path + pathi + "/**/*.ttl", recursive=True))
+            result.extend(glob.glob(pathi + "/**/*.ttl", recursive=True))
         for filek in result:
             print("Loading file: " + filek)
             dot = filek.rfind(".")

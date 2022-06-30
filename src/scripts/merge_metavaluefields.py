@@ -26,7 +26,7 @@ MIGRATIONS = {
         },
     "swissbioref:hasAgeValue":{
         "concept":"sphn:Biosample",
-        "destination":["swissbioref:hasSubjectAge\swissbioref:Age"],
+        "destination":["swissbioref:hasSubjectAge"],
         "xmlvaluetype":"PosFloat"
     }
     }
@@ -84,7 +84,7 @@ def merge_metadatavaluefields(output_tables_loc):
             print("Concept does not match at ", destdic["concept"], "could not migrate")
             continue
         # find out which rows should receive this xml 
-        destination_indexes= resolve_rows(dfk[["C_FULLNAME", "C_PATH", "M_APPLIED_PATH", "C_TABLENAME"]], destdic)
+        destination_indexes= resolve_rows(dfk[["C_FULLNAME", "C_PATH", "M_APPLIED_PATH", "C_TABLENAME", "C_VISUALATTRIBUTES"]], destdic)
         if len(destination_indexes)==0:
             continue
 
