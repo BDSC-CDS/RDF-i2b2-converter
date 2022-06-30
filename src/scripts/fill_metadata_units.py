@@ -11,8 +11,11 @@ def insert_units(output_tables_loc):
     DISCR_REGEX = "Integer|Float"
     UNIT_XML_TAG = "<NormalUnits>"
 
-
-    lookup = pd.read_csv(UNITS_LOOKUP, sep=';')
+    try:
+        lookup = pd.read_csv(UNITS_LOOKUP, sep=';')
+    except:
+        print("No unit lookup file found, skipping")
+        return
     lookup = dict(zip(lookup["Code"], lookup["Unit"]))
 
     # Select only rows using metadataxml
