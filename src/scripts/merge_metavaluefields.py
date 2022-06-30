@@ -4,10 +4,6 @@ import pandas as pd
 import pdb
 import json
 
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath)
-
-
 MIGRATIONS = {
     "swissbioref:hasLabResultValue" : {
         "concept":"sphn:LabResult", 

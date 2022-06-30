@@ -6,9 +6,6 @@ import json
 
 COLUMNS_TO_REPLACE = ["VALTYPE_CD", "TVAL_CHAR", "NVAL_NUM", "VALUEFLAG_CD", "QUANTITY_NUM", "UNITS_CD"]
 
-myPath = os.path.dirname(os.path.abspath(__file__))+"/"
-sys.path.insert(0, myPath)
-
 def transfer_obs_numerical_values(output_tables_loc):
 
     globals()["OUTPUT_TABLES_LOCATION"] = output_tables_loc
@@ -39,9 +36,9 @@ def transfer_obs_numerical_values(output_tables_loc):
             tmp = pd.concat([tmp, row.loc[COLUMNS_TO_REPLACE].rename(idx).to_frame().T], axis=0)
         return tmp
 
-    if not os.path.exists(myPath+'migrations_logs.json'):
+    if not os.path.exists(OUTPUT_TABLES_LOCATION+'migrations_logs.json'):
         return
-    with open(myPath+'migrations_logs.json') as json_file:
+    with open(OUTPUT_TABLES_LOCATION+'migrations_logs.json') as json_file:
         migrations = json.load(json_file)
     df = pd.read_csv(OBS_TABLE)
     df.columns = map(str.upper, df.columns)

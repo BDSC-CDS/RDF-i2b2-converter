@@ -2,15 +2,11 @@ import os
 import sys, pdb
 import pandas as pd
 
-myPath = os.path.dirname(os.path.abspath(__file__))+"/"
-sys.path.insert(0, myPath)
-
-UNITS_LOOKUP = myPath+"lookup_units.csv"
 
 def insert_units(output_tables_loc):
-
     globals()["OUTPUT_TABLES_LOCATION"] = output_tables_loc
     globals()["METADATA_LOC"] = output_tables_loc + "METADATA.csv"
+    globals()["UNITS_LOOKUP"]= output_tables_loc+"lookup_units.csv"
     df = pd.read_csv(METADATA_LOC)
     DISCR_REGEX = "Integer|Float"
     UNIT_XML_TAG = "<NormalUnits>"
