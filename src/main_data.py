@@ -1,3 +1,4 @@
+from doctest import ELLIPSIS_MARKER
 from data_loader import *
 from scripts.merge_datafields import *
 from scripts.obs_tools import *
@@ -35,3 +36,5 @@ if __name__ == "__main__":
     # Final sanity check
     if not check_basecodes():
         check_basecodes(stop=True)
+    else:
+        print("Success! All items are consistent with the ontology.")

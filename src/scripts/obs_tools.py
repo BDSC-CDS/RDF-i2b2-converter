@@ -57,8 +57,13 @@ def check_basecodes(stop=False):
     conc = pd.Series(df["CONCEPT_CD"].unique())
     mod = pd.Series(df["MODIFIER_CD"].unique())
     mod = mod[~mod.isin(["@"])]
-    mod_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"MODIFIER_DIMENSION.csv")["MODIFIER_CD"]
-    conc_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"CONCEPT_DIMENSION.csv")["CONCEPT_CD"]
+    try:
+        mod_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"MODIFIER_DIMENSION.csv")["MODIFIER_CD"]
+        conc_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"CONCEPT_DIMENSION.csv")["CONCEPT_CD"]
+    except:
+        print("Conversion passed but consistency check were not performed due to absence of ontology tables (CONCEPT_DIMENSION and/or MODIFIER_DIMENSION in the folder", OUTPUT_TABLES_LOCATION)
+        print("Put them there and call check_basecodes() in the I/O interface opening now:")
+        pdb.set_trace()
     if stop:
         print("Some concepts or modifiers are not in the ontology. \nTake a look at the \"missing_concepts\" and \"missing_modifiers\" variables. \\\
                 \nYou can access the tail of modifiers (typically showing the terminology codes) through the \"tail_modifiers\" variable")
