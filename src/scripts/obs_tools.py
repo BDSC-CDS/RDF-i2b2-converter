@@ -62,10 +62,12 @@ def check_basecodes(stop=False):
         print("Put them there and call check_basecodes() in the I/O interface opening now:")
         pdb.set_trace()
     if stop:
-        print("Some concepts or modifiers are not in the ontology. \nTake a look at the \"missing_concepts\" and \"missing_modifiers\" variables. \\\
-                \nYou can access the tail of modifiers (typically showing the terminology codes) through the \"tail_modifiers\" variable")
+        print("Some concepts or modifiers are not in the ontology. \nPlease take a look at the \"missing_concepts\" and \"missing_modifiers\" logfiles.\\\
+            If unreadable, change the "DEBUG" variable in the config files to True, and run the "make debug" command.")
         missing_concepts = conc[~conc.isin(conc_dim)]
         missing_modifiers = mod[~mod.isin(mod_dim)]
+        tail_modifiers = [k[-20:] for k in missing_modifiers]
         pd.set_option('display.max_colwidth', None)
-        pdb.set_trace()
+        missing_concepts.to_csv(OUTPUT_TABLES_LOCATION+"logs_missing_concepts.csv")
+        missing_modifiers.to_csv(OUTPUT_TABLES_LOCATION+"logs_missing_modifiers.csv")
     return all(conc.isin(conc_dim)) and all (mod.isin(mod_dim))
