@@ -21,7 +21,7 @@ def generate_ontology_table():
     root_entries = parser.get_entrypoints(ROOT_URIS)
 
     # Now prepare the directory and writing
-    wipe_directory(OUTPUT_TABLES_LOCATION)
+    #wipe_directory(OUTPUT_TABLES_LOCATION)
     init = True
     # Actual loop over the root links
     for concept_res in root_entries:
