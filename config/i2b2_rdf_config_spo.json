@@ -32,6 +32,28 @@
         "DOUBLE_DESCRIPTOR": {"VALUETYPE_CD": "N", "C_METADATAXML": {"DataType":"Float"}},
         "DATE_DESCRIPTOR": {"VALUETYPE_CD": "N", "C_METADATAXML": {"DataType":"PosInteger"}}
     },
+    "MIGRATIONS" : {
+        "swissbioref:hasLabResultValue" : {
+            "concept":"sphn:LabResult", 
+            "destination": ["swissbioref:hasLabResultLabTestCode/*"], 
+            "xmlvaluetype":"Float"
+            },
+        "sphn:hasDateTime":{
+            "concept":"sphn:BirthDate", 
+            "destination":["."], 
+            "xmlvaluetype":"Integer"
+            },
+        "sphn:hasBodyWeightValue":{
+            "concept":"sphn:BodyWeight", 
+            "destination":["."], 
+            "xmlvaluetype":"PosFloat"
+            },
+        "swissbioref:hasAgeValue":{
+            "concept":"sphn:Biosample",
+            "destination":["swissbioref:hasSubjectAge"],
+            "xmlvaluetype":"PosFloat"
+        }
+        },
     "XML_PATTERN" : "<?xml version='1.0'?><ValueMetadata><Version>3.02</Version><CreationDateTime>08/14/2008 01:22:59</CreationDateTime><TestID></TestID><TestName></TestName><DataType></DataType><CodeType></CodeType><Flagstouse></Flagstouse><Oktousevalues>Y</Oktousevalues><MaxStringLength></MaxStringLength><EnumValues></EnumValues><CommentsDeterminingExclusion><Com></Com></CommentsDeterminingExclusion><UnitValues><NormalUnits></NormalUnits><EqualUnits></EqualUnits><ExcludingUnits></ExcludingUnits><ConvertingUnits><Units></Units><MultiplyingFactor></MultiplyingFactor></ConvertingUnits></UnitValues><Analysis><Enums /><Counts /><New /></Analysis></ValueMetadata>",
     "COLUMNS": {
         "CONCEPT_DIMENSION":["CONCEPT_PATH", "CONCEPT_CD", "NAME_CHAR", "CONCEPT_BLOB", "UPDATE_DATE", "DOWNLOAD_DATE", "IMPORT_DATE", "SOURCESYSTEM_CD", "UPLOAD_ID"],
