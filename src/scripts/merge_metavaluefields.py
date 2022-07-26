@@ -4,28 +4,7 @@ import pandas as pd
 import pdb
 import json
 
-MIGRATIONS = {
-    "swissbioref:hasLabResultValue" : {
-        "concept":"sphn:LabResult", 
-        "destination": ["swissbioref:hasLabResultLabTestCode/*"], 
-        "xmlvaluetype":"Float"
-        },
-    "sphn:hasDateTime":{
-        "concept":"sphn:BirthDate", 
-        "destination":["."], 
-        "xmlvaluetype":"Integer"
-        },
-    "sphn:hasBodyWeightValue":{
-        "concept":"sphn:BodyWeight", 
-        "destination":["."], 
-        "xmlvaluetype":"PosFloat"
-        },
-    "swissbioref:hasAgeValue":{
-        "concept":"sphn:Biosample",
-        "destination":["swissbioref:hasSubjectAge"],
-        "xmlvaluetype":"PosFloat"
-    }
-    }
+
 
 def extract_parent_id(row):
     # tool to retrieve the short URI of the parent element in the i2b2 ontology file
@@ -59,7 +38,7 @@ def resolve_rows(df, destdic):
 
     return res_idx
 
-def merge_metadatavaluefields(output_tables_loc):
+def merge_metadatavaluefields(output_tables_loc, migrations):
 
     globals()["OUTPUT_TABLES_LOCATION"] = output_tables_loc
     globals()["METADATA_LOC"] = output_tables_loc + "METADATA.csv"
@@ -69,12 +48,12 @@ def merge_metadatavaluefields(output_tables_loc):
     dfk=df.assign(key=df["C_FULLNAME"].str.extract(r'.*\\([^\\]+)\\'))
 
     # get the positions of the lines to be deleted and digested into other lines
-    to_digest = dfk.loc[dfk["C_METADATAXML"].notnull() & dfk["key"].isin(MIGRATIONS.keys())]
+    to_digest = dfk.loc[dfk["C_METADATAXML"].notnull() & dfk["key"].isin(migrations.keys())]
 
     values = pd.DataFrame(columns=["C_METADATAXML"])
     moved = pd.Index([])
     for ix,row in to_digest.iterrows():
-        destdic = MIGRATIONS[row["key"]]
+        destdic = migrations[row["key"]]
         # Check it's the good item related to the good parent
         if destdic["concept"] != extract_parent_id(row):
             print("Concept does not match at ", destdic["concept"], "could not migrate")

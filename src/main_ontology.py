@@ -60,7 +60,7 @@ if __name__ == "__main__":
     create_dir(OUTPUT_TABLES_LOCATION)
     generate_ontology_table()
     merge_roots()
-    merge_metadatavaluefields(OUTPUT_TABLES_LOCATION)
+    merge_metadatavaluefields(OUTPUT_TABLES_LOCATION, MIGRATIONS)
     insert_units(OUTPUT_TABLES_LOCATION)
 
     gen_concept_modifier_dim(
