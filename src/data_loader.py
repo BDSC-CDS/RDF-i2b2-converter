@@ -12,6 +12,14 @@ def is_valid(pred, obj):
     val = obj.value(TYPE_PREDICATE_URI) if callable(obj.value) else get_datatype(obj)
     return val is None or val not in TO_IGNORE + BLACKLIST
 
+def extract_value(value, instructions):
+    res = value
+    for ins in instructions:
+        res = res.__getattribute__(ins)
+        if callable(res):
+            res = res()
+    return res
+
 
 class DataLoader:
     """
@@ -131,14 +139,20 @@ class ObservationRegister:
             value = resource.value
             if not vtype in self.value_items.keys():
                 raise Exception("Type not defined in config file: ", vtype)
+            if "transform" in self.value_items[vtype].keys() :
+                value = extract_value(value, self.value_items[vtype]["transform"])
+                pdb.set_trace()
             details.update({self.value_items[vtype]["col"]: value})
             details.update(self.value_items[vtype]["misc"])
         elif basecode != "@":
             hdler = I2B2BasecodeHandler()
             obj_rdftype = resource.value(TYPE_PREDICATE_URI)
+            # TODO: modify here to support non-untyped NamedIndividuals. 
+            # Before that, check catching of multiple types works correctly 
             if obj_rdftype is not None:
                 el = obj_rdftype.identifier
             else:
+                # Is a NamedIndividual
                 el = resource.identifier
             new_bc = hdler.reduce_basecode(el, prefix=basecode, debug=DEBUG)
         # In any case this digest thing should only add a value field if there is a value, then proceeds with adding the basecode entry in any case
