@@ -35,6 +35,8 @@ def generate_ontology_table():
             buffer = converter.get_batch()
             init = False
 
+    print("Done, all went well and your ontology tables are available in", OUTPUT_TABLES_LOCATION)
+
     # Step 3: Write the root information in the DB file then merge all concept files into it
     # Already done if the parser.get_entrypoints was given the root uri
     # Else, we have to make sure the root line is always written (or table will be invalid!)
