@@ -95,7 +95,7 @@ class DataLoader:
         if self.entry_class_resources == []:
             return []
         res = []
-        while res == []:
+        while res == [] and len(self.entry_class_resources)>0:
             cur = self.entry_class_resources.pop()
             selclass = cur.identifier
             obs = self.graph.query(
@@ -108,6 +108,12 @@ class DataLoader:
                 initBindings={"class": selclass},
             )
             res = [self.graph.resource(k[0]) for k in obs]
+            if res==[]:
+                print("No observation for top concept", selclass)
+            else:
+                print("Found data for top concept", selclass)
+        if res == []:
+            print("No data found. Please check the directories, Makefile volume binding (if using docker) or config files.")
         return res
 
 
