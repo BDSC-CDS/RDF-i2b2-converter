@@ -8,7 +8,7 @@ def insert_units(output_tables_loc):
     globals()["METADATA_LOC"] = output_tables_loc + "METADATA.csv"
     globals()["UNITS_LOOKUP"]= output_tables_loc+"lookup_units.csv"
     df = pd.read_csv(METADATA_LOC)
-    DISCR_REGEX = "Integer|Float"
+    DISCR_REGEX = "Integer|Float|PosFloat"
     UNIT_XML_TAG = "<NormalUnits>"
 
     try:

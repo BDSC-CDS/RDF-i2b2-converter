@@ -31,7 +31,7 @@ def resolve_rows(df, destdic):
             idces = conc_row
         elif "*" in path:
             npath= path[:path.find("/*")]
-            idces = df.loc[df["C_FULLNAME"].str.contains(npath) & df["M_APPLIED_PATH"].str.contains(conc)]
+            idces = df.loc[df["C_FULLNAME"].str.contains(npath) & ~(df["C_FULLNAME"]==("\\"+npath+"\\")) & df["M_APPLIED_PATH"].str.contains(conc)]
         else:
             idces = df.loc[(df["C_FULLNAME"] == ("\\"+path+"\\")) & (df["M_APPLIED_PATH"].str.contains(conc))]
         res_idx = res_idx.union(idces.index)
@@ -73,6 +73,7 @@ def merge_metadatavaluefields(output_tables_loc, migrations):
         logs.update({row["C_BASECODE"]:df.loc[destination_indexes, "C_BASECODE"].tolist()})
         # For each found index, store it into the temporary table
         df.loc[destination_indexes, "C_METADATAXML"] = xml
+        df.loc[destination_indexes, "C_VISUALATTRIBUTES"] = row["C_VISUALATTRIBUTES"]
         moved = moved.union([ix])
     df=df.drop(moved)
     df.to_csv(METADATA_LOC, index=False)
