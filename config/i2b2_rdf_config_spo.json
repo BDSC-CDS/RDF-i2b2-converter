@@ -4,6 +4,7 @@
     "ROOT_PATHS": ["\\SPHNv2021\\", "\\SPO\\"],
     "OUTPUT_TABLES_LOCATION": "/output_tables/",
     "PROJECT_NAME":"SPO",
+    "IGNORE_TERM_ID":[],
     "ONTOLOGY_DROP_DIC": {
         "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
         "PATIENT_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",
