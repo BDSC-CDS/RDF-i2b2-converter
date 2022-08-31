@@ -4,7 +4,7 @@ import pandas as pd
 import pdb
 import json
 
-COLUMNS_TO_REPLACE = ["VALTYPE_CD", "TVAL_CHAR", "NVAL_NUM", "VALUEFLAG_CD", "QUANTITY_NUM", "UNITS_CD"]
+COLUMNS_TMP = ["CONCEPT_CD", "MODIFIER_CD"]
 
 def transfer_obs_numerical_values(output_tables_loc):
 
@@ -17,7 +17,8 @@ def transfer_obs_numerical_values(output_tables_loc):
         # Get the group of interest for this particular observation
         curgrp = gps.get_group(tuple(row.loc[["PATIENT_NUM", "CONCEPT_CD", "INSTANCE_NUM"]]))
         dests = get_dests(row, curgrp)
-        filling = get_shot(curgrp, dests, row)
+        # If destinations already exist in the table, inject the row information in them. Else, mutate the row basecode itself.
+        filling = get_shot(dests, row)
         return filling
 
     def get_dests(row, curgrp):
@@ -25,15 +26,17 @@ def transfer_obs_numerical_values(output_tables_loc):
             |((curgrp["CONCEPT_CD"].isin(destinations))
                 &(curgrp["MODIFIER_CD"]=="@"))
             ]
-        if dest.empty:
-            print("Nothing found for ", el)
-        return dest.index
+        return dest
     
-    def get_shot(grp, dest_idx, row):
-        tmp = pd.DataFrame(columns=COLUMNS_TO_REPLACE)
-        for idx in dest_idx:
-            # Those indices we are looping over refer to the "tbmigrated_rows" dataslice
-            tmp = pd.concat([tmp, row.loc[COLUMNS_TO_REPLACE].rename(idx).to_frame().T], axis=0)
+    def get_shot(dests, row):
+        dests_idx = dests.index
+        if dests_idx.size >1:
+            raise Exception("Cannot relocate", row["C_FULLNAME"], "to more than one location")
+        elif dests_idx.size==0:
+            tmp = pd.Series({"CONCEPT_CD":row["CONCEPT_CD"], "MODIFIER_CD":destinations[0], "INDICES_TO_RM":None})
+        else:
+            tmp = pd.concat([dests[COLUMNS_TMP].squeeze(), pd.Series({"INDICES_TO_RM":dests_idx.values[0]})])
+        #tmp.rename(row.name)
         return tmp
 
     try:
@@ -51,12 +54,8 @@ def transfer_obs_numerical_values(output_tables_loc):
         tbmigrated_rows = df.loc[df["MODIFIER_CD"]==el]
         print("migrating value fields for", el, ",", tbmigrated_rows.shape, "lines affected")
         res =tbmigrated_rows.apply(lambda row: transfer(row), axis=1)
-        coll = pd.concat(res.values) if not res.empty else res
         # Inject the corrected subrow where it belongs in the matrix 
         # Merge the updated lines into the original dataframe... oof
-        df = df.loc[df.index.difference(tbmigrated_rows.index)]
-        df.update(coll) 
+        df=df.drop(res["INDICES_TO_RM"].dropna())
+        df.update(res[COLUMNS_TMP]) 
     df.to_csv(OBS_TABLE, index=False)
-
-
-    
