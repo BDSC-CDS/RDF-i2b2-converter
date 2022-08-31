@@ -13,6 +13,9 @@ def is_valid(pred, obj):
     return val is None or val not in TO_IGNORE + BLACKLIST
 
 def extract_value(value, instructions):
+    """
+    Runtime madness.
+    """
     res = value
     for ins in instructions:
         res = res.__getattribute__(ins)
@@ -147,7 +150,6 @@ class ObservationRegister:
                 raise Exception("Type not defined in config file: ", vtype)
             if "transform" in self.value_items[vtype].keys() :
                 value = extract_value(value, self.value_items[vtype]["transform"])
-                pdb.set_trace()
             details.update({self.value_items[vtype]["col"]: value})
             details.update(self.value_items[vtype]["misc"])
         elif basecode != "@":
