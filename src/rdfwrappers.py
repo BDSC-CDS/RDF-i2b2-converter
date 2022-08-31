@@ -91,15 +91,14 @@ class Component:
         self.label = self.shortname if fmtd_label == "" else fmtd_label.toPython()
 
         if self.is_terminology_term:
-            # TODO add terminology name here as prefix
             sep = self.shortname.rfind(":")
             code = self.shortname[sep + 1 :]
+            term_name = self.shortname[:sep].upper()
 
-            if code not in self.label and len(code) < 20:
+            if code not in self.label and term_name not in IGNORE_TERM_ID:
                 if code.isnumeric() and len(code) < 2:
                     code = "0" + code
                 self.label = code + " - " + self.label
-            term_name = self.shortname[:sep].upper()
             if (
                 self.parent_class is None or term_name not in self.parent_class.label
             ) and term_name not in self.label:
