@@ -47,6 +47,7 @@ def transfer_obs_numerical_values(output_tables_loc):
         return
     df = pd.read_csv(OBS_TABLE)
     df.columns = map(str.upper, df.columns)
+
     final_tab=[]
     gps=df.groupby(["PATIENT_NUM", "CONCEPT_CD", "INSTANCE_NUM"])
     for el, destinations in migrations.items():
@@ -56,6 +57,7 @@ def transfer_obs_numerical_values(output_tables_loc):
         res =tbmigrated_rows.apply(lambda row: transfer(row), axis=1)
         # Inject the corrected subrow where it belongs in the matrix 
         # Merge the updated lines into the original dataframe... oof
-        df=df.drop(res["INDICES_TO_RM"].dropna())
+        idl = res["INDICES_TO_RM"].dropna() if not res.empty else pd.Index([])
+        df=df.drop(idl)
         df.update(res[COLUMNS_TMP]) 
     df.to_csv(OBS_TABLE, index=False)
