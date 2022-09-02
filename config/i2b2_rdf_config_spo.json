@@ -42,12 +42,14 @@
         "sphn:hasDateTime":{
             "concept":"sphn:BirthDate", 
             "destination":["."], 
-            "xmlvaluetype":"Integer"
+            "xmlvaluetype":"Integer",
+            "newvisualattribute":"LA"
             },
         "sphn:hasBodyWeightValue":{
             "concept":"sphn:BodyWeight", 
             "destination":["."], 
-            "xmlvaluetype":"PosFloat"
+            "xmlvaluetype":"PosFloat",
+            "newvisualattribute":"LA"
             },
         "swissbioref:hasAgeValue":{
             "concept":"sphn:Biosample",
