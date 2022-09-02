@@ -73,7 +73,7 @@ def merge_metadatavaluefields(output_tables_loc, migrations):
         logs.update({row["C_BASECODE"]:df.loc[destination_indexes, "C_BASECODE"].tolist()})
         # For each found index, store it into the temporary table
         df.loc[destination_indexes, "C_METADATAXML"] = xml
-        new_va = row["C_VISUALATTRIBUTES"] if "newvisualattributes" not in destdic.keys() else destdic[2"newvisualattributes"]
+        new_va = row["C_VISUALATTRIBUTES"] if "newvisualattributes" not in destdic.keys() else destdic["newvisualattributes"]
         df.loc[destination_indexes, "C_VISUALATTRIBUTES"] = new_va
         moved = moved.union([ix])
     df=df.drop(moved)
