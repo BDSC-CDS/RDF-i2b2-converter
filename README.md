@@ -20,6 +20,8 @@ The required resources are:
 * a RDF ontology file, featuring rdf:type and owl:class predicates ((we used a .ttl file, hence the _format=turtle_ keyword argument in calls to rdflib. Change it accordingly to the format of your RDF files.)
 * configuration files, by default named *graph_config.json* and *i2b2-mapping.json* featuring parameters for the ontology extraction and mapping to i2b2 tables.
 
+The **output** of the ontology converter consists in *METADATA.csv*, *MODIFIER_DIMENSION.csv*, *CONCEPT_DIMENSION.csv*, *TABLE_ACCESS.csv*, and *migrations_logs.json*. (the latter being an utility file read by the data converter)
+
 ### A walk through the ontology configuration files:
 ```python
 --- graph_config.json
@@ -65,7 +67,9 @@ The end-to-end scheme is quite specific to i2b2 but as for the ontology conversi
 
 The i2b2 data system is built along a [star schema](https://community.i2b2.org/wiki/display/ServerSideDesign/I2B2+DATA+MART), and concept paths written in the ontology table are not specified in the data table. Instead, a _concept code_ allows to join the data table elements (_observations_) to their corresponding ontology path. Both the path and code are written in the CONCEPT_DIMENSION. The same logic applies to _modifiers_ and the MODIFIER_DIMENSION.
 
-The input graph can be either a unique files of instances or several files to be joined into a unique data graph. The loading script will discover all files in the `DATA_GRAPH_LOCATION` directory (see config file). 
+The input graph can be either a unique files of instances or several files to be joined into a unique data graph. The loading script will discover all files in the `DATA_GRAPH_LOCATION` directory (see config file). If the ontology converter produced a nonempty *migrations_logs.json* file, it needs to be present in the output folder BEFORE starting the data conversion.
+
+A consistency check will be performed in the end of the conversion. If ontology tables (at least *CONCEPT_DIMENSION.csv* and *MODIFIER_DIMENSION.csv*) are present in the target directory and match the codes created by the data converter, a congratulations message will be printed. In any case, two logfiles will list the inconsistencies.
 
 ### A walk through the ontology configuration files:
 ```python
@@ -96,3 +100,8 @@ Data conversion pipeline
 `$ cd RDF-i2b2-converter/`
 
 `$ python3 src/main_data.py`
+
+
+
+## Debug mode
+The config file *i2b2_rdf_mapping.json* features a **DEBUG** variable. When set to True, all conversion operations (both ontology or data samples) will create human-readable codes instead of i2b2-ready hashes. In case of inconsistencies (see [this section](#data-samples-converter)), it can help to re-run all conversions in `"DEBUG"="TRUE"` mode, and check the readable logs to find out which code was missing in the ontology and why.
