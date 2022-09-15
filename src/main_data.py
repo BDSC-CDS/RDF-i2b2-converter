@@ -25,7 +25,7 @@ if __name__ == "__main__":
     graphparser = load_observations()
     # Run scripts to modify the table according to project-specific purposes
     transfer_obs_numerical_values(OUTPUT_TABLES_LOCATION)
-    if DEBUG:
+    if ~DEBUG:
         # i2b2-formatting routines
         lookup_table = reindex()
         fill_nulls()
