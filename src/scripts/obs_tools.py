@@ -37,9 +37,9 @@ def reindex():
         gpd = df.groupby(col)
         counter=0
         for key, subdf in gpd.groups.items():
-            counter = counter+1
-            if counter%100==0:
+            if counter%1000==0:
                 print("    Reindexed", counter, "groups out of ", len(gpd.groups.keys()))
+            counter = counter+1
             df.loc[subdf, col] = new_id(key, col)
 
     #df["ENCOUNTER_NUM"]=df.apply(lambda row: new_id(row, "ENCOUNTER_NUM"), axis=1)

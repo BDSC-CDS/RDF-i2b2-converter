@@ -12,7 +12,7 @@ def transfer_obs_numerical_values(output_tables_loc):
     globals()["OBS_TABLE"] = output_tables_loc + "OBSERVATION_FACT.csv"
     def transfer(row):
         vv = row["INSTANCE_NUM"]
-        if vv%50 ==0:
+        if vv%1000 ==0:
             print("transfering patient", vv)
         # Get the group of interest for this particular observation
         curgrp = gps.get_group(tuple(row.loc[["PATIENT_NUM", "CONCEPT_CD", "INSTANCE_NUM"]]))
