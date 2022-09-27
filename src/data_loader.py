@@ -49,7 +49,7 @@ class DataLoader:
         counter = 0
         while nonempty:
             nonempty = self.write_batch()
-            counter = counter + 1
+            counter = counter + 1 if nonempty else counter
         print("Distinct concepts written: " + str(counter))
 
     def write_batch(self):
