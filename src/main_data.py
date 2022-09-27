@@ -33,7 +33,4 @@ if __name__ == "__main__":
         # i2b2 star schema tables creation
         fill_star_schema(mappings=lookup_table, graph_parser=graphparser)
     # Final sanity check
-    if not check_basecodes():
-        check_basecodes(stop=True)
-    else:
-        print("Success! All items are consistent with the ontology.")
+    check_basecodes()
