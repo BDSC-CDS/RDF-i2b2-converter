@@ -424,6 +424,7 @@ class OntologyDepthExplorer:
                 for sub in subs
                 if sub.identifier in ENTRY_CONCEPTS
             ]
+        return []
 
     def explore_properties(self):
         """

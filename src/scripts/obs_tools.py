@@ -61,7 +61,7 @@ def check_basecodes():
         print("Conversion passed but consistency check were not performed due to absence of ontology tables (CONCEPT_DIMENSION and/or MODIFIER_DIMENSION in the folder", OUTPUT_TABLES_LOCATION)
         print("Put them there and call check_basecodes() in a new Python interface")
         raise Exception("Converted, but skipped consistency checked.")
-    if not all(conc.isin(conc_dim)) and all (mod.isin(mod_dim)):
+    if not (all(conc.isin(conc_dim)) and all (mod.isin(mod_dim))):
         print("Some concepts or modifiers are not in the ontology. \nPlease take a look at the \"missing_concepts\" and \"missing_modifiers\" logfiles. \\\
             If unreadable, change the \"DEBUG\" variable in the config files to True, and run the \"make debug\" command.")
         missing_concepts = conc[~conc.isin(conc_dim)]
