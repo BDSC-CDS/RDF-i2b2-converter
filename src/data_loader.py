@@ -343,8 +343,11 @@ class ContextFactory:
             if "pred_to_value" in self.fields_dic[obj_type].keys()
             else []
         )
-        in_pred = rdflib.URIRef(tmp.pop(0))
-        val = obj.value(in_pred) if callable(obj.value) else obj.value
+        if callable(obj.value):
+            in_pred = rdflib.URIRef(tmp.pop(0))
+            val = obj.value(in_pred)
+        else :
+            val = obj.value
         while tmp != []:
             last_pred = rdflib.URIRef(tmp.pop(0))
             tval = val.value(last_pred)
