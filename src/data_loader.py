@@ -343,7 +343,8 @@ class ContextFactory:
             if "pred_to_value" in self.fields_dic[obj_type].keys()
             else []
         )
-        val = obj.value(rdflib.URIRef(tmp.pop(0))) if callable(obj.value) else obj.value
+        in_pred = rdflib.URIRef(tmp.pop(0))
+        val = obj.value(in_pred) if callable(obj.value) else obj.value
         while tmp != []:
             last_pred = rdflib.URIRef(tmp.pop(0))
             tval = val.value(last_pred)
@@ -352,11 +353,13 @@ class ContextFactory:
                     print("Dead end at ", val)
                 tval = rdflib.URIRef("")
             val = tval
-        pyval = (
-            "{:%Y-%m-%d %H:%M:%S}".format(val)
-            if isinstance(val, datetime.datetime)
-            else val.toPython()
-        )
+        # Unpack both date values that are embedded in a XSD:datetime and the ones that are plain strings (unpacked as datetime.datetime)
+        if isinstance(val, datetime.datetime):
+            pyval = "{:%Y-%m-%d %H:%M:%S}".format(val)
+        elif val is not None:
+            pyval =val.toPython()
+        else:
+            pyval=""
         self.context.update({self.fields_dic[obj_type]["col"]: pyval})
 
     def get_context(self):
