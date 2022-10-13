@@ -120,14 +120,14 @@ def gen_provider_dim(providers_sparqlres):
     prov_df.to_csv(OUTPUT_TABLES_LOCATION + "PROVIDER_DIMENSION.csv", index=False)
 
 
-def fill_star_schema(mappings=None, providers_gen=None):
+def fill_star_schema(mappings=None, providers=None):
     """
     Generate the observation-based star schema tables. 
     If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
     """
     gen_visit_dim()
     gen_patient_dim()
-    gen_provider_dim(providers_gen)
+    gen_provider_dim(providers)
 
     if mappings is not None:
         gen_encounter_mapping(mappings)
