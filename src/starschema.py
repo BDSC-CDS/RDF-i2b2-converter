@@ -79,8 +79,7 @@ def gen_encounter_mapping(lookup):
     emdf["PROJECT_ID"] = PROJECT_NAME
     emdf.loc[1:].to_csv(OUTPUT_TABLES_LOCATION + "ENCOUNTER_MAPPING.csv", index=False)
 
-
-def gen_provider_dim(graph_parser):
+def query_providers(graph_parser):
     provider_class = rdflib.URIRef(ONTOLOGY_DROP_DIC["PROVIDER_INFO"])
     graph = graph_parser.graph
     res = graph.query(
@@ -107,6 +106,10 @@ def gen_provider_dim(graph_parser):
             ),
         },
     )
+    return [el for el in res]
+
+def gen_provider_dim(providers_sparqlres):
+    res = providers_sparqlres
     prov_df = pd.DataFrame(columns=COLUMNS["PROVIDER_DIMENSION"])
     kdic = {"PROVIDER_ID": [], "PROVIDER_PATH": []}
     for el in res:
@@ -117,14 +120,14 @@ def gen_provider_dim(graph_parser):
     prov_df.to_csv(OUTPUT_TABLES_LOCATION + "PROVIDER_DIMENSION.csv", index=False)
 
 
-def fill_star_schema(mappings=None, graph_parser=None):
+def fill_star_schema(mappings=None, providers_gen=None):
     """
     Generate the observation-based star schema tables. 
     If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
     """
     gen_visit_dim()
     gen_patient_dim()
-    gen_provider_dim(graph_parser)
+    gen_provider_dim(providers_gen)
 
     if mappings is not None:
         gen_encounter_mapping(mappings)

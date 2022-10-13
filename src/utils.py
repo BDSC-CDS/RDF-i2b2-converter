@@ -4,6 +4,7 @@ import hashlib
 import glob
 import rdflib
 import json, os, sys, datetime
+import gc
 
 """"
 This file figures file and format utility functions.
@@ -77,6 +78,11 @@ class GraphParser:
 
     def get_entrypoints(self, list=ROOT_URIS):
         return [self.graph.resource(uri) for uri in list]
+
+    def free_memory(self):
+        del self.graph
+        del TERMINOLOGIES_FILES
+        gc.collect()
 
 
 class I2B2BasecodeHandler:
