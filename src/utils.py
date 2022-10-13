@@ -81,7 +81,6 @@ class GraphParser:
 
     def free_memory(self):
         del self.graph
-        del TERMINOLOGIES_FILES
         gc.collect()
 
 
