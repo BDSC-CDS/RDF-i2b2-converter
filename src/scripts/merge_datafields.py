@@ -33,8 +33,12 @@ def transfer_obs_numerical_values(output_tables_loc):
         if dests_idx.size >1:
             raise Exception("Cannot relocate", row["C_FULLNAME"], "to more than one location")
         elif dests_idx.size==0:
-            print("Couldn't relocate", row["MODIFIER_CD"], "because no available destination in the same instance (patient, encounter:", row["PATIENT_NUM"], row["ENCOUNTER_NUM"], ")")
-            tmp = pd.Series({"CONCEPT_CD":row["CONCEPT_CD"], "MODIFIER_CD":row["MODIFIER_CD"], "INDICES_TO_RM":None})
+            if len(destinations)==1 :
+                newcode = destinations[0] 
+            else :
+                newcode= row["MODIFIER_CD"]
+                print("Couldn't relocate", row["MODIFIER_CD"], "because no available destination in the same instance (patient, encounter:", row["PATIENT_NUM"], row["ENCOUNTER_NUM"], ")")
+            tmp = pd.Series({"CONCEPT_CD":row["CONCEPT_CD"], "MODIFIER_CD":newcode, "INDICES_TO_RM":None})
         else:
             tmp = pd.concat([dests[COLUMNS_TMP].squeeze(), pd.Series({"INDICES_TO_RM":dests_idx.values[0]})])
         #tmp.rename(row.name)
