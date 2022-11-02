@@ -24,9 +24,9 @@ def gen_concept_modifier_dim(
         df["C_TABLENAME"] == "MODIFIER_DIMENSION",
         ["C_FULLNAME", "C_BASECODE", "C_NAME"],
     ]
-
-    concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION.csv", index=False)
-    modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION.csv", index=False)
+    suffix="_DEBUG" if DEBUG else ""
+    concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION"+suffix+".csv", index=False)
+    modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION"+suffix+".csv", index=False)
 
 
 def gen_patient_dim():
