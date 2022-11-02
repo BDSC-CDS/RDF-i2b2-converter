@@ -62,8 +62,9 @@ def check_basecodes():
         print("Put them there and call check_basecodes() in a new Python interface")
         raise Exception("Converted, but skipped consistency checked.")
     if not (all(conc.isin(conc_dim)) and all (mod.isin(mod_dim))):
-        print("Some concepts or modifiers are not in the ontology. \nPlease take a look at the \"missing_concepts\" and \"missing_modifiers\" logfiles. \\\
-            If unreadable, change the \"DEBUG\" variable in the config files to True, and run the \"make debug\" command.")
+        print("Some concepts or modifiers are not in the ontology. \nPlease take a look at the \"logs_missing_concepts\" and \"logs_missing_modifiers\" logfiles. \\\
+            If unreadable, change the \"DEBUG\" variable in the config files to True, and run the \"make debug\" command. Also check the CONCEPT_DIMENSION and MODIFIER_DIMENSION in ", OUTPUT_TABLES_LOCATION, \\
+                "are in debug mode as well (concept_cd and modifier_cd should not be hashes but human-readable.")
         missing_concepts = conc[~conc.isin(conc_dim)]
         missing_modifiers = mod[~mod.isin(mod_dim)]
         tail_modifiers = [k[-20:] for k in missing_modifiers]
