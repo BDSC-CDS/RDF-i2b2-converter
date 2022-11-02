@@ -24,59 +24,37 @@ def gen_concept_modifier_dim(
         df["C_TABLENAME"] == "MODIFIER_DIMENSION",
         ["C_FULLNAME", "C_BASECODE", "C_NAME"],
     ]
-    suffix="_DEBUG" if DEBUG else ""
-    concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION"+suffix+".csv", index=False)
-    modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION"+suffix+".csv", index=False)
+
+    concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION.csv", index=False)
+    modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION.csv", index=False)
 
 
-def gen_patient_dim():
+def init_patient_dim():
     """
-    Gather the minimal information for the patient dimension table and write it.
-    If more details are needed, this should also query the RDF graph about patient information and store the details in the same table.
-
-    The patient numbers are the ones AFTER reindexing.
+    Initialize PATIENT_DIMENSION.
     """
-    df = pd.read_csv(OBS_TABLE).drop_duplicates(subset="PATIENT_NUM", keep="first")
     patdf = pd.DataFrame(columns=COLUMNS["PATIENT_DIMENSION"])
-    patdf["PATIENT_NUM"] = df["PATIENT_NUM"]
     patdf.to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_DIMENSION.csv", index=False)
 
 
-def gen_patient_mapping(lookup):
+def init_patient_mapping():
     """
-    Replace the non-integer (or too large) fields of "PATIENT_NUM" (both in observation and patient_dimension) by an integer. Store the index mapping in a dedicated table.
+    Initialize PATIENT_MAPPING
     """
-    pm = lookup.dropna(subset=["PATIENT_NUM"])
     pmdf = pd.DataFrame(columns=COLUMNS["PATIENT_MAPPING"])
-    pmdf["PATIENT_NUM"] = pm["PATIENT_NUM"].index.values
-    pmdf["PATIENT_IDE"] = pm["PATIENT_NUM"]
-    pmdf["PATIENT_IDE_SOURCE"] = pm["PATIENT_NUM"]
-    pmdf["PROJECT_ID"] = PROJECT_NAME
-    # check why first line is empty
     pmdf.loc[1:].to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_MAPPING.csv", index=False)
 
 
-def gen_visit_dim():
+def init_visit_dim():
     """
-    TODO: currently incorrect table since only one encounter with num -1 is kept... Fix this in the obs_tools file and remove the drop_duplicates call here.
-    Query the RDF graph about encounter information and store the details in a dedicated table.
+    Initialize VISIT_DIMENSION.
     """
-    df = pd.read_csv(OBS_TABLE).drop_duplicates(subset="ENCOUNTER_NUM", keep="first")
     encdf = pd.DataFrame(columns=COLUMNS["VISIT_DIMENSION"])
-    encdf["PATIENT_NUM"] = df["PATIENT_NUM"]
-    encdf["ENCOUNTER_NUM"] = df["ENCOUNTER_NUM"]
     encdf.to_csv(OUTPUT_TABLES_LOCATION + "VISIT_DIMENSION.csv", index=False)
 
 
-def gen_encounter_mapping(lookup):
-    em = lookup.dropna(subset=["ENCOUNTER_NUM"])
+def init_encounter_mapping(lookup):
     emdf = pd.DataFrame(columns=COLUMNS["ENCOUNTER_MAPPING"])
-    emdf["ENCOUNTER_NUM"] = em["ENCOUNTER_NUM"].index.values
-    emdf["ENCOUNTER_IDE"] = em["ENCOUNTER_NUM"]
-    emdf["ENCOUNTER_IDE_SOURCE"] = em["ENCOUNTER_NUM"]
-    emdf["PATIENT_IDE"] = "-1"
-    emdf["PATIENT_IDE_SOURCE"] = "-1"
-    emdf["PROJECT_ID"] = PROJECT_NAME
     emdf.loc[1:].to_csv(OUTPUT_TABLES_LOCATION + "ENCOUNTER_MAPPING.csv", index=False)
 
 def query_providers(graph_parser):
@@ -120,13 +98,13 @@ def gen_provider_dim(providers_sparqlres):
     prov_df.to_csv(OUTPUT_TABLES_LOCATION + "PROVIDER_DIMENSION.csv", index=False)
 
 
-def fill_star_schema(mappings=None, providers=None):
+def init_star_schema(providers=None):
     """
     Generate the observation-based star schema tables. 
     If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
     """
-    gen_visit_dim()
-    gen_patient_dim()
+    init_visit_dim()
+    init_patient_dim()
     gen_provider_dim(providers)
 
     if mappings is not None:

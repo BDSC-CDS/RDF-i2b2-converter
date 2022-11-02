@@ -1,7 +1,7 @@
 from data_loader import *
 from scripts.merge_datafields import transfer_obs_numerical_values
 from scripts.obs_tools import reindex, fill_nulls, check_basecodes
-from starschema import fill_star_schema, query_providers
+from starschema import init_star_schema, query_providers
 import psutil
 
 def load_observations():
@@ -28,12 +28,12 @@ if __name__ == "__main__":
     print("After freeing memory, using : ", psutil.virtual_memory()[2], "%")
     # Run scripts to modify the table according to project-specific purposes
     transfer_obs_numerical_values(OUTPUT_TABLES_LOCATION)
+    # i2b2 star schema tables creation
+    init_star_schema(providers=providers_generator)
     if DEBUG!="True":
         # i2b2-formatting routines
         lookup_table = reindex()
         fill_nulls()
 
-        # i2b2 star schema tables creation
-        fill_star_schema(mappings=lookup_table, providers=providers_generator)
     # Final sanity check
     check_basecodes()
