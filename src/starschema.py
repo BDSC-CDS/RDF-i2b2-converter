@@ -106,10 +106,8 @@ def init_star_schema(providers=None):
     init_visit_dim()
     init_patient_dim()
     gen_provider_dim(providers)
-
-    if mappings is not None:
-        gen_encounter_mapping(mappings)
-        gen_patient_mapping(mappings)
+    init_encounter_mapping()
+    init_patient_mapping()
 
 
 def gen_table_access(folder_path=OUTPUT_TABLES_LOCATION, metadata_filenames=["METADATA.csv"]):

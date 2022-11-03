@@ -1,7 +1,21 @@
-# Pass as first argument the debug folder, as second argument the target folder which should contain the i2b2-ready tables
+# This bash file contains tools to create the production-ready CSV tables.
 
 DEFAULT_DATE="01.01.2022"
 PROJECT="BIOREF"
+PROD_FOLDER="$(pwd)/output_tables/"
+DEBUG_FOLDER="$(pwd)/debug_tables/"
+
+
+main () {
+    reindex
+    fill_default_values
+
+    if [ $1!="--skip-replacing" ] ;then
+        replace_codes $PROD_FOLDER $DEBUG_FOLDER
+    fi
+
+}
+
 
 fill_default_values() {
     awk -v defdate=$DEFAULT_DATE '($4==""){$4="@"}($5==""){$5=defdate}1' FS=, OFS=, OBSERVATION_FACT.csv > tmp && mv -f tmp OBSERVATION_FACT.csv
@@ -15,9 +29,9 @@ replace_codes () {
     LOOKUP_CONCEPTS = $1/lookup_concepts.csv
     LOOKUP_MODIFIERS = $1/lookup_modifiers.csv
 
-    PATH_DCD=$2/CONCEPT_DIMENSION
-    PATH_DMD=$2/MODIFIER_DIMENSION.csv
-    PATH_DOF=$2/OBSERVATION_FACT.csv
+    PATH_DCD=$2/CONCEPT_DIMENSION_DEBUG.csv
+    PATH_DMD=$2/MODIFIER_DIMENSION_DEBUG.csv
+    PATH_DOF=$2/OBSERVATION_FACT_DEBUG.csv
 
 
     # 1. generate lookup tables between debug and non debug codes:
@@ -86,3 +100,5 @@ reindex_patients () {
     awk '(FNR==NR){a[$1]=$3;next}(FNR!=1){$2=a[$2]}{print $0}' FS=, OFS=, PATIENT_MAPPING.csv OBSERVATION_FACT.csv > tmp && mv tmp -f OBSERVATION_FACT.csv
 
 }
+
+main $@

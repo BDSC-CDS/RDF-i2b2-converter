@@ -3,6 +3,8 @@ from scripts.merge_datafields import transfer_obs_numerical_values
 from scripts.obs_tools import reindex, fill_nulls, check_basecodes
 from starschema import init_star_schema, query_providers
 import psutil
+import subprocess
+import shutil
 
 def load_observations():
     parser = GraphParser(paths=[DATA_GRAPHS_LOCATION, CONTEXT_GRAPHS_LOCATION])
@@ -31,9 +33,13 @@ if __name__ == "__main__":
     # i2b2 star schema tables creation
     init_star_schema(providers=providers_generator)
     if DEBUG!="True":
-        # i2b2-formatting routines
-        lookup_table = reindex()
-        fill_nulls()
+        subprocess.run(["src/scripts/postprod.bash", "--skip-replacing"])
+    else:
+        shutil.copy2("src/scripts/postprod.bash", OUTPUT_TABLES_LOCATION)
+        print("Debug tables have been written in your destination folder along with a bash script you can use to generate production-ready tables. \
+            \nTo achieve that, go in the said folder and run ($ bash postprod.bash). \
+                \nYou can also modify the environment variables defined on top of the file to configure your destination folder.")
+        # copy the bash scripts to the output folder so the user can trigger them from their host
 
     # Final sanity check
     check_basecodes()
