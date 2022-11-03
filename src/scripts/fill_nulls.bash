@@ -1,1 +1,0 @@
-awk -v defdate=$DEFAULT_DATE '($4==""){$4="@"}($5==""){$5=defdate}1' FS=, OFS=, OBSERVATION_FACT.csv > tmp && mv -f tmp OBSERVATION_FACT.csv
