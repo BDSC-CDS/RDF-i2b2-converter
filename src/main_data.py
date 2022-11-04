@@ -33,7 +33,7 @@ if __name__ == "__main__":
     # i2b2 star schema tables creation
     init_star_schema(providers=providers_generator)
     if DEBUG!="True":
-        subprocess.run(["src/scripts/postprod.bash", "--skip-replacing"])
+        subprocess.run(["bash", "src/scripts/postprod.bash", "--skip-replacing", "-outputF", OUTPUT_TABLES_LOCATION])
     else:
         shutil.copy2("src/scripts/postprod.bash", OUTPUT_TABLES_LOCATION)
         print("Debug tables have been written in your destination folder along with a bash script you can use to generate production-ready tables. \

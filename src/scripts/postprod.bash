@@ -1,3 +1,6 @@
+#!/usr/bin/bash
+set -Eeuo pipefail
+
 # This bash file contains tools to create the production-ready CSV tables.
 
 DEFAULT_DATE="01.01.2022"
@@ -12,9 +15,9 @@ help () {
 
     This script creates production-ready tables. It will reindex the patient and encounter numbers to integers 
     and store the lookup tables in the relevant files.
-    \nIt can also replace the codes in tables generated through debug mode, making them production-ready tables.
-    \n
-    \n
+    It can also replace the codes in tables generated through debug mode, making them production-ready tables.
+    
+    
     To skip the debug-to-production code replacement, use the --skip-replacing flag."
 }
 
@@ -22,31 +25,37 @@ main () {
     skip=0
     while [ "$1" != "" ];
     do
-        case $1 in:
-        -outputF ) shift
+        case $1 in
+        -outputF) shift
             PROD_FOLDER=$1
+            shift
             ;;
-        -debugF ) shift
+        -debugF) shift
             DEBUG_FOLDER=$1
+            shift
             ;;
-        --skip-replacing
+        --skip-replacing) shift
             skip=1
             ;;
         *)
             help
+            shift
             ;;
+        esac
+    done
 
-    reindex
-    fill_default_values
+    [[ "${PROD_FOLDER}" != */ ]] && PROD_FOLDER="${PROD_FOLDER}/"
+    [[ "${DEBUG_FOLDER}" != */ ]] && DEBUG_FOLDER="${DEBUG_FOLDER}/"
+    reindex $PROD_FOLDER
+    fill_default_values $PROD_FOLDER
     if ! [ skip ] ;then
-        [[ "${PROD_FOLDER}" != */ ]] && PROD_FOLDER="${PROD_FOLDER}/"
-        [[ "${DEBUG_FOLDER}" != */ ]] && DEBUG_FOLDER="${DEBUG_FOLDER}/"]
         replace_codes $PROD_FOLDER $DEBUG_FOLDER
     fi
 }
 
 fill_default_values() {
-    awk -v defdate=$DEFAULT_DATE '($4==""){$4="@"}($5==""){$5=defdate}1' FS=, OFS=, OBSERVATION_FACT.csv > tmp && mv -f tmp OBSERVATION_FACT.csv
+    awk -v defdate=$DEFAULT_DATE -v defenc="-1" -v defprovider="@" '($1==""){$1=defenc}($4==""){$4=defprovider}($5==""){$5=defdate}1' FS=, OFS=, \
+    ${1}OBSERVATION_FACT.csv > tmp && mv -f tmp ${1}OBSERVATION_FACT.csv
 }
 
 replace_codes () {
@@ -60,7 +69,7 @@ replace_codes () {
 
     PATH_DCD=${2}CONCEPT_DIMENSION_DEBUG.csv
     PATH_DMD=${2}MODIFIER_DIMENSION_DEBUG.csv
-    PATH_DOF=${2}OBSERVATION_FACT_DEBUG.csv
+    PATH_DOF=${2}OBSERVATION_FACT.csv
 
 
     # 1. generate lookup tables between debug and non debug codes:
@@ -83,30 +92,30 @@ reindex () {
     # Required: filled patient_dimension and visit_dimension, header-only encounter_mapping and patient_mapping.
     # Source on OBSERVATION_FACT and extract a pruned list of (encounter,patient) pairs with it
     echo "Starting reindexing"
-    awk '(NR>1){print $1 FS $2}' FS=, OFS=, OBSERVATION_FACT.csv | awk '!visited[$0]++' FS=, OFS=, > unique_PE_pairs.csv
-    reindex_encounters
-    reindex_patients
-    rm -f unique_PE_pairs.csv 
+    awk '(NR>1){print $1 FS $2}' FS=, OFS=, ${1}OBSERVATION_FACT.csv | awk '!visited[$0]++' FS=, OFS=, > ${1}unique_PE_pairs.csv
+    reindex_encounters $@
+    reindex_patients $@
+    rm -f ${1}unique_PE_pairs.csv 
 }
 
 reindex_encounters () {
     echo "Reindexing encounters..."
     awk -v proj=$PROJECT -v default="-1" '(NR==1){print $0; cnter=1; next}
             (NR>FNR && $1!="" && !visited[$1]++){print $1 FS $1 FS proj FS cnter++ FS default FS default FS FS FS FS FS FS FS}' \
-        FS=, OFS=, ENCOUNTER_MAPPING.csv unique_PE_pairs.csv > tmp \
-        && mv -f tmp ENCOUNTER_MAPPING.csv
+        FS=, OFS=, ${1}ENCOUNTER_MAPPING.csv ${1}unique_PE_pairs.csv > tmp \
+        && mv -f tmp ${1}ENCOUNTER_MAPPING.csv
     echo "ENCOUNTER_MAPPING written."
 
     # Fill VISIT_DIMENSION accordingly
     awk '(NR==1){print $0}(NR!=FNR && FNR>1){print $4 FS $4 FS FS FS FS FS FS FS FS FS FS FS FS FS}' \
-        FS=, OFS=, VISIT_DIMENSION.csv ENCOUNTER_MAPPING.csv > tmp \
-        && mv -f tmp VISIT_DIMENSION.csv
+        FS=, OFS=, ${1}VISIT_DIMENSION.csv ${1}ENCOUNTER_MAPPING.csv > tmp \
+        && mv -f tmp ${1}VISIT_DIMENSION.csv
     echo "VISIT_DIMENSION written."
 
     # Read ENCOUNTER_MAPPING and replace values in OBSERVATION_FACT
     awk '(FNR==NR){a[$1]=$4;next}(FNR!=1){$1=a[$1]}{print $0}' \
-        FS=, OFS=, ENCOUNTER_MAPPING.csv OBSERVATION_FACT.csv > tmp \
-        && mv -f tmp OBSERVATION_FACT.csv
+        FS=, OFS=, ${1}ENCOUNTER_MAPPING.csv ${1}OBSERVATION_FACT.csv > tmp \
+        && mv -f tmp ${1}OBSERVATION_FACT.csv
     echo "Reindexed encounters in OBSERVATION_FACT."
 
 }
@@ -115,20 +124,20 @@ reindex_patients () {
     # Fill PATIENT_MAPPING with the info and index from PATIENT_DIMENSION
     awk -v proj=$PROJECT '(NR==1){print $0; cnter=1; next} \
         (NR>FNR && !visited[$2]++){print $2 FS $2 FS cnter++ FS FS proj FS FS FS FS FS FS}' \
-        FS=, OFS=, PATIENT_MAPPING.csv unique_PE_pairs.csv > tmp \
-        && mv -f tmp PATIENT_MAPPING.csv
+        FS=, OFS=, ${1}PATIENT_MAPPING.csv ${1}unique_PE_pairs.csv > tmp \
+        && mv -f tmp ${1}PATIENT_MAPPING.csv
     echo "PATIENT_MAPPING written."
 
     # Fill PATIENT_DIMENSION accordingly
     awk '(NR==1){print $0}(NR!=FNR && FNR>1){print $3 FS $3 FS FS FS FS FS FS FS FS FS FS FS FS FS}' \
-        FS=, OFS=, PATIENT_DIMENSION.csv PATIENT_MAPPING.csv > tmp \
-        && mv -f tmp PATIENT_DIMENSION.csv
+        FS=, OFS=, ${1}PATIENT_DIMENSION.csv ${1}PATIENT_MAPPING.csv > tmp \
+        && mv -f tmp ${1}PATIENT_DIMENSION.csv
     echo "PATIENT_DIMENSION written."
 
     # Read PATIENT_MAPPING and replace values in OBSERVATION_FACT
     awk '(FNR==NR){a[$1]=$3;next}(FNR!=1){$2=a[$2]}{print $0}' \
-        FS=, OFS=, PATIENT_MAPPING.csv OBSERVATION_FACT.csv > tmp \
-        && mv -f tmp OBSERVATION_FACT.csv
+        FS=, OFS=, ${1}PATIENT_MAPPING.csv ${1}OBSERVATION_FACT.csv > tmp \
+        && mv -f tmp ${1}OBSERVATION_FACT.csv
     echo "Reindexed patients in OBSERVATION_FACT."
 }
 
