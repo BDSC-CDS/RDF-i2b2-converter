@@ -2,13 +2,45 @@
 
 DEFAULT_DATE="01.01.2022"
 PROJECT="BIOREF"
-PROD_FOLDER="$(pwd)/output_tables/"
-DEBUG_FOLDER="$(pwd)/debug_tables/"
+PROD_FOLDER="$(pwd)../output_tables/"
+DEBUG_FOLDER="$(pwd)"
+
+help () {
+    echo "
+    Usage: bash postprod.bash -outputF /home/.../my_production_folder -debugF /home/.../my_debug_folder(can be the current directory)
+    (default are now set to $PROD_FOLDER and $DEBUG_FOLDER )
+
+    This script creates production-ready tables. It will reindex the patient and encounter numbers to integers 
+    and store the lookup tables in the relevant files.
+    \nIt can also replace the codes in tables generated through debug mode, making them production-ready tables.
+    \n
+    \n
+    To skip the debug-to-production code replacement, use the --skip-replacing flag."
+}
 
 main () {
+    skip=0
+    while [ "$1" != "" ];
+    do
+        case $1 in:
+        -outputF ) shift
+            PROD_FOLDER=$1
+            ;;
+        -debugF ) shift
+            DEBUG_FOLDER=$1
+            ;;
+        --skip-replacing
+            skip=1
+            ;;
+        *)
+            help
+            ;;
+
     reindex
     fill_default_values
-    if ! [ $1=="--skip-replacing" ] ;then
+    if ! [ skip ] ;then
+        [[ "${PROD_FOLDER}" != */ ]] && PROD_FOLDER="${PROD_FOLDER}/"
+        [[ "${DEBUG_FOLDER}" != */ ]] && DEBUG_FOLDER="${DEBUG_FOLDER}/"]
         replace_codes $PROD_FOLDER $DEBUG_FOLDER
     fi
 }
@@ -19,16 +51,16 @@ fill_default_values() {
 
 replace_codes () {
     echo "Replacing debug codes by production codes"
-    PATH_HCD=$1/CONCEPT_DIMENSION.csv
-    PATH_HMD=$1/MODIFIER_DIMENSION.csv
-    PATH_HOF=$1/OBSERVATION_FACT.csv
+    PATH_HCD=${1}CONCEPT_DIMENSION.csv
+    PATH_HMD=${1}MODIFIER_DIMENSION.csv
+    PATH_HOF=${1}OBSERVATION_FACT.csv
 
-    LOOKUP_CONCEPTS = $1/lookup_concepts.csv
-    LOOKUP_MODIFIERS = $1/lookup_modifiers.csv
+    LOOKUP_CONCEPTS = ${1}lookup_concepts.csv
+    LOOKUP_MODIFIERS = ${1}lookup_modifiers.csv
 
-    PATH_DCD=$2/CONCEPT_DIMENSION_DEBUG.csv
-    PATH_DMD=$2/MODIFIER_DIMENSION_DEBUG.csv
-    PATH_DOF=$2/OBSERVATION_FACT_DEBUG.csv
+    PATH_DCD=${2}CONCEPT_DIMENSION_DEBUG.csv
+    PATH_DMD=${2}MODIFIER_DIMENSION_DEBUG.csv
+    PATH_DOF=${2}OBSERVATION_FACT_DEBUG.csv
 
 
     # 1. generate lookup tables between debug and non debug codes:

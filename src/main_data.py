@@ -1,6 +1,6 @@
 from data_loader import *
 from scripts.merge_datafields import transfer_obs_numerical_values
-from scripts.obs_tools import reindex, fill_nulls, check_basecodes
+from scripts.obs_tools import check_basecodes
 from starschema import init_star_schema, query_providers
 import psutil
 import subprocess
@@ -42,4 +42,5 @@ if __name__ == "__main__":
         # copy the bash scripts to the output folder so the user can trigger them from their host
 
     # Final sanity check
+    #subprocess.run(["src/scripts/check_basecodes.bash"])
     check_basecodes()

@@ -42,7 +42,7 @@ def init_patient_mapping():
     Initialize PATIENT_MAPPING
     """
     pmdf = pd.DataFrame(columns=COLUMNS["PATIENT_MAPPING"])
-    pmdf.loc[1:].to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_MAPPING.csv", index=False)
+    pmdf.to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_MAPPING.csv", index=False)
 
 
 def init_visit_dim():
@@ -53,9 +53,9 @@ def init_visit_dim():
     encdf.to_csv(OUTPUT_TABLES_LOCATION + "VISIT_DIMENSION.csv", index=False)
 
 
-def init_encounter_mapping(lookup):
+def init_encounter_mapping():
     emdf = pd.DataFrame(columns=COLUMNS["ENCOUNTER_MAPPING"])
-    emdf.loc[1:].to_csv(OUTPUT_TABLES_LOCATION + "ENCOUNTER_MAPPING.csv", index=False)
+    emdf.to_csv(OUTPUT_TABLES_LOCATION + "ENCOUNTER_MAPPING.csv", index=False)
 
 def query_providers(graph_parser):
     provider_class = rdflib.URIRef(ONTOLOGY_DROP_DIC["PROVIDER_INFO"])
