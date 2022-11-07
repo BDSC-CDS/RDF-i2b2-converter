@@ -7,6 +7,7 @@ def check_basecodes():
     conc = pd.Series(df["CONCEPT_CD"].unique())
     mod = pd.Series(df["MODIFIER_CD"].unique())
     mod = mod[~mod.isin(["@"])]
+    suffix = "_VERBOSE" if DEBUG=="True" else ""
     try:
         mod_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"MODIFIER_DIMENSION.csv")["MODIFIER_CD"]
         conc_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"CONCEPT_DIMENSION.csv")["CONCEPT_CD"]

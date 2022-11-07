@@ -24,7 +24,7 @@ def gen_concept_modifier_dim(
         df["C_TABLENAME"] == "MODIFIER_DIMENSION",
         ["C_FULLNAME", "C_BASECODE", "C_NAME"],
     ]
-    suffix="_DEBUG" if DEBUG else ""
+    suffix="_VERBOSE" if DEBUG else ""
     concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION"+suffix+".csv", index=False)
     modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION"+suffix+".csv", index=False)
 
