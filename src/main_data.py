@@ -2,7 +2,6 @@ from data_loader import *
 from scripts.merge_datafields import transfer_obs_numerical_values
 from scripts.obs_tools import check_basecodes
 from starschema import init_star_schema, query_providers
-import psutil
 import subprocess
 import shutil
 
@@ -25,9 +24,7 @@ if __name__ == "__main__":
     create_dir(OUTPUT_TABLES_LOCATION)
     graphparser = load_observations()
     providers_generator = query_providers(graphparser)
-    print("Before freeing memory, using : ", psutil.virtual_memory()[2], "%")
     graphparser.free_memory()
-    print("After freeing memory, using : ", psutil.virtual_memory()[2], "%")
     # Run scripts to modify the table according to project-specific purposes
     transfer_obs_numerical_values(OUTPUT_TABLES_LOCATION)
     # i2b2 star schema tables creation
