@@ -9,8 +9,8 @@ def check_basecodes():
     mod = mod[~mod.isin(["@"])]
     suffix = "_VERBOSE" if DEBUG=="True" else ""
     try:
-        mod_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"MODIFIER_DIMENSION.csv")["MODIFIER_CD"]
-        conc_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"CONCEPT_DIMENSION.csv")["CONCEPT_CD"]
+        mod_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"MODIFIER_DIMENSION"+suffix+".csv")["MODIFIER_CD"]
+        conc_dim = pd.read_csv(OUTPUT_TABLES_LOCATION+"CONCEPT_DIMENSION"+suffix+".csv")["CONCEPT_CD"]
     except:
         print("Conversion passed but consistency check were not performed due to absence of ontology tables (CONCEPT_DIMENSION and/or MODIFIER_DIMENSION in the folder", OUTPUT_TABLES_LOCATION)
         print("Put them there and call check_basecodes() in a new Python interface")
