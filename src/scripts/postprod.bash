@@ -87,7 +87,7 @@ replace_codes () {
     # 2. replace column of OBSERVATION fact by their equivalent in non-verbose mode
     awk 'FNR==NR{a[$2]=$1;next}{ $3=a[$3]}1' FS=, OFS=, $LOOKUP_CONCEPTS $PATH_OF > ${1}tmp
     awk 'FNR==NR{a[$2]=$1;next}{ $6=a[$6]}1' FS=, OFS=, $LOOKUP_MODIFIERS ${1}tmp > $PATH_OF && rm -f ${1}tmp
-    rm $LOOKUP_CONCEPTS rn $LOOKUP_MODIFIERS
+    rm $LOOKUP_CONCEPTS $LOOKUP_MODIFIERS
     echo "Verbose codes were correctly replaced."
 }
 
