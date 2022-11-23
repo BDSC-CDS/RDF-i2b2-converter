@@ -37,7 +37,7 @@ if __name__ == "__main__":
         # copy the bash scripts to the output folder so the user can trigger them from their host
         shutil.copy2("src/scripts/postprod.bash", OUTPUT_TABLES_LOCATION)
         print("Debug tables have been written in your destination folder along with a bash script you can use to generate production-ready tables. \
-            To achieve that, go in the said folder and run ($ bash postprod.bash). \
+            To achieve that, go in the said folder and run the postprod.bash script. \
             You can also modify the environment variables defined on top of the file to configure your destination folder.")
 
     # Final sanity check

@@ -87,6 +87,7 @@ replace_codes () {
     # 2. replace column of OBSERVATION fact by their equivalent in non-verbose mode
     awk 'FNR==NR{a[$2]=$1;next}{ $3=a[$3]}1' FS=, OFS=, $LOOKUP_CONCEPTS $PATH_OF > ${1}tmp
     awk 'FNR==NR{a[$2]=$1;next}{ $6=a[$6]}1' FS=, OFS=, $LOOKUP_MODIFIERS ${1}tmp > $PATH_OF && rm -f ${1}tmp
+    rm $LOOKUP_CONCEPTS rn $LOOKUP_MODIFIERS
     echo "Verbose codes were correctly replaced."
 }
 
@@ -104,8 +105,8 @@ reindex () {
 
 reindex_encounters () {
     echo "Reindexing encounters..."
-    awk -v proj=$PROJECT -v default="-1" '(NR==1){print $0; cnter=1; next}
-            (NR>FNR && $1!="" && !visited[$1]++){print $1 FS $1 FS proj FS cnter++ FS default FS default FS FS FS FS FS FS FS}' \
+    awk -v proj=$PROJECT -v defaultval="-1" '(NR==1){print $0; cnter=1; next}
+            (NR>FNR && $1!="" && !visited[$1]++){print $1 FS $1 FS proj FS cnter++ FS defaultval FS defaultval FS FS FS FS FS FS FS}' \
         FS=, OFS=, ${2}ENCOUNTER_MAPPING.csv ${1}unique_PE_pairs.csv > ${1}tmp \
         && mv -f ${1}tmp ${1}ENCOUNTER_MAPPING.csv
     echo "ENCOUNTER_MAPPING written."
@@ -133,7 +134,7 @@ reindex_patients () {
     echo "PATIENT_MAPPING written."
 
     # Fill PATIENT_DIMENSION accordingly
-    awk '(NR==1){print $0}(NR!=FNR && FNR>1){print $3 FS $3 FS FS FS FS FS FS FS FS FS FS FS FS FS}' \
+    awk '(NR==1){print $0}(NR!=FNR && FNR>1){print $3 FS FS FS FS FS FS FS FS FS FS FS FS FS FS FS FS FS FS FS}' \
         FS=, OFS=, ${2}PATIENT_DIMENSION.csv ${1}PATIENT_MAPPING.csv > ${1}tmp \
         && mv -f ${1}tmp ${1}PATIENT_DIMENSION.csv
     echo "PATIENT_DIMENSION written."
