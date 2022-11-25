@@ -41,35 +41,36 @@ for key, val in config["data_global_uris"].items():
     )
 
 
-SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PRED_URI)
+SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PREDICATE_URI)
 TERMINOLOGIES_FILES = {}
-
 
 class GraphParser:
     def __init__(self, paths):
         self.graph = rdflib.Graph()
         result = []
         for pathi in paths:
+            if not os.path.exists(pathi):
+                continue
             if os.path.isfile(pathi):
                 result.append(pathi)
                 continue
-            result.extend(glob.glob(pathi + "/**/*.ttl", recursive=True))
+            result.extend(glob.glob(pathi + "/**/*", recursive=True)) 
         for filek in result:
-            print("Loading file: " + filek)
+            rdf_format= rdflib.util.guess_format(filek)
+            if rdf_format is None:
+                print("Couldn't parse file", filek, ", skipping")
+                continue
             dot = filek.rfind(".")
             slash = filek.rfind("/")
             fname = filek[slash + 1 : dot]
             if fname in TERMINOLOGIES_GRAPHS.values():
                 print("Creating a dedicated graph for", fname)
                 cur = rdflib.Graph()
-                cur.parse(filek, format="turtle")
+                cur.parse(filek, format=rdf_format)
                 TERMINOLOGIES_FILES.update({fname: cur})
             else:
                 print("adding to the main graph: ", fname)
-                if filek[-3:] == "ttl":
-                    self.graph.parse(filek, format="turtle")
-                elif filek[-3:] == "owl":
-                    self.graph.parse(filek, format="xml")
+                self.graph.parse(filek, format=rdf_format)
         print("Graph is fully loaded in memory.")
 
     def define_namespaces(self):
