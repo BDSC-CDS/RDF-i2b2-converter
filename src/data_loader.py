@@ -221,7 +221,7 @@ class InformationTree:
             # If the item has no predicate at all, the following test will be evaluated to True
             if all(
                 [
-                    k.identifier in (TYPE_PREDICATE_URI, LABEL_URI)
+                    k.identifier in (TYPE_PREDICATE_URI, LABEL_PREDICATE_URI)
                     for k in obj.predicates()
                 ]
             ):

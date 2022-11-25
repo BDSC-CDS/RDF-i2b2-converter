@@ -25,7 +25,7 @@ class Component:
         )
         self.set_shortname()
         self.parent_class = parent_class
-        com = resource.value(COMMENT_URI)
+        com = resource.value(COMMENT_PREDICATE_URI)
         self.comment = com.toPython() if com is not None else com
         self.set_label()
 
@@ -59,7 +59,7 @@ class Component:
         return self.parent_class is None
 
     def is_valueset(self):
-        tmp = self.resource.value(SUBCLASS_PRED_URI)
+        tmp = self.resource.value(SUBCLASS_PREDICATE_URI)
         return tmp is not None and tmp.identifier in VALUESET_MARKER_URIS
 
     def get_label(self):
@@ -223,7 +223,7 @@ class Property(Component):
         """
         Create Concept or ChildfreeConcept based on the resources stored in self.range_res and populate self.range with them.
         Comsequence will be that concept.explore_children() will only return properties of such muted concepts.
-        The overwriting rule is typically dependent on the RDF implementation. Set the config variable ALWAYS_DEEP to True to deactivate this filter.
+        The overwriting rule is typically dependent on the RDF implementation. Set the config variable ALLOW_MIXED_TREES to True to deactivate this filter.
 
         In the SPHN implementation, we want to expand an property range node into its subclasses if and only if
         it is a descendant of a sphn:Terminology and is the only of its kind (same prefix) in the ranges list.
@@ -231,7 +231,7 @@ class Property(Component):
 
         """
         final_ranges = {"muted": [], "regular": []}
-        if ALWAYS_DEEP == "True":
+        if ALLOW_MIXED_TREES == "True":
             final_ranges["regular"] = self.range_res
             return 0
 
@@ -296,7 +296,7 @@ class RangeFilter:
                     }
         }
         """,
-            initBindings={"self": self.resource.identifier, "range": RANGE_PRED_URI},
+            initBindings={"self": self.resource.identifier, "range": RANGE_PREDICATE_URI},
         )
         listed_res = [self.resource.graph.resource(row[0]) for row in response]
         # If there are several ranges, remove the first element which is in fact the name of the blank node

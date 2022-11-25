@@ -16,7 +16,7 @@ def check_macros():
 
 def generate_ontology_table():
     # First let's setup the graph navigation
-    parser = GraphParser([ONTOLOGY_GRAPH_LOCATION, TERMINOLOGIES_LOCATION])
+    parser = GraphParser(ONTOLOGY_GRAPHS_LOCATIONS)
     parser.define_namespaces()
     root_entries = parser.get_entrypoints(ROOT_URIS)
 

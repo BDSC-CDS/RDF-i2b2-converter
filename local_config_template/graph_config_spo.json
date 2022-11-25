@@ -1,33 +1,41 @@
 {
     "parameters": {
-        "ONTOLOGY_GRAPH_LOCATION": "ontology/main_ontologies/spo/",
-        "TERMINOLOGIES_LOCATION": "ontology/external_terminologies/",
-        "RDF_FORMAT": "ttl",
+        "ONTOLOGY_GRAPHS_LOCATIONS": [
+            "ontology/main_ontologies/spo/",
+            "ontology/external_terminologies"
+        ],
+        "RDF_FORMAT": "turtle",
         "PREF_LANGUAGE": "fr",
-        "ALWAYS_DEEP": "False",
+        "ALLOW_MIXED_TREES": "False",
         "TERMINOLOGIES_GRAPHS": {
-            "http://snomed.info/id/":"snomed-ct-20220131",
-            "https://loinc.org/rdf/":"sphn_loinc_2.72-1", 
-            "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/":"sphn_icd-10-gm_2022-2",
-            "https://biomedit.ch/rdf/sphn-resource/chop":"sphn_chop_2022-1",
-            "https://biomedit.ch/rdf/sphn-resource/atc/":"sphn_atc_2021-3",
-            "https://biomedit.ch/rdf/sphn-resource/loinc/":"sphn_loinc_2.72-1",
-            "https://biomedit.ch/rdf/sphn-resource/emdn/EMDN":"sphn_emdn_1.1-1",
-            "https://biomedit.ch/rdf/sphn-resource/gmdn-bioref/GMDN-BIOREF":"sphn_gmdn-bioref_2022-04-26-2",
-            "https://biomedit.ch/rdf/sphn-resource/gudid-bioref/GUDID-BIOREF":"sphn_gudid-bioref_20211101-3",
-            "https://biomedit.ch/rdf/sphn-resource/onco-tree#OncoTree":"oncotree"
+            "http://snomed.info/id/": "snomed-ct-20220131",
+            "https://loinc.org/rdf/": "sphn_loinc_2.72-1",
+            "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/": "sphn_icd-10-gm_2022-2",
+            "https://biomedit.ch/rdf/sphn-resource/chop": "sphn_chop_2022-1",
+            "https://biomedit.ch/rdf/sphn-resource/atc/": "sphn_atc_2021-3",
+            "https://biomedit.ch/rdf/sphn-resource/loinc/": "sphn_loinc_2.72-1",
+            "https://biomedit.ch/rdf/sphn-resource/emdn/EMDN": "sphn_emdn_1.1-1",
+            "https://biomedit.ch/rdf/sphn-resource/gmdn-bioref/GMDN-BIOREF": "sphn_gmdn-bioref_2022-04-26-2",
+            "https://biomedit.ch/rdf/sphn-resource/gudid-bioref/GUDID-BIOREF": "sphn_gudid-bioref_20211101-3",
+            "https://biomedit.ch/rdf/sphn-resource/onco-tree#OncoTree": "oncotree"
         }
     },
     "uris": {
-        "ROOT_URIS": ["https://biomedit.ch/rdf/sphn-ontology/spo#Concept", "https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept"],
-        "SUBCLASS_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
-        "RANGE_PRED_URI": "http://www.w3.org/2000/01/rdf-schema#range",
+        "ROOT_URIS": [
+            "https://biomedit.ch/rdf/sphn-ontology/spo#Concept",
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#SPHNConcept"
+        ],
+        "SUBCLASS_PREDICATE_URI": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+        "RANGE_PREDICATE_URI": "http://www.w3.org/2000/01/rdf-schema#range",
         "TYPE_PREDICATE_URI": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+        "COMMENT_PREDICATE_URI": "http://www.w3.org/2000/01/rdf-schema#comment",
+        "LABEL_PREDICATE_URI": "http://www.w3.org/2000/01/rdf-schema#label",
+        "VALUESET_MARKER_URIS": [
+            "https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet",
+            "https://biomedit.ch/rdf/sphn-ontology/spo#ValueSet"
+        ],
         "DATATYPE_PROP_URI": "http://www.w3.org/2002/07/owl#DatatypeProperty",
-        "OBJECT_PROP_URI" : "http://www.w3.org/2002/07/owl#ObjectProperty",
-        "COMMENT_URI": "http://www.w3.org/2000/01/rdf-schema#comment",
-        "TERMINOLOGY_MARKER_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#Terminology", "https://biomedit.ch/rdf/sphn-ontology/spo#Terminology"],
-        "VALUESET_MARKER_URIS": ["https://biomedit.ch/rdf/sphn-ontology/sphn#ValueSet", "https://biomedit.ch/rdf/sphn-ontology/spo#ValueSet"],
+        "OBJECT_PROP_URI": "http://www.w3.org/2002/07/owl#ObjectProperty",
         "ENTRY_CONCEPTS": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#Consent",
@@ -48,8 +56,7 @@
             "https://biomedit.ch/rdf/sphn-ontology/spo#OncologySurgery",
             "https://biomedit.ch/rdf/sphn-ontology/spo#SomaticVariantFound"
         ],
-        "LABEL_URI":"http://www.w3.org/2000/01/rdf-schema#label",
-        "BLACKLIST": [   
+        "BLACKLIST": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#hasDuration",
             "https://biomedit.ch/rdf/sphn-ontology/sphn#hasTimePattern",
             "https://biomedit.ch/rdf/sphn-ontology/spo#hasOncologyDrugTreatmentRelativeDoseOfDrugApplied"
