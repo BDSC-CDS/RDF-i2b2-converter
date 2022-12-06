@@ -54,10 +54,10 @@ class GraphParser:
             if os.path.isfile(pathi):
                 result.append(pathi)
                 continue
-            result.extend(glob.glob(pathi + "/**/*", recursive=True)) 
+            result.extend(glob.glob(pathi + "/**/*", recursive=True))
         for filek in result:
-            rdf_format= rdflib.util.guess_format(filek)
-            if rdf_format is None:
+            rdf_format = rdflib.util.guess_format(filek)
+            if rdf_format is None or (RDF_FORMAT != "*" and rdf_format != RDF_FORMAT):
                 print("Couldn't parse file", filek, ", skipping")
                 continue
             dot = filek.rfind(".")
