@@ -57,8 +57,9 @@ def init_encounter_mapping():
     emdf = pd.DataFrame(columns=COLUMNS["ENCOUNTER_MAPPING"])
     emdf.to_csv(OUTPUT_TABLES_LOCATION + "ENCOUNTER_MAPPING.csv", index=False)
 
+
 def query_providers(graph_parser):
-    provider_class = rdflib.URIRef(ONTOLOGY_DROP_DIC["PROVIDER_INFO"])
+    provider_class = PROVIDER_CLASS_URI
     graph = graph_parser.graph
     res = graph.query(
         """

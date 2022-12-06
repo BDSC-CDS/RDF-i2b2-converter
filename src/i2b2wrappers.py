@@ -7,7 +7,7 @@ def drop(attribute):
     """
     for rn in attribute.get_children(verbose=False):
         cur_uri = rn.get_uri()
-        if cur_uri in ONTOLOGY_DROP_DIC.values():
+        if cur_uri in ONTOLOGY_DROP_DIC:
             return cur_uri
     return False
 

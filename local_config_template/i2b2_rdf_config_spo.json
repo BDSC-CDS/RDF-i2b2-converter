@@ -1,22 +1,18 @@
 {
     "DEBUG": "False",
     "MAX_BASECODE_LENGTH": 50,
-    "ROOT_PATHS": [
-        "\\SPHNv2021\\",
-        "\\SPO\\"
-    ],
     "OUTPUT_TABLES_LOCATION": "output_tables/",
     "PROJECT_NAME": "SPO",
     "IGNORE_TERM_ID": [],
-    "ONTOLOGY_DROP_DIC": {
-        "ENCOUNTER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
-        "PATIENT_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",
-        "PROVIDER_INFO": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute",
-        "DATE_DESCRIPTOR": "http://www.w3.org/2001/XMLSchema#dateTime",
-        "UNIT_DESCRIPTOR": "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit",
-        "hasAgeduplicate": "https://biomedit.ch/rdf/sphn-ontology/swissbioref#Age",
-        "hasIntentduplicate": "https://biomedit.ch/rdf/sphn-ontology/sphn#Intent"
-    },
+    "ONTOLOGY_DROP_DIC": [
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute",
+        "http://www.w3.org/2001/XMLSchema#dateTime",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#Unit",
+        "https://biomedit.ch/rdf/sphn-ontology/swissbioref#Age",
+        "https://biomedit.ch/rdf/sphn-ontology/sphn#Intent"
+    ],
     "UNDROP_LEAVES": {
         "http://www.w3.org/2001/XMLSchema#dateTime": [
             "https://biomedit.ch/rdf/sphn-ontology/sphn#BirthDate"

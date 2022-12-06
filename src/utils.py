@@ -233,30 +233,19 @@ def generate_xml(metadata_dict):
     Default type is string but PosFloat, Integer, PosInteger, Float are accepted
     """
     keyz = metadata_dict.keys()
-    shortname = metadata_dict["TestName"] if "TestName" in keyz else ""
-    shortname = metadata_dict["TestName"] if "TestName" in keyz else ""
-    simple_type = metadata_dict["DataType"] if "DataType" in keyz else ""
-    valueset = metadata_dict["EnumValues"] if "EnumValues" in keyz else ""
-    test_id = metadata_dict["TestID"] if "TestID" in keyz else ""
-    units = metadata_dict["Units"] if "Units" in keyz else ""
-    if simple_type is None:
-        return
     res = XML_PATTERN
-    res = res.replace("<TestName></TestName>", "<TestName>" + shortname + "</TestName>")
-    res = res.replace(
-        "<DataType></DataType>", "<DataType>" + simple_type + "</DataType>"
-    )
-    res = res.replace("<TestID></TestID>", "<TestID>" + test_id + "</TestID>")
-    if simple_type == "Enum" and len(valueset) > 0:
-        enumstr = "".join(
-            ['<Val description="">' + elem + "</Val>" for elem in valueset]
-        )
-        res = res.replace(
-            "<EnumValues></EnumValues>", "<EnumValues>" + enumstr + "</EnumValues>"
-        )
-    res = res.replace(
-        "<NormalUnits></NormalUnits>", "<NormalUnits>" + units + "</NormalUnits>"
-    )
+    for k in keyz:
+        ftag = "<" + k + ">"
+        etag = "</" + k + ">"
+        val = metadata_dict[k]
+        if val is None:
+            continue
+        if k == "EnumValues":
+            enumstr = "".join(
+                ['<Val description="">' + elem + "</Val>" for elem in val]
+            )
+            val = enumstr
+        res = res.replace(ftag + etag, ftag + val + etag)
     return res
 
 
