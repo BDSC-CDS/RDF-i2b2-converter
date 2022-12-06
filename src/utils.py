@@ -44,6 +44,7 @@ for key, val in config["data_global_uris"].items():
 SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PREDICATE_URI)
 TERMINOLOGIES_FILES = {}
 
+
 class GraphParser:
     def __init__(self, paths):
         self.graph = rdflib.Graph()
@@ -130,9 +131,11 @@ def rname(uri, graph):
     full = graph.qname(uri)
     return full[full.find(":") + 1 :]
 
+
 def create_dir(relative_path):
     # Create the directory if it doesn't already exist.
     return os.makedirs(relative_path) if not os.path.exists(relative_path) else 0
+
 
 def terminology_indicator(resource):
     """
@@ -165,7 +168,7 @@ def check_domains(resource):
 
 def shortname(resource):
     """
-    Reduce the resource URI. 
+    Reduce the resource URI.
     In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
     The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
     """

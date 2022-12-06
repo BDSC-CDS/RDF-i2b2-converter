@@ -3,7 +3,7 @@ from data_loader import *
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath)
-OBS_TABLE = OUTPUT_TABLES_LOCATION+"OBSERVATION_FACT.csv"
+OBS_TABLE = OUTPUT_TABLES_LOCATION + "OBSERVATION_FACT.csv"
 
 
 def gen_concept_modifier_dim(
@@ -24,9 +24,13 @@ def gen_concept_modifier_dim(
         df["C_TABLENAME"] == "MODIFIER_DIMENSION",
         ["C_FULLNAME", "C_BASECODE", "C_NAME"],
     ]
-    suffix="_VERBOSE" if DEBUG else ""
-    concept_df.fillna("").to_csv(folder_path + "CONCEPT_DIMENSION"+suffix+".csv", index=False)
-    modifier_df.fillna("").to_csv(folder_path + "MODIFIER_DIMENSION"+suffix+".csv", index=False)
+    suffix = "_VERBOSE" if DEBUG else ""
+    concept_df.fillna("").to_csv(
+        folder_path + "CONCEPT_DIMENSION" + suffix + ".csv", index=False
+    )
+    modifier_df.fillna("").to_csv(
+        folder_path + "MODIFIER_DIMENSION" + suffix + ".csv", index=False
+    )
 
 
 def init_patient_dim():
@@ -87,6 +91,7 @@ def query_providers(graph_parser):
     )
     return [el for el in res]
 
+
 def gen_provider_dim(providers_sparqlres):
     res = providers_sparqlres
     prov_df = pd.DataFrame(columns=COLUMNS["PROVIDER_DIMENSION"])
@@ -101,7 +106,7 @@ def gen_provider_dim(providers_sparqlres):
 
 def init_star_schema(providers=None):
     """
-    Generate the observation-based star schema tables. 
+    Generate the observation-based star schema tables.
     If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
     """
     init_visit_dim()
@@ -111,7 +116,9 @@ def init_star_schema(providers=None):
     init_patient_mapping()
 
 
-def gen_table_access(folder_path=OUTPUT_TABLES_LOCATION, metadata_filenames=["METADATA.csv"]):
+def gen_table_access(
+    folder_path=OUTPUT_TABLES_LOCATION, metadata_filenames=["METADATA.csv"]
+):
     dfs = [pd.read_csv(folder_path + fname) for fname in metadata_filenames]
     df = pd.concat(dfs) if len(dfs) > 1 else dfs[0]
     table_access = pd.DataFrame(columns=COLUMNS["TABLE_ACCESS"])

@@ -296,7 +296,10 @@ class RangeFilter:
                     }
         }
         """,
-            initBindings={"self": self.resource.identifier, "range": RANGE_PREDICATE_URI},
+            initBindings={
+                "self": self.resource.identifier,
+                "range": RANGE_PREDICATE_URI,
+            },
         )
         listed_res = [self.resource.graph.resource(row[0]) for row in response]
         # If there are several ranges, remove the first element which is in fact the name of the blank node
