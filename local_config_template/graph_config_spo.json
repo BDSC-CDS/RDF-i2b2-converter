@@ -12,7 +12,7 @@
             "https://loinc.org/rdf/": "sphn_loinc_2.72-1",
             "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/": "sphn_icd-10-gm_2022-2",
             "https://biomedit.ch/rdf/sphn-resource/chop": "sphn_chop_2022-1",
-            "https://biomedit.ch/rdf/sphn-resource/atc/": "sphn_atc_2021-3",
+            "https://biomedit.ch/rdf/sphn-resource/atc/": "sphn_atc_2022-1",
             "https://biomedit.ch/rdf/sphn-resource/loinc/": "sphn_loinc_2.72-1",
             "https://biomedit.ch/rdf/sphn-resource/onco-tree#OncoTree": "oncotree"
         }
