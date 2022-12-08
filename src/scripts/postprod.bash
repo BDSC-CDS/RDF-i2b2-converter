@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 # This bash file contains tools to create the production-ready CSV tables.
 
-DEFAULT_DATE="01.01.2022"
+# Fill elements without starting date to end of this year
+DEFAULT_DATE="$(date +%Y)-12-31 00:00:00"
 PROJECT="BIOREF"
 PROD_FOLDER="$(pwd)"
 INPUT_FOLDER="$(pwd)"

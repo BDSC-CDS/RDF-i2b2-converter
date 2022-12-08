@@ -2,7 +2,6 @@
     "DATA_GRAPHS_LOCATION": "/data",
     "CONTEXT_GRAPHS_LOCATION": "/units",
     "MAX_BATCH_SIZE": 1000,
-    "DEFAULT_DATE": "2022-04-12 00:00:00",
     "data_global_uris": {
         "PROVIDER_CLASS_URI": "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute",
         "TO_IGNORE": [
