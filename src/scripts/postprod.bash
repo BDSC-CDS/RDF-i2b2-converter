@@ -60,7 +60,7 @@ main () {
 }
 
 fill_default_values() {
-    awk -v defdate=$DEFAULT_DATE -v defenc="-1" -v defprovider="@" '($1==""){$1=defenc}($4==""){$4=defprovider}($5==""){$5=defdate}($NF==""){$NF=FNR-1}1' FS=, OFS=, \
+    awk -v defdate="$DEFAULT_DATE" -v defenc="-1" -v defprovider="@" '($1==""){$1=defenc}($4==""){$4=defprovider}($5==""){$5=defdate}($NF==""){$NF=FNR-1}1' FS=, OFS=, \
     ${1}OBSERVATION_FACT.csv > ${1}tmp && mv -f ${1}tmp ${1}OBSERVATION_FACT.csv
 }
 
