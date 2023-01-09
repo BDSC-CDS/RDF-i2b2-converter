@@ -257,14 +257,17 @@ class InformationTree:
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
         # Digest the context and get back the "clean" list of details
         context_register = ContextFactory(parent_context)
-        if not context_register.valid():
-            print("Incomplete context, skipping observation")
-            return
         observation_elements = context_register.digest(pred_objects)
         if concept:
             context_register.add_concept_code(
                 current_basecode, instance_num=instance_num
             )
+            if not context_register.valid():
+                print(
+                    "Incomplete context, skipping observation. Partial context is",
+                    context_register.get_context(),
+                )
+                return
             self.obs_register.digest(
                 resource,
                 parent=None,
