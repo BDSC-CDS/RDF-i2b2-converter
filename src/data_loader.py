@@ -12,6 +12,7 @@ def is_valid(pred, obj):
     val = obj.value(TYPE_PREDICATE_URI) if callable(obj.value) else get_datatype(obj)
     return val is None or val not in TO_IGNORE + BLACKLIST
 
+
 def extract_value(value, instructions):
     """
     Runtime madness.
@@ -98,7 +99,7 @@ class DataLoader:
         if self.entry_class_resources == []:
             return []
         res = []
-        while res == [] and len(self.entry_class_resources)>0:
+        while res == [] and len(self.entry_class_resources) > 0:
             cur = self.entry_class_resources.pop()
             selclass = cur.identifier
             obs = self.graph.query(
@@ -111,12 +112,14 @@ class DataLoader:
                 initBindings={"class": selclass},
             )
             res = [self.graph.resource(k[0]) for k in obs]
-            if res==[]:
+            if res == []:
                 print("No observation for top concept", selclass)
             else:
                 print("Found data for top concept", selclass)
         if res == []:
-            print("No data found. Please check the directories, Makefile volume binding (if using docker) or config files.")
+            print(
+                "No data found. Please check the directories, Makefile volume binding (if using docker) or config files."
+            )
         return res
 
 
@@ -148,15 +151,15 @@ class ObservationRegister:
             value = resource.value
             if not vtype in self.value_items.keys():
                 raise Exception("Type not defined in config file: ", vtype)
-            if "transform" in self.value_items[vtype].keys() :
+            if "transform" in self.value_items[vtype].keys():
                 value = extract_value(value, self.value_items[vtype]["transform"])
             details.update({self.value_items[vtype]["col"]: value})
             details.update(self.value_items[vtype]["misc"])
         elif basecode != "@":
             hdler = I2B2BasecodeHandler()
             obj_rdftype = resource.value(TYPE_PREDICATE_URI)
-            # TODO: modify here to support non-untyped NamedIndividuals. 
-            # Before that, check catching of multiple types works correctly 
+            # TODO: modify here to support non-untyped NamedIndividuals.
+            # Before that, check catching of multiple types works correctly
             if obj_rdftype is not None:
                 el = obj_rdftype.identifier
             else:
@@ -171,9 +174,6 @@ class ObservationRegister:
         Process the information in an end of path. Add every detail in the correct column of the default observation table.
         Use the context details.
         """
-        if context == {}:
-            raise Exception("Cannot add a record with an empty context")
-
         record = context.copy()
         record.update({"MODIFIER_CD": basecode})
         self.records.append(record)
@@ -187,7 +187,7 @@ class InformationTree:
     This class is in charge of the graph exploration given a collection of top-level instance.
     It will trigger the collection of observation informations.
     When the tip of a branch is found, is is processed and stored in the ObservationRegister.
-    The first level is used to extract patient, hospital and encounter data. 
+    The first level is used to extract patient, hospital and encounter data.
     """
 
     def __init__(self, resources_list, start_instance=1):
@@ -257,6 +257,9 @@ class InformationTree:
         pred_objects = [k for k in resource.predicate_objects() if is_valid(*k)]
         # Digest the context and get back the "clean" list of details
         context_register = ContextFactory(parent_context)
+        if not context_register.valid():
+            print("Incomplete context, skipping observation")
+            return
         observation_elements = context_register.digest(pred_objects)
         if concept:
             context_register.add_concept_code(
@@ -271,7 +274,9 @@ class InformationTree:
 
         for pred, obj in observation_elements:
             # Updating the basecode with the forward link
-            basecode = hdler.reduce_basecode(pred.identifier, prefix=current_basecode, debug=DEBUG)
+            basecode = hdler.reduce_basecode(
+                pred.identifier, prefix=current_basecode, debug=DEBUG
+            )
             if self.is_pathend(obj):
                 self.obs_register.digest(
                     obj, pred, basecode, context_register.get_context()
@@ -293,6 +298,20 @@ class ContextFactory:
     def __init__(self, parent_context={}):
         self.context = parent_context.copy()
         self.fields_dic = COLUMNS_MAPPING["CONTEXT"]
+
+    def valid(self):
+        """
+        Check all mandatory fields for a context are filled in. To be called when ready for writing.
+        """
+        for el in self.fields_dic:
+            if "mandatory" in el.keys() and el["mandatory"] == "True":
+                if (
+                    not el["col"] in self.context.keys()
+                    and self.context[el["col"]] is not None
+                    and self.context[el["col"]] != ""
+                ):
+                    return False
+        return True
 
     def digest(self, pred_objects):
         """
@@ -346,7 +365,7 @@ class ContextFactory:
         if callable(obj.value):
             in_pred = rdflib.URIRef(tmp.pop(0))
             val = obj.value(in_pred)
-        else :
+        else:
             val = obj.value
         while tmp != []:
             last_pred = rdflib.URIRef(tmp.pop(0))
@@ -360,9 +379,9 @@ class ContextFactory:
         if isinstance(val, datetime.datetime):
             pyval = "{:%Y-%m-%d %H:%M:%S}".format(val)
         elif val is not None:
-            pyval =val.toPython()
+            pyval = val.toPython()
         else:
-            pyval=""
+            pyval = ""
         self.context.update({self.fields_dic[obj_type]["col"]: pyval})
 
     def get_context(self):
