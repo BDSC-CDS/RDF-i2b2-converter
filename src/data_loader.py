@@ -306,7 +306,8 @@ class ContextFactory:
         """
         Check all mandatory fields for a context are filled in. To be called when ready for writing.
         """
-        for el in self.fields_dic:
+        for kel in self.fields_dic.keys():
+            el = self.fields_dic[kel]
             if "mandatory" in el.keys() and el["mandatory"] == "True":
                 if (
                     not el["col"] in self.context.keys()
