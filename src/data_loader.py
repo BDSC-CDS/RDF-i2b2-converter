@@ -309,8 +309,8 @@ class ContextFactory:
         for kel in self.fields_dic.keys():
             el = self.fields_dic[kel]
             if "mandatory" in el.keys() and el["mandatory"] == "True":
-                if (
-                    not el["col"] in self.context.keys()
+                if not (
+                    el["col"] in self.context.keys()
                     and self.context[el["col"]] is not None
                     and self.context[el["col"]] != ""
                 ):
