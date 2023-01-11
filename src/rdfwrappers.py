@@ -77,17 +77,33 @@ class Component:
     def set_shortname(self):
         self.shortname = shortname(self.resource)
 
+    def pref_label(self):
+        """
+        Homemade method to get the label of the preferred tag. Replaces rdflib.Graph.prefLabel (removed from lib)
+        """
+        labels = [
+            k[1]
+            for k in self.resource.predicate_objects()
+            if k[0].identifier == RDFS.label
+        ]
+        if len(labels) == 1:
+            return labels[0].toPython()
+        if len(labels) == 0:
+            return ""
+        # More than 1 label, let's filter along language tags
+        res = [k.toPython() for k in labels if k.language == PREF_LANGUAGE]
+        if len(res) > 1:
+            return res[0]
+        if len(res) == 0:
+            return labels[0].toPython()
+        return res
+
     def set_label(self):
         """
         Set the language-dependent label (to be used as display name)
         """
-        labels = self.resource.graph.preferredLabel(
-            self.resource.identifier, lang=PREF_LANGUAGE
-        )
-        if len(labels) > 0:
-            self.label = labels[0][1].toPython()
+        fmtd_label = self.pref_label()
         # If the resource had no language-tagged label, get the normal label. If it does not exist, say the label will be the URI suffix
-        fmtd_label = self.resource.label()
         self.label = self.shortname if fmtd_label == "" else fmtd_label.toPython()
 
         if self.is_terminology_term:
