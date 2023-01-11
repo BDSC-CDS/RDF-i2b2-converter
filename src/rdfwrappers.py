@@ -104,7 +104,7 @@ class Component:
         """
         fmtd_label = self.pref_label()
         # If the resource had no language-tagged label, get the normal label. If it does not exist, say the label will be the URI suffix
-        self.label = self.shortname if fmtd_label == "" else fmtd_label.toPython()
+        self.label = self.shortname if fmtd_label == "" else fmtd_label
 
         if self.is_terminology_term:
             sep = self.shortname.rfind(":")
