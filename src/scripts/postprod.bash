@@ -75,7 +75,7 @@ replace_codes () {
 
     PATH_DCD=${2}CONCEPT_DIMENSION_VERBOSE.csv
     PATH_DMD=${2}MODIFIER_DIMENSION_VERBOSE.csv
-
+    init_nl=$(wc -l < $PATH_OF)
 
     # 1. generate lookup tables between verbose and non verbose codes:
     if ! [ -f $LOOKUP_CONCEPTS ] ; then
@@ -86,10 +86,12 @@ replace_codes () {
     fi
 
     # 2. replace column of OBSERVATION fact by their equivalent in non-verbose mode
-    awk 'FNR==NR{a[$2]=$1;next}{ $3=a[$3]}1' FS=, OFS=, $LOOKUP_CONCEPTS $PATH_OF > ${1}tmp
-    awk 'FNR==NR{a[$2]=$1;next}{ $6=a[$6]}1' FS=, OFS=, $LOOKUP_MODIFIERS ${1}tmp > $PATH_OF && rm -f ${1}tmp
+    awk 'FNR==NR{a[$2]=$1;next}(a[$3]){ $3=a[$3]; print $0}' FS=, OFS=, $LOOKUP_CONCEPTS $PATH_OF > ${1}tmp
+    awk 'FNR==NR{a[$2]=$1;next}(a[$6]){ $6=a[$6]; print $0}' FS=, OFS=, $LOOKUP_MODIFIERS ${1}tmp > $PATH_OF && rm -f ${1}tmp
     rm $LOOKUP_CONCEPTS $LOOKUP_MODIFIERS
-    echo "Verbose codes were correctly replaced."
+    skipped=$(( $init_nl - $(wc -l < $PATH_OF) ))
+    percent="($(echo "$skipped" "$init_nl" |awk '{printf "%.2f", $1 * 100 / $2}')%)"
+    echo "Verbose codes were correctly replaced. $skipped lines $percent skipped due to missing equivalences."
 }
 
 reindex () {
