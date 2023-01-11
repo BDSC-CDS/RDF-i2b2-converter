@@ -3,7 +3,7 @@ from utils import *
 
 def get_datatype(obj):
     dt = obj.datatype
-    return "http://www.w3.org/2001/XMLSchema#string" if dt is None else dt.toPython()
+    return rdflib.XSD.string.toPython() if dt is None else dt.toPython()
 
 
 def is_valid(pred, obj):

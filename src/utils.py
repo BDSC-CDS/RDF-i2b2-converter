@@ -154,11 +154,8 @@ def which_graph(uri):
 
 
 def check_domains(resource):
-    dom = resource.value(rdflib.URIRef("http://www.w3.org/2000/01/rdf-schema#domain"))
-    if (
-        resource.graph.resource(rdflib.URIRef("http://www.w3.org/2002/07/owl#unionOf"))
-        in dom.predicates()
-    ):
+    dom = resource.value(rdflib.RDFS.domain)
+    if resource.graph.resource(rdflib.OWL.unionOf) in dom.predicates():
         print(
             "Warning: ",
             resource,

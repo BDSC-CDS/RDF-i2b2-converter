@@ -84,7 +84,7 @@ class Component:
         labels = [
             k[1]
             for k in self.resource.predicate_objects()
-            if k[0].identifier == RDFS.label
+            if k[0].identifier == rdflib.RDFS.label
         ]
         if len(labels) == 1:
             return labels[0].toPython()
