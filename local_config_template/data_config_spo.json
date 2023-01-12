@@ -74,6 +74,7 @@
         "CONTEXT": {
             "https://biomedit.ch/rdf/sphn-ontology/sphn#SubjectPseudoIdentifier": {
                 "col": "PATIENT_NUM",
+                "mandatory": "True",
                 "overwrite": "False",
                 "pred_to_value": [
                     "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
@@ -81,6 +82,7 @@
             },
             "https://biomedit.ch/rdf/sphn-ontology/sphn#AdministrativeCase": {
                 "col": "ENCOUNTER_NUM",
+                "mandatory": "False",
                 "overwrite": "False",
                 "pred_to_value": [
                     "https://biomedit.ch/rdf/sphn-ontology/sphn#hasIdentifier"
@@ -89,6 +91,7 @@
             "https://biomedit.ch/rdf/sphn-ontology/sphn#DataProviderInstitute": {
                 "col": "PROVIDER_ID",
                 "overwrite": "False",
+                "mandatory": "False",
                 "verbose_value": [
                     "https://biomedit.ch/rdf/sphn-ontology/sphn#hasDataProviderInstituteCode",
                     "https://biomedit.ch/rdf/sphn-ontology/sphn#hasCodeName"
