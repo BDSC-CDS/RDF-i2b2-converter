@@ -92,11 +92,9 @@ class Component:
             return ""
         # More than 1 label, let's filter along language tags
         res = [k.toPython() for k in labels if k.language == PREF_LANGUAGE]
-        if len(res) > 1:
-            return res[0]
         if len(res) == 0:
             return labels[0].toPython()
-        return res
+        return res[0]
 
     def set_label(self):
         """
