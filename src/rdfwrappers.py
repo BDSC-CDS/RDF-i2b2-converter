@@ -1,4 +1,5 @@
 from utils import *
+from main_ontology import GRAPH_CONFIG
 
 # add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
 

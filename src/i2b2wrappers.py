@@ -1,4 +1,5 @@
 from rdfwrappers import *
+from typing import List
 
 
 def drop(attribute):
@@ -33,8 +34,8 @@ class I2B2Converter:
         Extract and instantiate all the i2b2concepts for this run.
         They are found by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
-        self.i2b2voidconcepts = []
-        self.left_tosearch = []
+        self.i2b2voidconcepts: List[I2B2Concept] = []
+        self.left_tosearch: List[I2B2Concept] = []
         # Exploring into our concept
         cur = I2B2Concept(concept, i2b2parent)
         concept.get_entry_desc()
@@ -51,6 +52,10 @@ class I2B2Converter:
             self.i2b2voidconcepts.extend(next.i2b2voidconcepts)
 
     def get_batch(self):
+        """
+        Iterate on the concepts to be discovered, convert the whole tree spanned
+        by each concept and store its conversion partial output in a buffer before proceeding.
+        """
         # First flush the directory concepts (that do not span modifiers) if any
         self.towrite = [k.get_db_line() for k in self.i2b2voidconcepts]
         self.i2b2voidconcepts = []
@@ -59,11 +64,13 @@ class I2B2Converter:
             return False
         cur = self.left_tosearch.pop()
         print("Exploring concept ", cur)
+        # Trigger the properties and subconcepts search
         cur.extract_modelems()
+        # Save the current output to a buffer
         self.towrite.extend([k.get_db_line() for k in [cur] + cur.modifiers])
         return True
 
-    def write(self, filepath=OUTPUT_TABLES_LOCATION + "METADATA.csv", init_table=False):
+    def write(self, outfile, init_status=False):
         """
         Write all the db at once through a pandas dataframe.
         If updating this function to enable append mode, do not forget to make sure header is written exactly once in the file.

@@ -3,7 +3,10 @@ import pdb
 import hashlib
 import glob
 import rdflib
-import json, os, sys, datetime
+import json
+import os
+import sys
+import datetime
 import gc
 
 """"
@@ -11,42 +14,30 @@ This file figures file and format utility functions.
 It initializes global variables by reading the "ontology_config" file.
 """
 
-###########
-GRAPH_CONFIG = "/config/graph_config.json"
-I2B2_MAPPING = "/config/i2b2_rdf_config.json"
-DATA_CONFIG = "/config/data_config.json"
-
-with open(GRAPH_CONFIG) as ff:
-    config = json.load(ff)
-for key, val in config["parameters"].items():
-    globals()[key] = val
-for key, val in config["uris"].items():
-    globals()[key] = (
-        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
-    )
-
-with open(I2B2_MAPPING) as ff:
-    config = json.load(ff)
-for key, val in config.items():
-    globals()[key] = val if val != "False" else False
-
-with open(DATA_CONFIG) as ff:
-    config = json.load(ff)
-for key, val in config.items():
-    val = int(val) if type(val) == str and val.isnumeric() else val
-    globals()[key] = val
-for key, val in config["data_global_uris"].items():
-    globals()[key] = (
-        rdflib.URIRef(val) if type(val) == str else [rdflib.URIRef(k) for k in val]
-    )
+terminologies_files = {}
 
 
-SUBCLASS_PRED = rdflib.URIRef(SUBCLASS_PREDICATE_URI)
-TERMINOLOGIES_FILES = {}
+def read_config(CONFPATH):
+    with open(CONFPATH):
+        parsed_config = json.load(CONFPATH)
+        for key, val in parsed_config.items():
+            if val == "True" or val == "False":
+                val = val == "True"
+            elif key == "uris":
+                for val2 in val.values():
+                    val2 = (
+                        rdflib.URIRef(val2)
+                        if type(val2) == str
+                        else [rdflib.URIRef(k) for k in val2]
+                    )
+            elif type(val) == str and val.isnumeric():
+                val = int(val)
+    return parsed_config
 
 
 class GraphParser:
     def __init__(self, paths):
+        global terminologies_files
         self.graph = rdflib.Graph()
         result = []
         for pathi in paths:
@@ -68,7 +59,7 @@ class GraphParser:
                 print("Creating a dedicated graph for", fname)
                 cur = rdflib.Graph()
                 cur.parse(filek, format=rdf_format)
-                TERMINOLOGIES_FILES.update({fname: cur})
+                terminologies_files.update({fname: cur})
             else:
                 print("adding to the main graph: ", fname)
                 self.graph.parse(filek, format=rdf_format)
@@ -83,6 +74,7 @@ class GraphParser:
 
     def free_memory(self):
         del self.graph
+        del terminologies_files
         gc.collect()
 
 
@@ -146,9 +138,10 @@ def terminology_indicator(resource):
 
 
 def which_graph(uri):
+    global terminologies_files
     for key in TERMINOLOGIES_GRAPHS.keys():
-        if key in uri and TERMINOLOGIES_GRAPHS[key] in TERMINOLOGIES_FILES.keys():
-            res = TERMINOLOGIES_FILES[TERMINOLOGIES_GRAPHS[key]]
+        if key in uri and TERMINOLOGIES_GRAPHS[key] in terminologies_files.keys():
+            res = terminologies_files[TERMINOLOGIES_GRAPHS[key]]
             return res if res != "" and res is not None else False
     return False
 
@@ -204,6 +197,21 @@ def wipe_directory(dir_path, names=[]):
     for k in names:
         os.remove(dir_path + k)
         print("Removed file: ", dir_path + k)
+
+
+def merge_roots(target_file):
+    df = pd.read_csv(target_file)
+    df = df.replace([":Concept"], ["sphn:SPHNConcept"], regex=True)
+    lvl = df.loc[df["C_HLEVEL"] == 0]
+    if len(lvl) > 1:
+        lvl = lvl.drop(lvl.iloc[[0]].index)
+        df = df.drop(lvl.index)
+    df.fillna("").to_csv(
+        path_or_buf=target_file,
+        mode="w",
+        header=True,
+        index=False,
+    )
 
 
 def db_to_csv(db, filename, init=False, columns=[]):

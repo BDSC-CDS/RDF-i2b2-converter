@@ -1,12 +1,11 @@
-import os
-import sys
 import pandas as pd
-import pdb
 import json
 
 
 def extract_parent_id(row):
-    # tool to retrieve the short URI of the parent element in the i2b2 ontology file
+    """
+    Tool to retrieve the short URI of the parent element in the i2b2 ontology file
+    """
     if pd.isnull(row["C_PATH"]):
         return row[["M_APPLIED_PATH"]].str.extract(r".*\\([^\\]+)\\")[0][
             "M_APPLIED_PATH"
@@ -48,23 +47,23 @@ def resolve_rows(df, destdic):
     return res_idx
 
 
-def merge_metadatavaluefields(output_tables_loc, migrations):
-
-    globals()["OUTPUT_TABLES_LOCATION"] = output_tables_loc
-    globals()["METADATA_LOC"] = output_tables_loc + "METADATA.csv"
+def merge_metadatavaluefields(migrations_config, metadata_file, migrations_logfile):
+    """
+    Merge ontology items following the configuration file.
+    """
     logs = {}
-    df = pd.read_csv(METADATA_LOC)
+    df = pd.read_csv(metadata_file)
     # get the shortened URI that trails the full path
     dfk = df.assign(key=df["C_FULLNAME"].str.extract(r".*\\([^\\]+)\\"))
 
     # get the positions of the lines to be deleted and digested into other lines
     to_digest = dfk.loc[
-        dfk["C_METADATAXML"].notnull() & dfk["key"].isin(migrations.keys())
+        dfk["C_METADATAXML"].notnull() & dfk["key"].isin(migrations_config.keys())
     ]
 
     moved = pd.Index([])
     for ix, row in to_digest.iterrows():
-        destdic = migrations[row["key"]]
+        destdic = migrations_config[row["key"]]
         # Check it's the good item related to the good parent
         if destdic["concept"] != extract_parent_id(row):
             print("Concept does not match at ", destdic["concept"], "could not migrate")
@@ -109,6 +108,6 @@ def merge_metadatavaluefields(output_tables_loc, migrations):
         df.loc[destination_indexes, "C_VISUALATTRIBUTES"] = new_va
         moved = moved.union([ix])
     df = df.drop(moved)
-    df.to_csv(METADATA_LOC, index=False)
-    with open(OUTPUT_TABLES_LOCATION + "migrations_logs.json", "w") as outfile:
+    df.to_csv(metadata_file, index=False)
+    with open(migrations_logfile, "w") as outfile:
         json.dump(logs, outfile)

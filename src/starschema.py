@@ -7,15 +7,15 @@ OBS_TABLE = OUTPUT_TABLES_LOCATION + "OBSERVATION_FACT.csv"
 
 
 def gen_concept_modifier_dim(
-    folder_path=OUTPUT_TABLES_LOCATION, metadata_filename="METADATA.csv"
+    output_tables_loc, metadata_file, columns, debug_status: bool
 ):
     """
     Build two tables: i2b2's CONCEPT_DIMENSION and MODIFIER_DIMENSION that stores the concepts and modifiers codes as well as the full paths used in the ontology.
     These informations are needed to join CRC tables to ontology tables.
     """
-    df = pd.read_csv(folder_path + metadata_filename)
-    concept_df = pd.DataFrame(columns=COLUMNS["CONCEPT_DIMENSION"])
-    modifier_df = pd.DataFrame(columns=COLUMNS["MODIFIER_DIMENSION"])
+    df = pd.read_csv(metadata_file)
+    concept_df = pd.DataFrame(columns=columns["CONCEPT_DIMENSION"])
+    modifier_df = pd.DataFrame(columns=columns["MODIFIER_DIMENSION"])
 
     concept_df[["CONCEPT_PATH", "CONCEPT_CD", "NAME_CHAR"]] = df.loc[
         df["C_TABLENAME"] == "CONCEPT_DIMENSION", ["C_FULLNAME", "C_BASECODE", "C_NAME"]
@@ -24,12 +24,12 @@ def gen_concept_modifier_dim(
         df["C_TABLENAME"] == "MODIFIER_DIMENSION",
         ["C_FULLNAME", "C_BASECODE", "C_NAME"],
     ]
-    suffix = "_VERBOSE" if DEBUG else ""
+    suffix = "_VERBOSE" if debug_status else ""
     concept_df.fillna("").to_csv(
-        folder_path + "CONCEPT_DIMENSION" + suffix + ".csv", index=False
+        output_tables_loc + "CONCEPT_DIMENSION" + suffix + ".csv", index=False
     )
     modifier_df.fillna("").to_csv(
-        folder_path + "MODIFIER_DIMENSION" + suffix + ".csv", index=False
+        output_tables_loc + "MODIFIER_DIMENSION" + suffix + ".csv", index=False
     )
 
 
