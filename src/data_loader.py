@@ -1,6 +1,38 @@
 from utils import *
 
 
+def query_providers(graph_parser:GraphParser, provider_class_uri:rdflib.URIRef, mapping_context:dict):
+    """
+    mapping_context: the context (from I2B2_CONFIG["COLUMNS_MAPPING"][provider_class.toPython()])
+    """
+    graph = graph_parser.graph
+    res = graph.query(
+        """
+        SELECT ?c ?n
+        where {
+            ?k rdf:type ?dpiclass .
+            ?k ?_ ?s .
+            ?s ?codepred ?c .
+            ?s ?codeid ?n
+        }
+        """,
+        initBindings={
+            "dpiclass": provider_class_uri,
+            "codepred": rdflib.URIRef(
+                mapping_context["verbose_value"][
+                    -1
+                ]
+            ),
+            "codeid": rdflib.URIRef(
+                mapping_context["pred_to_value"][
+                    -1
+                ]
+            ),
+        },
+    )
+    return [el for el in res]
+
+
 def get_datatype(obj):
     dt = obj.datatype
     return rdflib.XSD.string.toPython() if dt is None else dt.toPython()

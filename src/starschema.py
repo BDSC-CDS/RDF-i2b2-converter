@@ -1,16 +1,17 @@
-from i2b2wrappers import *
-from data_loader import *
+import pandas as pd
+from typing import List
 
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath)
-OBS_TABLE = OUTPUT_TABLES_LOCATION + "OBSERVATION_FACT.csv"
+"""
+A set of functions creating the i2b2 CSV tables for the star schema and and ONT cell.
+"""
 
 
 def gen_concept_modifier_dim(
     output_tables_loc, metadata_file, columns, debug_status: bool
 ):
     """
-    Build two tables: i2b2's CONCEPT_DIMENSION and MODIFIER_DIMENSION that stores the concepts and modifiers codes as well as the full paths used in the ontology.
+    Build two tables: i2b2's CONCEPT_DIMENSION and MODIFIER_DIMENSION that stores the concepts and modifiers codes as
+    well as the full paths used in the ontology.
     These informations are needed to join CRC tables to ontology tables.
     """
     df = pd.read_csv(metadata_file)
@@ -33,95 +34,51 @@ def gen_concept_modifier_dim(
     )
 
 
-def init_patient_dim():
+def init_crc_table(table_path: str, columns: List[str]):
     """
-    Initialize PATIENT_DIMENSION.
+    Create a CSV table with the specified columns.
     """
-    patdf = pd.DataFrame(columns=COLUMNS["PATIENT_DIMENSION"])
-    patdf.to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_DIMENSION.csv", index=False)
+    patdf = pd.DataFrame(columns=columns)
+    patdf.to_csv(table_path, index=False)
 
 
-def init_patient_mapping():
+def gen_provider_dim(
+    output_tables_loc: str, columns: List[str], providers_sparqlres: List
+):
     """
-    Initialize PATIENT_MAPPING
+    Create the PROVIDER_DIMENSION CSV table out of the provider resource discovery.
     """
-    pmdf = pd.DataFrame(columns=COLUMNS["PATIENT_MAPPING"])
-    pmdf.to_csv(OUTPUT_TABLES_LOCATION + "PATIENT_MAPPING.csv", index=False)
-
-
-def init_visit_dim():
-    """
-    Initialize VISIT_DIMENSION.
-    """
-    encdf = pd.DataFrame(columns=COLUMNS["VISIT_DIMENSION"])
-    encdf.to_csv(OUTPUT_TABLES_LOCATION + "VISIT_DIMENSION.csv", index=False)
-
-
-def init_encounter_mapping():
-    emdf = pd.DataFrame(columns=COLUMNS["ENCOUNTER_MAPPING"])
-    emdf.to_csv(OUTPUT_TABLES_LOCATION + "ENCOUNTER_MAPPING.csv", index=False)
-
-
-def query_providers(graph_parser):
-    provider_class = PROVIDER_CLASS_URI
-    graph = graph_parser.graph
-    res = graph.query(
-        """
-        SELECT ?c ?n
-        where {
-            ?k rdf:type ?dpiclass .
-            ?k ?_ ?s .
-            ?s ?codepred ?c .
-            ?s ?codeid ?n
-        }
-        """,
-        initBindings={
-            "dpiclass": provider_class,
-            "codepred": rdflib.URIRef(
-                COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["verbose_value"][
-                    -1
-                ]
-            ),
-            "codeid": rdflib.URIRef(
-                COLUMNS_MAPPING["CONTEXT"][provider_class.toPython()]["pred_to_value"][
-                    -1
-                ]
-            ),
-        },
-    )
-    return [el for el in res]
-
-
-def gen_provider_dim(providers_sparqlres):
-    res = providers_sparqlres
-    prov_df = pd.DataFrame(columns=COLUMNS["PROVIDER_DIMENSION"])
+    prov_df = pd.DataFrame(columns=columns)
     kdic = {"PROVIDER_ID": [], "PROVIDER_PATH": []}
-    for el in res:
+    for el in providers_sparqlres:
         kdic["PROVIDER_ID"].append(el[1].toPython())
         kdic["PROVIDER_PATH"].append(el[0].toPython())
     pdf = pd.DataFrame.from_dict(kdic)
     prov_df = pd.concat([prov_df, pdf], axis=0)
-    prov_df.to_csv(OUTPUT_TABLES_LOCATION + "PROVIDER_DIMENSION.csv", index=False)
+    prov_df.to_csv(output_tables_loc + "PROVIDER_DIMENSION.csv", index=False)
 
 
-def init_star_schema(providers=None):
-    """
-    Generate the observation-based star schema tables.
-    If a mapping is passed as parameter, generate also the encouter_mapping and patient_mapping tables.
-    """
-    init_visit_dim()
-    init_patient_dim()
-    gen_provider_dim(providers)
-    init_encounter_mapping()
-    init_patient_mapping()
-
-
-def gen_table_access(
-    folder_path=OUTPUT_TABLES_LOCATION, metadata_filenames=["METADATA.csv"]
+def init_star_schema(
+    output_tables_loc: str, tables: List[str], columns: dict, providers: List
 ):
-    dfs = [pd.read_csv(folder_path + fname) for fname in metadata_filenames]
-    df = pd.concat(dfs) if len(dfs) > 1 else dfs[0]
-    table_access = pd.DataFrame(columns=COLUMNS["TABLE_ACCESS"])
+    """
+    Create the observation-based star schema tables.
+    """
+    for table in tables:
+        init_crc_table(table_path=output_tables_loc + table, columns=columns[table])
+    gen_provider_dim(
+        output_tables_loc=output_tables_loc,
+        columns=columns["PROVIDER_DIMENSION"],
+        providers_sparqlres=providers,
+    )
+
+
+def gen_table_access(output_tables_loc, metadata_file, columns):
+    """
+    Create and fillup the TABLE_ACCESS CSV table.
+    """
+    df = pd.read_csv(metadata_file)
+    table_access = pd.DataFrame(columns=columns)
     inter = table_access.columns.intersection(df.columns)
     table_access[inter] = df.loc[
         (df["C_HLEVEL"] == 0) & (df["C_FACTTABLECOLUMN"] == "CONCEPT_CD"), inter
@@ -131,4 +88,4 @@ def gen_table_access(
     table_access["C_DIMTABLENAME"] = "CONCEPT_DIMENSION"
     table_access["C_PROTECTED_ACCESS"] = "N"
 
-    table_access.fillna("").to_csv(folder_path + "TABLE_ACCESS.csv", index=False)
+    table_access.fillna("").to_csv(output_tables_loc + "TABLE_ACCESS.csv", index=False)

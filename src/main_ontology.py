@@ -1,10 +1,13 @@
-from rdflib.graph import Graph
-from rdfwrappers import *
-from i2b2wrappers import *
+"""
+Main file for ontology conversion.
+"""
+
+from rdfwrappers import Concept
+from i2b2wrappers import I2B2Converter
 from starschema import gen_concept_modifier_dim, gen_table_access
 from scripts.merge_metavaluefields import merge_metadatavaluefields
 from scripts.fill_metadata_units import insert_units
-from utils import merge_roots, GraphParser
+from utils import merge_roots, GraphParser, create_dir, read_config
 from constant import (
     GRAPH_CONFIG_FILE,
     I2B2_MAPPING_FILE,
@@ -52,43 +55,41 @@ def convert_main(
 
 
 if __name__ == "__main__":
-
     ### Setting up the configs and folders
     GRAPH_CONFIG = read_config(GRAPH_CONFIG_FILE)
     GRAPH_PARAMS = GRAPH_CONFIG["parameters"]
     GRAPH_URIS = GRAPH_CONFIG["uris"]
     I2B2_CONFIG = read_config(I2B2_MAPPING_FILE)
     output_tables_location = I2B2_CONFIG["OUTPUT_TABLES_LOCATION"]
-    metadata_file = output_tables_location + METADATA_FILENAME
+    metadata_fpath = output_tables_location + METADATA_FILENAME
     create_dir(output_tables_location)
 
     ### Trigger the conversion
     convert_main(
         parser=GraphParser(GRAPH_PARAMS["ONTOLOGY_GRAPHS_LOCATIONS"]),
         root_uris=GRAPH_URIS["ROOT_URIS"],
-        metadata_file=metadata_file,
+        metadata_file=metadata_fpath,
     )
 
     ### Post-processing of the i2b2 CSV tables (pandas manipulations)
-    merge_roots(target_file=metadata_file)
+    merge_roots(target_file=metadata_fpath)
     merge_metadatavaluefields(
         migrations_config=I2B2_CONFIG["MIGRATIONS"],
-        metadata_file=metadata_file,
+        metadata_file=metadata_fpath,
         migrations_logfile=output_tables_location + MIGRATIONS_FILENAME,
     )
     insert_units(
-        metadata_file=metadata_file,
+        metadata_file=metadata_fpath,
         units_file=output_tables_location + UNITS_FILENAME,
     )
-
     gen_concept_modifier_dim(
         output_tables_loc=output_tables_location,
-        metadata_file=metadata_file,
+        metadata_file=metadata_fpath,
         columns=I2B2_CONFIG["COLUMNS"],
         debug_status=I2B2_CONFIG["DEBUG"],
     )
-    TODO
     gen_table_access(
-        folder_path=output_tables_location,
-        metadata_filenames=["METADATA.csv"],
+        output_tables_loc=output_tables_location,
+        metadata_file=metadata_fpath,
+        columns=I2B2_CONFIG["COLUMNS"]["TABLE_ACCESS"],
     )

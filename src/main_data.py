@@ -1,7 +1,7 @@
 from data_loader import *
 from scripts.merge_datafields import transfer_obs_numerical_values
 from scripts.obs_tools import check_basecodes
-from starschema import init_star_schema, query_providers
+from starschema import init_star_schema
 from constant import (
     MIGRATIONS_FILENAME,
     OBSERVATION_FILENAME,
@@ -28,13 +28,17 @@ def load_observations():
 
 
 if __name__ == "__main__":
-
     GRAPH_CONFIG = read_config(GRAPH_CONFIG_FILE)
     I2B2_CONFIG = read_config(I2B2_MAPPING_FILE)
     DATA_CONFIG = read_config(DATA_CONFIG_FILE)
     create_dir(OUTPUT_TABLES_LOCATION)
     graphparser = load_observations()
-    providers_generator = query_providers(graphparser)
+    provider_class_uri = DATA_CONFIG["uris"]["PROVIDER_CLASS_URI"]
+    providers_generator = query_providers(
+        graph_parser=graphparser,
+        provider_class_uri=rdflib.URIRef(provider_class_uri),
+        mapping_context=DATA_CONFIG["CONTEXT"][provider_class_uri],
+    )
     graphparser.free_memory()
     # Run scripts to modify the table according to project-specific purposes
     transfer_obs_numerical_values(
