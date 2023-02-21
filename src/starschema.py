@@ -1,17 +1,17 @@
-import pandas as pd
-from typing import List
-
 """
 A set of functions creating the i2b2 CSV tables for the star schema and and ONT cell.
 """
+
+from typing import List
+import pandas as pd
 
 
 def gen_concept_modifier_dim(
     output_tables_loc, metadata_file, columns, debug_status: bool
 ):
     """
-    Build two tables: i2b2's CONCEPT_DIMENSION and MODIFIER_DIMENSION that stores the concepts and modifiers codes as
-    well as the full paths used in the ontology.
+    Build two tables: i2b2's CONCEPT_DIMENSION and MODIFIER_DIMENSION that stores
+    the concepts and modifiers codes as well as the full paths used in the ontology.
     These informations are needed to join CRC tables to ontology tables.
     """
     df = pd.read_csv(metadata_file)

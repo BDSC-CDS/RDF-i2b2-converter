@@ -15,7 +15,7 @@ import shutil
 
 def load_observations():
     parser = GraphParser(paths=[DATA_GRAPHS_LOCATION, CONTEXT_GRAPHS_LOCATION])
-    parser.define_namespaces()
+    parser.define_namespaces()  # TODO why void useless function call here?
     entry_classes = parser.get_entrypoints(ENTRY_DATA_CONCEPTS)
     dl = DataLoader(
         parser,

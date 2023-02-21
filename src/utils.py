@@ -1,3 +1,7 @@
+"""
+Simple utility standalone functions.
+"""
+from typing import List
 import pandas as pd
 import pdb
 import hashlib
@@ -9,17 +13,12 @@ import sys
 import datetime
 import gc
 
-""""
-This file figures file and format utility functions.
-It initializes global variables by reading the "ontology_config" file.
-"""
-
-terminologies_files = {}
+TERMINOLOGIES_FILES = {}
 
 
-def read_config(CONFPATH):
-    with open(CONFPATH):
-        parsed_config = json.load(CONFPATH)
+def read_config(confpath):
+    with open(confpath) as ffile:
+        parsed_config = json.load(ffile)
         for key, val in parsed_config.items():
             if val == "True" or val == "False":
                 val = val == "True"
@@ -36,8 +35,16 @@ def read_config(CONFPATH):
 
 
 class GraphParser:
-    def __init__(self, paths):
-        global terminologies_files
+    """
+    A class for file discovery and management of in-memory graphs loading
+    """
+
+    def __init__(self, paths, rdf_format, terminologies_links):
+        """
+        :param rdf_format The RDF format the users want to take into account,
+                            should be '*' or a proper RDF format.
+                            Mismatches with rdflib's guessed format will be ignored.
+        """
         self.graph = rdflib.Graph()
         result = []
         for pathi in paths:
@@ -48,33 +55,44 @@ class GraphParser:
                 continue
             result.extend(glob.glob(pathi + "/**/*", recursive=True))
         for filek in result:
-            rdf_format = rdflib.util.guess_format(filek)
-            if rdf_format is None or (RDF_FORMAT != "*" and rdf_format != RDF_FORMAT):
+            # Check the format parameter matches something doable
+            guessed_format = rdflib.util.guess_format(filek)
+            if guessed_format is None or (
+                rdf_format != "*" and guessed_format != rdf_format
+            ):
                 print("Couldn't parse file", filek, ", skipping")
                 continue
             dot = filek.rfind(".")
             slash = filek.rfind("/")
             fname = filek[slash + 1 : dot]
-            if fname in TERMINOLOGIES_GRAPHS.values():
+            if fname in terminologies_links.values():
                 print("Creating a dedicated graph for", fname)
                 cur = rdflib.Graph()
-                cur.parse(filek, format=rdf_format)
-                terminologies_files.update({fname: cur})
+                cur.parse(filek, format=guessed_format)
+                TERMINOLOGIES_FILES.update({fname: cur})
             else:
                 print("adding to the main graph: ", fname)
-                self.graph.parse(filek, format=rdf_format)
+                self.graph.parse(filek, format=guessed_format)
         print("Graph is fully loaded in memory.")
 
     def define_namespaces(self):
-        ns = [e for e in self.graph.namespace_manager.namespaces()]
-        return ns
+        """
+        To check (iterating through the namespace generator apparently activates them?)
+        """
+        return list(self.graph.namespace_manager.namespaces())
 
-    def get_entrypoints(self, list=ROOT_URIS):
-        return [self.graph.resource(uri) for uri in list]
+    def get_entrypoints(self, entrypoints: List[rdflib.URIRef]):
+        """
+        Collect the resources associated to the specified entrypoints.
+        """
+        return list(self.graph.resource(uri) for uri in entrypoints)
 
     def free_memory(self):
+        """
+        Free the memory. To trigger when graph operations are over.
+        """
         del self.graph
-        del terminologies_files
+        TERMINOLOGIES_FILES.clear()
         gc.collect()
 
 
@@ -83,7 +101,8 @@ class I2B2BasecodeHandler:
     Compute and extract the basecode for a Class or a Property existing in the ontology.
     Access the attributes of the embedded RDF resource.
     If a value is specified, it will be included in the basecode computation.
-    If an other handler is specified as "ph" at construction, its code will be embedded in the computation. (this helps encapsulating hierarchy in codes)
+    If an other handler is specified as "logical_parent" at construction, its code 
+        will be embedded in the computation. (helps encapsulating hierarchy in codes)
     """
 
     def __init__(self, i2b2element=None):
@@ -99,9 +118,9 @@ class I2B2BasecodeHandler:
     def get_basecode(self):
         if self.basecode is not None:
             return self.basecode
-        return self.reduce_basecode(rdf_uri=self.core, prefix=self.prefix, debug=DEBUG)
+        return self.reduce_basecode(rdf_uri=self.core, prefix=self.prefix, debug=False)
 
-    def reduce_basecode(self, rdf_uri, prefix, debug=False, cap=MAX_BASECODE_LENGTH):
+    def reduce_basecode(self, rdf_uri, prefix, debug=False, cap=50):
         """
         Returns a basecode for self.component. A prefix and a value can be added in the hash.
         The code is made from the URI of the RDF ontology concept, which is an info that does not depend on the ontology converter's output.
@@ -129,19 +148,18 @@ def create_dir(relative_path):
     return os.makedirs(relative_path) if not os.path.exists(relative_path) else 0
 
 
-def terminology_indicator(resource):
+def terminology_indicator(resource, terminologies_graphs):
     """
     Determine if it is worth looking for properties of this concept or not.
     In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
     """
-    return any([k in resource.identifier for k in TERMINOLOGIES_GRAPHS.keys()])
+    return any([k in resource.identifier for k in terminologies_graphs.keys()])
 
 
-def which_graph(uri):
-    global terminologies_files
-    for key in TERMINOLOGIES_GRAPHS.keys():
-        if key in uri and TERMINOLOGIES_GRAPHS[key] in terminologies_files.keys():
-            res = terminologies_files[TERMINOLOGIES_GRAPHS[key]]
+def which_graph(uri, terminologies_graphs):
+    for key in terminologies_graphs.keys():
+        if key in uri and terminologies_graphs[key] in terminologies_files.keys():
+            res = terminologies_files[terminologies_graphs[key]]
             return res if res != "" and res is not None else False
     return False
 
@@ -255,11 +273,3 @@ def generate_xml(metadata_dict):
             val = enumstr
         res = res.replace(ftag + etag, ftag + val + etag)
     return res
-
-
-def remove_duplicates(dics):
-    """
-    Given an unordered list of dictionaries, return a shortened list without duplicates.
-    d1 is a duplicate of d2 if d1 == d2.
-    """
-    return [dict(t) for t in {tuple(d.items()) for d in dics}]

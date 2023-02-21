@@ -1,7 +1,7 @@
 {
     "parameters": {
         "ONTOLOGY_GRAPHS_LOCATIONS": [
-            "ontology/main_ontologies/spo/",
+            "ontology/main_ontologies",
             "ontology/external_terminologies"
         ],
         "RDF_FORMAT": "turtle",

@@ -29,13 +29,13 @@ def convert_main(
     Upper stack of the conversion algorithm: from the ontology root(s),
     """
     # First let's setup the graph navigation
-    root_entries = parser.get_entrypoints(root_uris)
+    root_entries = parser.get_entrypoints(entrypoints=root_uris)
 
     init = True
     # Actual loop over the root links
     for concept_res in root_entries:
         concept = Concept(concept_res)
-        # Initialize the converter, (automatically setup the first level of descendance from root)
+        # Initialize the converter (auto setup the first level of root descendance)
         converter = I2B2Converter(concept)
         # Sequentially explore the descendance of every instantiable concept,
         # convert it and write the transcript ("batch") to the metadata file.
@@ -66,7 +66,11 @@ if __name__ == "__main__":
 
     ### Trigger the conversion
     convert_main(
-        parser=GraphParser(GRAPH_PARAMS["ONTOLOGY_GRAPHS_LOCATIONS"]),
+        parser=GraphParser(
+            paths=GRAPH_PARAMS["ONTOLOGY_GRAPHS_LOCATIONS"],
+            rdf_format=GRAPH_PARAMS["RDF_FORMAT"],
+            terminologies_links=GRAPH_PARAMS["TERMINOLOGIES_GRAPHS"],
+        ),
         root_uris=GRAPH_URIS["ROOT_URIS"],
         metadata_file=metadata_fpath,
     )
