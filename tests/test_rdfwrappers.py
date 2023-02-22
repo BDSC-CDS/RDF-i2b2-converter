@@ -3,10 +3,8 @@ import sys
 import pytest
 import random
 
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath)
 
-from initsts import *
+from tests.initsts import *
 
 
 def list_sparql_bnode_domains(uri=TEST_URI):

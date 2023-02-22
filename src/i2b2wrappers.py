@@ -29,13 +29,14 @@ class I2B2Converter:
     From this object can be triggered the modifiers generation.
     """
 
-    def __init__(self, concept, i2b2parent=None):
+    def __init__(self, concept: Concept, i2b2parent=None):
         """
         Extract and instantiate all the i2b2concepts for this run.
         They are found by navigating through the subconcepts tree (ignoring the properties) defined in rdfwrappers.
         """
         self.i2b2voidconcepts: List[I2B2Concept] = []
         self.left_tosearch: List[I2B2Concept] = []
+        self.towrite:List=[]
         # Exploring into our concept
         cur = I2B2Concept(concept, i2b2parent)
         concept.get_entry_desc()
@@ -47,9 +48,9 @@ class I2B2Converter:
         cur.visual = "CA"
         self.i2b2voidconcepts.append(cur)
         for sub in concept.subconcepts:
-            next = I2B2Converter(sub, cur)
-            self.left_tosearch.extend(next.left_tosearch)
-            self.i2b2voidconcepts.extend(next.i2b2voidconcepts)
+            next_level = I2B2Converter(sub, cur)
+            self.left_tosearch.extend(next_level.left_tosearch)
+            self.i2b2voidconcepts.extend(next_level.i2b2voidconcepts)
 
     def get_batch(self):
         """

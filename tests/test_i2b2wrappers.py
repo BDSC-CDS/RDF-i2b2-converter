@@ -3,13 +3,11 @@ import sys
 import pytest
 import random
 
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath)
 
-from initsts import *
-from utils import from_csv
-from main_ontology import generate_ontology_table
-from i2b2wrappers import *
+from tests.initsts import *
+from src.utils import from_csv
+from src.main_ontology import generate_ontology_table
+from src.i2b2wrappers import *
 
 global_db = []
 METADATA_PATH = OUTPUT_TABLES + "METADATA.csv"

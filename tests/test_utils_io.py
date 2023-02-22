@@ -5,7 +5,6 @@ Test file for I/O operations and other routines defined in utils.py
 
 import unittest
 from rdflib import URIRef
-from typing import List
 from tests.constant_test import MANDATORY_GRAPH_CONFIG_KEYS
 from src.constant import GRAPH_CONFIG_FILE, I2B2_MAPPING_FILE
 from src.utils import read_config
