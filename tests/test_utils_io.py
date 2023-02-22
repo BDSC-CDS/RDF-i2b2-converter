@@ -26,7 +26,12 @@ class IOTester(unittest.TestCase):
     def test_read_graph_config(self):
         for valuri in self.graph_dic["uris"].values():
             with self.subTest():
-                self.assertTrue(isinstance(valuri, URIRef) || all([isinstance(valuri, URIRef) for elem in valuri]))
+                if isinstance(valuri, list):
+                    for elem in valuri:
+                        with self.subTest():
+                            self.assertIsInstance(elem, URIRef)
+                else:
+                    self.assertIsInstance(valuri, URIRef)
 
     def test_keys_uris(self):
         for key in self.graph_dic["uris"].keys():

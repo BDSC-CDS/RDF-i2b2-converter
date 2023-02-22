@@ -17,19 +17,26 @@ TERMINOLOGIES_FILES = {}
 
 
 def read_config(confpath):
+    """
+    Read the specified config file.
+    Expected keyword for the JSON dictionary and associated behaviours are:
+        - "uris": all items are cast to a rdflib.URIRef string representation
+    Other elements are read as strings, except integers and boolean (cast as such)
+    """
     with open(confpath) as ffile:
         parsed_config = json.load(ffile)
         for key, val in parsed_config.items():
             if val == "True" or val == "False":
-                val = val == "True"
+                parsed_config[key] = val == "True"
             elif key == "uris":
-                for val2 in val.values():
-                    val2 = (
+                for key2, val2 in val.items():
+                    val[key2] = (
                         rdflib.URIRef(val2)
-                        if type(val2) == str
+                        if isinstance(val2, str)
                         else [rdflib.URIRef(k) for k in val2]
                     )
-            elif type(val) == str and val.isnumeric():
+                assert 0
+            elif isinstance(val, str) and val.isnumeric():
                 val = int(val)
     return parsed_config
 
@@ -101,7 +108,7 @@ class I2B2BasecodeHandler:
     Compute and extract the basecode for a Class or a Property existing in the ontology.
     Access the attributes of the embedded RDF resource.
     If a value is specified, it will be included in the basecode computation.
-    If an other handler is specified as "logical_parent" at construction, its code 
+    If an other handler is specified as "logical_parent" at construction, its code
         will be embedded in the computation. (helps encapsulating hierarchy in codes)
     """
 
