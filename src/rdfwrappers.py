@@ -1,12 +1,11 @@
 from utils import *
-from main_ontology import GRAPH_CONFIG
 
 # add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
 
 
-def filter_valid(res_list):
+def filter_valid(res_list, blacklist):
     # Discards elements referenced in the blacklist, proceed with the other
-    filtered = [item for item in res_list if item.identifier not in BLACKLIST]
+    filtered = [item for item in res_list if item.identifier not in blacklist]
     return filtered
 
 
@@ -38,7 +37,7 @@ class Component:
             return resource
         return graph.resource(resource.identifier)
 
-    def get_children(self, *kwargs):
+    def get_children(self):
         """
         Allows to go down the ontology tree independently if the object is a Concept or Property.
         """
@@ -134,8 +133,17 @@ class Component:
 
 
 class Concept(Component):
-    def __init__(self, resource, parent_class=None):
+    """
+    A Python interpretation of a RDF Concept.
+    """
+
+    def __init__(
+        self, resource, reserved_uris, pref_language, mixed_trees, parent_class=None
+    ):
         super().__init__(resource, parent_class)
+        self.pref_language = pref_language
+        self.mixed_trees = mixed_trees
+        self.reserved_uris = reserved_uris
         self.subconcepts = []
         self.properties = []
         self.resolver = OntologyDepthExplorer(self)
@@ -176,8 +184,20 @@ class Concept(Component):
             predicate.digin_ranges()
 
     def find_subconcepts(self, filter_mode="blacklist"):
+        """
+        Fetch the subconcepts of the current element.
+        """
         if len(self.subconcepts) == 0:
-            self.subconcepts = self.resolver.explore_subclasses(filter_mode)
+            if filter_mode == "blacklist":
+                self.subconcepts = self.resolver.filter_out_subclasses(
+                    subclass_predicate=self.reserved_uris["SUBCLASS_PREDICATE_URI"],
+                    blacklist=self.reserved_uris["BLACKLIST"],
+                )
+            elif filter_mode == "whitelist":
+                self.subconcepts = self.resolver.filter_in_subclasses(
+                    subclass_predicate=self.reserved_uris["SUBCLASS_PREDICATE_URI"],
+                    whitelist=self.reserved_uris["ENTRY_CONCEPTS"],
+                )
             # Trigger recursive call on first-level children
             for sub in self.subconcepts:
                 sub.find_subconcepts(filter_mode)
@@ -194,7 +214,9 @@ class ChildfreeConcept(Concept):
     To implement this, simply override find_subconcepts.
     """
 
-    def find_subconcepts(self, filter_mode="blacklist"):
+    def find_subconcepts(
+        self, blacklist, subclass_predicate, entry_concepts, filter_mode="blacklist"
+    ):
         return []
 
 
@@ -282,15 +304,17 @@ class RangeFilter:
     Fetch and filter the Range elements of a Property discarding the blacklisted ones.
     """
 
-    def __init__(self, res):
+    def __init__(self, res, range_predicate_uri, blacklist):
         self.resource = res
+        self.predicate = range_predicate_uri
+        self.blacklist=blacklist
 
     def extract_range_res(self):
         """
         Return all the ranges a property points to, except the ones referring to metadata (see the config file)
         """
         rnge_types = self.extract_range_type()
-        return filter_valid(rnge_types)
+        return filter_valid(rnge_types, blacklist=self.blacklist)
 
     def extract_range_type(self):
         """
@@ -313,7 +337,7 @@ class RangeFilter:
         """,
             initBindings={
                 "self": self.resource.identifier,
-                "range": RANGE_PREDICATE_URI,
+                "range": self.predicate,
             },
         )
         listed_res = [self.resource.graph.resource(row[0]) for row in response]
@@ -334,7 +358,7 @@ class PropertyFilter:
     remove this property.
     """
 
-    def __init__(self, concept):
+    def __init__(self, concept:Concept):
         self.concept = concept
         self.resources = []
 
@@ -355,7 +379,11 @@ class PropertyFilter:
         cleanres = []
         ranges = []
         for res in self.resources:
-            handler = RangeFilter(res)
+            handler = RangeFilter(
+                res,
+                range_predicate_uri=self.concept.reserved_uris["RANGE_PREDICATE_URI"],
+                blacklist=self.concept.reserved_uris["BLACKLIST"]
+            )
             reachable = handler.extract_range_res()
             if reachable != []:
                 cleanres.append(res)
@@ -368,7 +396,7 @@ class PropertyFilter:
         Discard all blacklisted properties.
         """
         # Loop over Properties, check they are not blacklisted
-        self.resources = filter_valid(self.resources)
+        self.resources = filter_valid(self.resources, blacklist=self.concept.reserved_uris["BLACKLIST"])
 
     def fetch_unique_properties(self):
         """
@@ -422,27 +450,49 @@ class OntologyDepthExplorer:
         self.concept = concept
         self.filter = PropertyFilter(concept)
 
-    def explore_subclasses(self, filter_mode):
+    def filter_out_subclasses(self, subclass_predicate, blacklist):
         """
-        Fetch the direct subclasses of the concept. Reference the parent_class concept.
-        If the current node is a terminology element, all its predicate can be in a separate graph.
+        Fetch the direct subclasses of the concept based on a blacklist.
+        Reference the parent_class concept.
+        If the current node is a terminology element,
+            its predicate can be in a separate graph.
         """
-        subs = self.concept.resource.subjects(SUBCLASS_PRED)
+        subs = self.concept.resource.subjects(subclass_predicate)
         if subs is None:
             return []
-        if filter_mode == "blacklist":
-            return [
-                Concept(sub, parent_class=self.concept)
-                for sub in subs
-                if sub.identifier not in BLACKLIST
-            ]
-        elif filter_mode == "whitelist":
-            return [
-                Concept(sub, parent_class=self.concept)
-                for sub in subs
-                if sub.identifier in ENTRY_CONCEPTS
-            ]
-        return []
+        return [
+            Concept(
+                resource=sub,
+                reserved_uris=self.concept.reserved_uris,
+                pref_language=self.concept.pref_language,
+                mixed_trees=self.concept.mixed_trees,
+                parent_class=self.concept,
+            )
+            for sub in subs
+            if sub.identifier not in blacklist
+        ]
+
+    def filter_in_subclasses(self, subclass_predicate, whitelist):
+        """
+        Fetch the direct subclasses of the concept based on a whitelist.
+        Reference the parent_class concept.
+        If the current node is a terminology element,
+            its predicates can be in a separate graph.
+        """
+        subs = self.concept.resource.subjects(subclass_predicate)
+        if subs is None:
+            return []
+        return [
+            Concept(
+                resource=sub,
+                reserved_uris=self.concept.reserved_uris,
+                pref_language=self.concept.pref_language,
+                mixed_trees=self.concept.mixed_trees,
+                parent_class=self.concept,
+            )
+            for sub in subs
+            if sub.identifier in whitelist
+        ]
 
     def explore_properties(self):
         """
