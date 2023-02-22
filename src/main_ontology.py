@@ -57,7 +57,6 @@ def convert_main(
 if __name__ == "__main__":
     ### Setting up the configs and folders
     GRAPH_CONFIG = read_config(GRAPH_CONFIG_FILE)
-    GRAPH_PARAMS = GRAPH_CONFIG["parameters"]
     GRAPH_URIS = GRAPH_CONFIG["uris"]
     I2B2_CONFIG = read_config(I2B2_MAPPING_FILE)
     output_tables_location = I2B2_CONFIG["OUTPUT_TABLES_LOCATION"]
@@ -67,9 +66,9 @@ if __name__ == "__main__":
     ### Trigger the conversion
     convert_main(
         parser=GraphParser(
-            paths=GRAPH_PARAMS["ONTOLOGY_GRAPHS_LOCATIONS"],
-            rdf_format=GRAPH_PARAMS["RDF_FORMAT"],
-            terminologies_links=GRAPH_PARAMS["TERMINOLOGIES_GRAPHS"],
+            paths=GRAPH_CONFIG["ONTOLOGY_GRAPHS_LOCATIONS"],
+            rdf_format=GRAPH_CONFIG["RDF_FORMAT"],
+            terminologies_links=GRAPH_CONFIG["TERMINOLOGIES_GRAPHS"],
         ),
         root_uris=GRAPH_URIS["ROOT_URIS"],
         metadata_file=metadata_fpath,
