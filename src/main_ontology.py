@@ -34,7 +34,12 @@ def convert_main(
     init = True
     # Actual loop over the root links
     for concept_res in root_entries:
-        concept = Concept(concept_res)
+        concept = Concept(
+            concept_res,
+            reserved_uris=GRAPH_URIS,
+            pref_language=GRAPH_PARAMETERS["PREF_LANGAGE"],
+            mixed_trees=GRAPH_PARAMETERS["ALLOW_MIXED_TREES"],
+        )
         # Initialize the converter (auto setup the first level of root descendance)
         converter = I2B2Converter(concept)
         # Sequentially explore the descendance of every instantiable concept,

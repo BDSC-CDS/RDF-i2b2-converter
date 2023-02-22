@@ -1,19 +1,21 @@
 {
-    "ONTOLOGY_GRAPHS_LOCATIONS": [
-        "ontology/main_ontologies",
-        "ontology/external_terminologies"
-    ],
-    "RDF_FORMAT": "turtle",
-    "PREF_LANGUAGE": "fr",
-    "ALLOW_MIXED_TREES": "False",
-    "TERMINOLOGIES_GRAPHS": {
-        "http://snomed.info/id/": "snomed-ct-20220131",
-        "https://loinc.org/rdf/": "sphn_loinc_2.72-1",
-        "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/": "sphn_icd-10-gm_2022-2",
-        "https://biomedit.ch/rdf/sphn-resource/chop": "sphn_chop_2022-1",
-        "https://biomedit.ch/rdf/sphn-resource/atc/": "sphn_atc_2022-1",
-        "https://biomedit.ch/rdf/sphn-resource/loinc/": "sphn_loinc_2.72-1",
-        "https://biomedit.ch/rdf/sphn-resource/onco-tree#OncoTree": "oncotree"
+    "parameters": {
+        "ONTOLOGY_GRAPHS_LOCATIONS": [
+            "ontology/main_ontologies",
+            "ontology/external_terminologies"
+        ],
+        "RDF_FORMAT": "turtle",
+        "PREF_LANGUAGE": "fr",
+        "ALLOW_MIXED_TREES": "False",
+        "TERMINOLOGIES_GRAPHS": {
+            "http://snomed.info/id/": "snomed-ct-20220131",
+            "https://loinc.org/rdf/": "sphn_loinc_2.72-1",
+            "https://biomedit.ch/rdf/sphn-resource/icd-10-gm/": "sphn_icd-10-gm_2022-2",
+            "https://biomedit.ch/rdf/sphn-resource/chop": "sphn_chop_2022-1",
+            "https://biomedit.ch/rdf/sphn-resource/atc/": "sphn_atc_2022-1",
+            "https://biomedit.ch/rdf/sphn-resource/loinc/": "sphn_loinc_2.72-1",
+            "https://biomedit.ch/rdf/sphn-resource/onco-tree#OncoTree": "oncotree"
+        }
     },
     "uris": {
         "ROOT_URIS": [
