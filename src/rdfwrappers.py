@@ -14,9 +14,20 @@ class Component:
     Component is a wrapper for the rdflib.Resource class.
     """
 
-    def __init__(self, resource, parent_class=None):
+    def __init__(
+        self,
+        resource,
+        graph_parameters,
+        reserved_uris,
+        parent_class=None,
+    ):
+        self.graph_parameters = graph_parameters
+        self.reserved_uris = reserved_uris
         self.is_terminology_term = (
-            terminology_indicator(resource)
+            terminology_indicator(
+                resource=resource,
+                terminologies_config=self.graph_parameters["TERMINOLOGIES_GRAPHS"],
+            )
             if parent_class is None
             else parent_class.is_terminology_term
         )
@@ -32,7 +43,10 @@ class Component:
     def switch_graph(self, resource):
         if not self.is_terminology_term:
             return resource
-        graph = which_graph(resource.identifier)
+        graph = which_graph(
+            uri=resource.identifier,
+            terminologies_config=self.graph_parameters["TERMINOLOGIES_GRAPHS"],
+        )
         if graph is False:
             return resource
         return graph.resource(resource.identifier)
@@ -91,7 +105,11 @@ class Component:
         if len(labels) == 0:
             return ""
         # More than 1 label, let's filter along language tags
-        res = [k.toPython() for k in labels if k.language == PREF_LANGUAGE]
+        res = [
+            k.toPython()
+            for k in labels
+            if k.language == self.graph_parameters["PREF_LANGUAGE"]
+        ]
         if len(res) == 0:
             return labels[0].toPython()
         return res[0]
@@ -109,7 +127,8 @@ class Component:
             code = self.shortname[sep + 1 :]
             term_name = self.shortname[:sep].upper()
 
-            if code not in self.label and term_name not in IGNORE_TERM_ID:
+            if code not in label:
+                # TODO modify stuff here
                 if code.isnumeric() and len(code) < 2:
                     code = "0" + code
                 self.label = code + " - " + self.label
@@ -138,12 +157,13 @@ class Concept(Component):
     """
 
     def __init__(
-        self, resource, reserved_uris, pref_language, mixed_trees, parent_class=None
+        self,
+        resource,
+        graph_parameters,
+        reserved_uris,
+        parent_class=None,
     ):
-        super().__init__(resource, parent_class)
-        self.pref_language = pref_language
-        self.mixed_trees = mixed_trees
-        self.reserved_uris = reserved_uris
+        super().__init__(resource, graph_parameters, reserved_uris, parent_class)
         self.subconcepts = []
         self.properties = []
         self.resolver = OntologyDepthExplorer(self)
@@ -204,6 +224,19 @@ class Concept(Component):
 
         return self.subconcepts
 
+    def is_entry(self):
+        return self.resource.identifier in self.reserved_uris["ENTRY_CONCEPTS"]
+
+    def is_valueset(self):
+        """
+        Check if the concept is part of a registered valueset.
+        """
+        tmp = self.resource.value(self.reserved_uris["SUBCLASS_PREDICATE_URI"])
+        return (
+            tmp is not None
+            and tmp.identifier in self.reserved_uris["VALUESET_MARKER_URIS"]
+        )
+
 
 class ChildfreeConcept(Concept):
     """A family of concepts for which we are not interested in expanding their subconcepts, either because they don't have any by nature, or they are irrelevant.
@@ -230,8 +263,8 @@ class LeafConcept(ChildfreeConcept):
 
 
 class Property(Component):
-    def __init__(self, resource, valid_ranges):
-        super().__init__(resource)
+    def __init__(self, resource, graph_parameters, reserved_uris, valid_ranges):
+        super().__init__(resource, graph_parameters, reserved_uris)
         self.ranges_res = valid_ranges
         self.ranges = []
 
@@ -239,11 +272,18 @@ class Property(Component):
         return self.ranges
 
     def digin_ranges(self):
-        prop_type = self.resource.value(TYPE_PREDICATE_URI)
-        if prop_type is None or prop_type.identifier == OBJECT_PROP_URI:
+        prop_type = self.resource.value(self.graph_parameters["TYPE_PREDICATE_URI"])
+        if (
+            prop_type is None
+            or prop_type.identifier == self.graph_parameters["OBJECT_PROP_URI"]
+        ):
             processed_range_res = self.sort_silent_ranges()
-            raw_ranges = [Concept(reg) for reg in processed_range_res["regular"]] + [
-                ChildfreeConcept(gen) for gen in processed_range_res["muted"]
+            raw_ranges = [
+                Concept(reg, self.graph_parameters, self.reserved_uris)
+                for reg in processed_range_res["regular"]
+            ] + [
+                ChildfreeConcept(gen, self.graph_parameters, self.reserved_uris)
+                for gen in processed_range_res["muted"]
             ]
             for obj in raw_ranges:
                 # The explore method will trigger subclasses and properties discovery
@@ -252,9 +292,12 @@ class Property(Component):
                 else:
                     obj.explore_children()
                     self.ranges.append(obj)
-        elif prop_type.identifier == DATATYPE_PROP_URI:
+        elif prop_type.identifier == self.reserved_uris["DATATYPE_PROP_URI"]:
             # The ranges are tree leaf objects without properties and without subclasses
-            self.ranges = [LeafConcept(reg) for reg in self.ranges_res]
+            self.ranges = [
+                LeafConcept(reg, self.graph_parameters, self.reserved_uris)
+                for reg in self.ranges_res
+            ]
 
     def sort_silent_ranges(self):
         """
@@ -268,12 +311,15 @@ class Property(Component):
 
         """
         final_ranges = {"muted": [], "regular": []}
-        if ALLOW_MIXED_TREES == "True":
-            final_ranges["regular"] = self.range_res
+        if self.graph_parameters["ALLOW_MIXED_TREES"] == "True":
+            final_ranges["regular"] = self.ranges_res
             return 0
 
         # Extract the indices of self.ranges_res which belong to an external terminology
-        termins = [terminology_indicator(elem) for elem in self.ranges_res]
+        termins = [
+            terminology_indicator(elem, self.graph_parameters["TERMINOLOGIES_GRAPH"])
+            for elem in self.ranges_res
+        ]
         idx_termsinrange = [indx for indx, truth_val in enumerate(termins) if truth_val]
 
         # Now for each specific terminology, keep track to which range it applies to
@@ -369,7 +415,13 @@ class PropertyFilter:
         if len(ranges) != len(self.resources):
             raise Exception("Bad property-range matching")
         return [
-            Property(self.resources[i], ranges[i]) for i in range(len(self.resources))
+            Property(
+                self.resources[i],
+                graph_parameters=self.concept.graph_parameters,
+                reserved_uris=self.concept.reserved_uris,
+                valid_ranges=ranges[i],
+            )
+            for i in range(len(self.resources))
         ]
 
     def filter_ranges(self):
@@ -396,7 +448,9 @@ class PropertyFilter:
         Discard all blacklisted properties.
         """
         # Loop over Properties, check they are not blacklisted
-        self.resources = filter_valid(self.resources, blacklist=self.concept.reserved_uris["BLACKLIST"])
+        self.resources = filter_valid(
+            self.resources, blacklist=self.concept.reserved_uris["BLACKLIST"]
+        )
 
     def fetch_unique_properties(self):
         """
@@ -463,6 +517,7 @@ class OntologyDepthExplorer:
         return [
             Concept(
                 resource=sub,
+                graph_parameters=self.concept.graph_parameters,
                 reserved_uris=self.concept.reserved_uris,
                 pref_language=self.concept.pref_language,
                 mixed_trees=self.concept.mixed_trees,
@@ -485,6 +540,7 @@ class OntologyDepthExplorer:
         return [
             Concept(
                 resource=sub,
+                graph_parameters=self.concept.graph_parameters,
                 reserved_uris=self.concept.reserved_uris,
                 pref_language=self.concept.pref_language,
                 mixed_trees=self.concept.mixed_trees,
@@ -515,4 +571,11 @@ class OntologyDepthExplorer:
         """,
             initBindings={"o": self.concept.resource.identifier},
         )
-        return [LeafConcept(graph.resource(row[0])) for row in res2]
+        return [
+            LeafConcept(
+                graph.resource(row[0]),
+                graph_parameters=self.concept.graph_parameters,
+                reserved_uris=self.concept.reserved_uris,
+            )
+            for row in res2
+        ]

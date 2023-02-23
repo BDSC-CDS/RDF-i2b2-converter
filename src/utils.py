@@ -16,6 +16,17 @@ import gc
 TERMINOLOGIES_FILES = {}
 
 
+def easy_cast(dict_to_cast: dict):
+    """
+    Cast dictionary values to integers and booleans when applicable.
+    """
+    for key, value in dict_to_cast.items():
+        if value == "True" or value == "False":
+            dict_to_cast[key] = value == "True"
+        elif isinstance(value, str) and value.isnumeric():
+            dict_to_cast[key] = int(value)
+
+
 def read_config(confpath):
     """
     Read the specified config file.
@@ -25,16 +36,19 @@ def read_config(confpath):
     """
     with open(confpath, encoding="utf-8") as ffile:
         parsed_config = json.load(ffile)
-        for key, val in parsed_config.items():
-            if val == "True" or val == "False":
-                parsed_config[key] = val == "True"
-            elif key == "uris":
-                for key2, val2 in val.items():
-                    val[key2] = (
-                        rdflib.URIRef(val2)
-                        if isinstance(val2, str)
-                        else [rdflib.URIRef(k) for k in val2]
-                    )
+    # Cast level-one items
+    easy_cast(parsed_config)
+    # Cast subdictionary items if applicable
+    if "parameters" in parsed_config.keys():
+        easy_cast(parsed_config["parameters"])
+    # Custom typecast for the reserved "uris" subdictionary
+    if "uris" in parsed_config.keys():
+        for key2, val2 in parsed_config["uris"].items():
+            parsed_config["uris"][key2] = (
+                rdflib.URIRef(val2)
+                if isinstance(val2, str)
+                else [rdflib.URIRef(k) for k in val2]
+            )
             elif isinstance(val, str) and val.isnumeric():
                 val = int(val)
     return parsed_config
@@ -154,18 +168,18 @@ def create_dir(relative_path):
     return os.makedirs(relative_path) if not os.path.exists(relative_path) else 0
 
 
-def terminology_indicator(resource, terminologies_graphs):
+def terminology_indicator(resource, terminologies_config):
     """
     Determine if it is worth looking for properties of this concept or not.
     In the SPHN implementation, if the concept comes from a terminology (testable easily by looking at the URI) it doesn't have any properties
     """
-    return any([k in resource.identifier for k in terminologies_graphs.keys()])
+    return any([k in resource.identifier for k in terminologies_config.keys()])
 
 
-def which_graph(uri, terminologies_graphs):
-    for key in terminologies_graphs.keys():
-        if key in uri and terminologies_graphs[key] in terminologies_files.keys():
-            res = terminologies_files[terminologies_graphs[key]]
+def which_graph(uri, terminologies_config):
+    for key in terminologies_config.keys():
+        if key in uri and terminologies_config[key] in TERMINOLOGIES_FILES.keys():
+            res = TERMINOLOGIES_FILES[terminologies_config[key]]
             return res if res != "" and res is not None else False
     return False
 
