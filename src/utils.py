@@ -49,8 +49,6 @@ def read_config(confpath):
                 if isinstance(val2, str)
                 else [rdflib.URIRef(k) for k in val2]
             )
-            elif isinstance(val, str) and val.isnumeric():
-                val = int(val)
     return parsed_config
 
 
@@ -77,9 +75,7 @@ class GraphParser:
         for filek in result:
             # Check the format parameter matches something doable
             guessed_format = rdflib.util.guess_format(filek)
-            if guessed_format is None or (
-                rdf_format != "*" and guessed_format != rdf_format
-            ):
+            if guessed_format is None or (rdf_format not in ("*", guessed_format)):
                 print("Couldn't parse file", filek, ", skipping")
                 continue
             dot = filek.rfind(".")
@@ -200,16 +196,16 @@ def shortname(resource):
     In most cases the rdflib reasoner is able to do it, but in case it fails this method will do it explicitly.
     The protocol is finding the namespaces reduction that reduces the most the item and decide this is the prefix.
     """
-    shortname = resource.graph.namespace_manager.normalizeUri(resource.identifier)
+    sname = resource.graph.namespace_manager.normalizeUri(resource.identifier)
     uri = resource.identifier
-    if uri in shortname:
-        ns = resource.graph.namespace_manager.namespaces()
+    if uri in sname:
+        nmspaces = resource.graph.namespace_manager.namespaces()
         best_guess_len = 0
-        for key, value in ns:
+        for key, value in nmspaces:
             if value in uri and len(value) > best_guess_len:
                 best_guess_len = len(value)
-                shortname = key + ":" + uri[len(value) :]
-    return shortname
+                sname = key + ":" + uri[len(value) :]
+    return sname
 
 
 def format_date(rdfdate, generalize=True):
@@ -272,14 +268,14 @@ def from_csv(filename):
     return db.to_dict("records")
 
 
-def generate_xml(metadata_dict):
+def generate_xml(metadata_dict, xml_pattern):
     """
     Generate the metadata_xml panel for a specific entry. Uses the XML_PATTERN and UNITS_DIC global variables.
     enum types are not used since we have explicit valuesets as modifier leaves.
     Default type is string but PosFloat, Integer, PosInteger, Float are accepted
     """
     keyz = metadata_dict.keys()
-    res = XML_PATTERN
+    res = xml_pattern
     for k in keyz:
         ftag = "<" + k + ">"
         etag = "</" + k + ">"

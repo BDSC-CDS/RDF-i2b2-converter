@@ -1,10 +1,15 @@
-from utils import *
-
-# add patient, encounter,  provider info in the blacklist to speedup the searches. usually should not be discarded at this stage since i2b2 takes care of them
+"""
+A RDF wrapping module dealing with the graph discovery 
+    and creation of Python objects following a Concept, Property structure.
+"""
+import rdflib
+from utils import terminology_indicator, which_graph, shortname
 
 
 def filter_valid(res_list, blacklist):
-    # Discards elements referenced in the blacklist, proceed with the other
+    """
+    Discards elements referenced in the blacklist, proceed with the other
+    """
     filtered = [item for item in res_list if item.identifier not in blacklist]
     return filtered
 
@@ -64,7 +69,7 @@ class Component:
         pass
 
     def is_entry(self):
-        return self.resource.identifier in ENTRY_CONCEPTS
+        return False
 
     def is_logical_desc(self):
         """
@@ -180,8 +185,7 @@ class Concept(Component):
         Trigger the recursion and return the first level children.
         Only does so if both subconcepts and properties are empty, else consider the search has already been done.
         """
-        # TODO :  is it ok to skip properties search for items that already have only subconcepts?
-        if self.properties == [] and self.subconcepts == []:
+        if not self.properties and not self.subconcepts:
             self.explore_children()
         if not self.is_terminology_term and verbose:
             print("Done digging in graph for " + self.get_shortname())
@@ -247,15 +251,16 @@ class ChildfreeConcept(Concept):
     To implement this, simply override find_subconcepts.
     """
 
-    def find_subconcepts(
-        self, blacklist, subclass_predicate, entry_concepts, filter_mode="blacklist"
-    ):
+    # pylint: disable=arguments-differ
+    def find_subconcepts(self):
         return []
 
 
 class LeafConcept(ChildfreeConcept):
     """
-    LeafConcepts are leaves of the tree, by definition. By the ChildfreeConcept inheritance, they have no subconcepts. On top of that, they have no useful properties.
+    LeafConcepts are leaves of the tree, by definition.
+    By the ChildfreeConcept inheritance, they have no subconcepts.
+    On top of that, they have no useful properties.
     """
 
     def explore_children(self):
@@ -268,7 +273,7 @@ class Property(Component):
         self.ranges_res = valid_ranges
         self.ranges = []
 
-    def get_children(self, **kwargs):
+    def get_children(self):
         return self.ranges
 
     def digin_ranges(self):
@@ -353,7 +358,7 @@ class RangeFilter:
     def __init__(self, res, range_predicate_uri, blacklist):
         self.resource = res
         self.predicate = range_predicate_uri
-        self.blacklist=blacklist
+        self.blacklist = blacklist
 
     def extract_range_res(self):
         """
@@ -404,7 +409,7 @@ class PropertyFilter:
     remove this property.
     """
 
-    def __init__(self, concept:Concept):
+    def __init__(self, concept: Concept):
         self.concept = concept
         self.resources = []
 
@@ -434,7 +439,7 @@ class PropertyFilter:
             handler = RangeFilter(
                 res,
                 range_predicate_uri=self.concept.reserved_uris["RANGE_PREDICATE_URI"],
-                blacklist=self.concept.reserved_uris["BLACKLIST"]
+                blacklist=self.concept.reserved_uris["BLACKLIST"],
             )
             reachable = handler.extract_range_res()
             if reachable != []:
@@ -500,7 +505,7 @@ class OntologyDepthExplorer:
     All searches are done recursively, fetching only the first level of children and creating an other OntologyDepthExplorer object for
     """
 
-    def __init__(self, concept):
+    def __init__(self, concept: Concept):
         self.concept = concept
         self.filter = PropertyFilter(concept)
 
