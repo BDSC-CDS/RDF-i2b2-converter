@@ -41,11 +41,14 @@ class Component:
         )
         self.set_shortname()
         self.parent_class = parent_class
-        com = resource.value(COMMENT_PREDICATE_URI)
-        self.comment = com.toPython() if com is not None else com
+        self.set_comment()
         self.set_label()
 
     def switch_graph(self, resource):
+        """
+        Replaces the resource of reference by its equivalent in an other graph
+            if required (terminology terms, typically)
+        """
         if not self.is_terminology_term:
             return resource
         graph = which_graph(
@@ -58,28 +61,28 @@ class Component:
 
     def get_children(self):
         """
-        Allows to go down the ontology tree independently if the object is a Concept or Property.
+        Allows to go down the ontology tree independently
+            if the object is a Concept or Property.
         """
-        pass
 
     def get_entry_desc(self):
         """
         Dig the ontology from the current point only considering subclass relations.
         """
-        pass
 
     def is_entry(self):
+        """
+        Base case to check if a resource is an entry concept level.
+            Overriden by the Concept class.
+        """
         return False
 
     def is_logical_desc(self):
         """
-        Checks if the current element was created as subclass of an other (return False) or as property of an other (return True).
+        Checks if the current element was created as subclass of another (return False)
+            or as property of an other (return True).
         """
         return self.parent_class is None
-
-    def is_valueset(self):
-        tmp = self.resource.value(SUBCLASS_PREDICATE_URI)
-        return tmp is not None and tmp.identifier in VALUESET_MARKER_URIS
 
     def get_label(self):
         return self.label
@@ -93,12 +96,17 @@ class Component:
     def get_comment(self):
         return self.comment
 
+    def set_comment(self):
+        com = self.resource.value(self.reserved_uris["COMMENT_PREDICATE_URI"])
+        self.comment = com.toPython() if com is not None else com
+
     def set_shortname(self):
         self.shortname = shortname(self.resource)
 
     def pref_label(self):
         """
-        Homemade method to get the label of the preferred tag. Replaces rdflib.Graph.prefLabel (removed from lib)
+        Homemade method to get the label of the preferred tag. 
+        Replaces rdflib.Graph.prefLabel (removed from lib)
         """
         labels = [
             k[1]
@@ -124,23 +132,23 @@ class Component:
         Set the language-dependent label (to be used as display name)
         """
         fmtd_label = self.pref_label()
+        sname = self.shortname
         # If the resource had no language-tagged label, get the normal label. If it does not exist, say the label will be the URI suffix
-        self.label = self.shortname if fmtd_label == "" else fmtd_label
+        label = self.shortname if fmtd_label == "" else fmtd_label
 
         if self.is_terminology_term:
-            sep = self.shortname.rfind(":")
-            code = self.shortname[sep + 1 :]
-            term_name = self.shortname[:sep].upper()
+            sep = sname.rfind(":")
+            code = sname[sep + 1 :]
+            term_name = sname[:sep].upper()
 
             if code not in label:
-                # TODO modify stuff here
-                if code.isnumeric() and len(code) < 2:
-                    code = "0" + code
-                self.label = code + " - " + self.label
+                label = code + " - " + label
             if (
-                self.parent_class is None or term_name not in self.parent_class.label
-            ) and term_name not in self.label:
-                self.label = term_name + ":" + self.label
+                self.parent_class is None
+                or term_name not in self.parent_class.get_label()
+            ) and term_name not in label:
+                label = term_name + ":" + label
+        self.label=label
 
     def __repr__(self):
         return (
@@ -418,7 +426,7 @@ class PropertyFilter:
         self.filter_bl_properties()
         ranges = self.filter_ranges()
         if len(ranges) != len(self.resources):
-            raise Exception("Bad property-range matching")
+            raise ValueError("Bad property-range matching")
         return [
             Property(
                 self.resources[i],
@@ -524,8 +532,6 @@ class OntologyDepthExplorer:
                 resource=sub,
                 graph_parameters=self.concept.graph_parameters,
                 reserved_uris=self.concept.reserved_uris,
-                pref_language=self.concept.pref_language,
-                mixed_trees=self.concept.mixed_trees,
                 parent_class=self.concept,
             )
             for sub in subs
@@ -547,8 +553,6 @@ class OntologyDepthExplorer:
                 resource=sub,
                 graph_parameters=self.concept.graph_parameters,
                 reserved_uris=self.concept.reserved_uris,
-                pref_language=self.concept.pref_language,
-                mixed_trees=self.concept.mixed_trees,
                 parent_class=self.concept,
             )
             for sub in subs

@@ -1,5 +1,5 @@
 from rdfwrappers import *
-from typing import List
+from typing import List, Optional
 
 
 def drop(attribute):
@@ -22,6 +22,18 @@ def save_from_drop(droppy_uri, parent_uri):
     return False
 
 
+def amend(name, terminologies_names_to_ignore):
+    """
+    Remove the terminology name if irrelevant.
+    """
+    # TODO amend the display names if necessary here
+    for ignored in terminologies_names_to_ignore:
+        if ignored in name:
+            idx = name.index(ignored)
+            return name[:idx] + name[: idx + len(ignored)]
+    return name
+
+
 class I2B2Converter:
     """
     The converter object initialized with a python rdfwrappers.Concept instance.
@@ -36,7 +48,7 @@ class I2B2Converter:
         """
         self.i2b2voidconcepts: List[I2B2Concept] = []
         self.left_tosearch: List[I2B2Concept] = []
-        self.towrite:List=[]
+        self.towrite = []
         # Exploring into our concept
         cur = I2B2Concept(concept, i2b2parent)
         concept.get_entry_desc()
@@ -80,7 +92,14 @@ class I2B2Converter:
 
 
 class I2B2OntologyElement:
-    def __init__(self, graph_component, parent=None, explicit_logical_parent=None):
+    """
+    An abstract class for i2b2 concept and modifier representations.
+    Uses the interface defined by rdfwrappers.Component.
+    """
+
+    def __init__(
+        self, graph_component: Component, parent=None, explicit_logical_parent=None
+    ):
         self.parent = parent
         if explicit_logical_parent is not None:
             self.logical_parent = explicit_logical_parent
@@ -119,7 +138,9 @@ class I2B2OntologyElement:
         self.path = self.path_handler.get_path()
 
     def set_displayname(self):
-        self.displayname = self.component.get_label()
+        self.displayname = amend(
+            self.component.get_label(), self.ignore_terminologies_id
+        )
 
     def set_code(self):
         self.code = self.basecode_handler.get_basecode()
